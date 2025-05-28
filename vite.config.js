@@ -54,4 +54,8 @@ export default defineConfig({
             credentials: true,
         },
     },
+    // ... остальные настройки
+    build: {
+        chunkSizeWarningLimit: 1000, // Увеличиваем лимит до 1000 кБ
+    },
 });

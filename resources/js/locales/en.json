@@ -1,0 +1,12 @@
+{
+    "welcome": "Welcome to the Avicenna Partner Cabinet",
+    "description": "This is your personal dashboard for managing the partner program.",
+    "login": "Login",
+    "register": "Register",
+    "language": "Language",
+    "vuestic": {
+        "select": {
+            "placeholder": "Select language"
+        }
+    }
+}
