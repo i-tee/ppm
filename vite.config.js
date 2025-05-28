@@ -2,8 +2,6 @@
 import { defineConfig } from 'vite';
 // Плагин для интеграции Vite с Laravel
 import laravel from 'laravel-vite-plugin';
-// Плагин для Tailwind CSS
-import tailwindcss from '@tailwindcss/vite';
 // Плагин для поддержки Vue файлов
 import vue from '@vitejs/plugin-vue';
 // Импортируем модули для работы с файлами и путями
@@ -28,7 +26,6 @@ export default defineConfig({
                 exclude: ['vendor/**'],
             },
         }),
-        tailwindcss(),
         vue({
             template: {
                 transformAssetUrls: {
