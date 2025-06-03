@@ -6,6 +6,9 @@
     "password": "Пароль",
     "register": "Зарегистрироваться",
     "language": "Язык",
+    "confirm_password": "Подтвердите пароль",
+    "register_description": "Пожалуйста, зарегистрируйтесь, чтобы создать аккаунт.",
+    "name": "Имя",
     "vuestic": {
         "select": {
             "placeholder": "Выберите язык"
