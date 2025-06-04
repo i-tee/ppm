@@ -50,6 +50,7 @@
             {{ $t('register') }}
           </va-button>
         </div>
+        
       </va-card-content>
     </va-card>
   </div>

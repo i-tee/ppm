@@ -73,7 +73,7 @@
             {{ $t('register') }}
           </va-button>
 
-          <va-button :to="{ name: 'login' }" color="secondary" class="flex-grow ml-2">
+          <va-button :to="{ name: 'welcome' }" color="secondary" class="flex-grow ml-2">
             {{ $t('login') }}
           </va-button>
         </div>
