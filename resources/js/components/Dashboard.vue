@@ -1,23 +1,17 @@
 <template>
-  <div class="home-wrapper">
-    <va-card class="home-card" outlined>
+  <div class="dashboard-wrapper">
+    <va-card class="dashboard-card" outlined>
       <va-card-title class="justify-center text-center text-primary text-2xl">
-        <VaIcon name="home" class="mr-2" /> {{ $t('welcome') }}
+        <VaIcon name="dashboard" class="mr-2" /> {{ $t('dashboard') }}
       </va-card-title>
 
       <va-divider />
 
       <va-card-content>
-        <p class="text-center text-secondary mb-4">{{ $t('description') }}</p>
+        <p class="text-center text-secondary mb-4">Добро пожаловать, {{ currentUser?.name }}!</p>
         <div class="flex justify-center mt-6">
-          <va-button v-if="!isAuthenticated" :to="{ name: 'login' }" color="primary" class="mr-2">
-            {{ $t('login') }}
-          </va-button>
-          <va-button v-if="!isAuthenticated" :to="{ name: 'register' }" color="secondary">
-            {{ $t('register') }}
-          </va-button>
-          <va-button v-if="isAuthenticated" :to="{ name: 'dashboard' }" color="primary">
-            {{ $t('dashboard') }}
+          <va-button @click="handleLogout" color="danger">
+            {{ $t('logout') }}
           </va-button>
         </div>
       </va-card-content>
@@ -27,23 +21,37 @@
 
 <script>
 import { useAuthStore } from '../stores/auth';
+import { useRouter } from 'vue-router';
 
 export default {
-  name: 'Home',
+  name: 'Dashboard',
   setup() {
     const authStore = useAuthStore();
-    return { authStore };
+    const router = useRouter();
+
+    return { authStore, router };
   },
+
   computed: {
+    currentUser() {
+      return this.authStore.currentUser;
+    },
     isAuthenticated() {
       return this.authStore.isAuthenticated;
+    },
+  },
+
+  methods: {
+    async handleLogout() {
+      await this.authStore.logout();
+      this.router.push('/login');
     },
   },
 };
 </script>
 
 <style scoped>
-.home-wrapper {
+.dashboard-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -52,7 +60,7 @@ export default {
   padding: 20px;
 }
 
-.home-card {
+.dashboard-card {
   width: 100%;
   max-width: 400px;
   padding: 20px;

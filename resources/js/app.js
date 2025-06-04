@@ -1,6 +1,7 @@
 import '@fontsource/inter/400.css'; // Regular weight
 import '@fontsource/inter/700.css'; // Bold weight
 import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 import { createVuestic } from 'vuestic-ui';
@@ -10,8 +11,10 @@ import 'vuestic-ui/styles/grid.css';
 import 'material-design-icons-iconfont/dist/material-design-icons.css';
 
 const app = createApp(App);
+const pinia = createPinia();
 
 app.use(router);
+app.use(pinia);
 
 // Конфигурация Vuestic с явным указанием шрифта
 app.use(createVuestic({
