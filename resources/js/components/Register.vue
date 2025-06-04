@@ -68,10 +68,6 @@
           {{ error }}
         </div>
 
-        <div v-if="success" class="text-center text-success mb-4">
-          {{ success }}
-        </div>
-
         <div class="flex justify-between mt-6">
           <va-button @click="register" color="primary" class="flex-grow mr-2">
             {{ $t('register') }}
@@ -88,9 +84,17 @@
 
 <script>
 import api from '../api'; // Импортируем настроенный axios
+import { useAuthStore } from '../stores/auth';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'Register',
+  setup() {
+    const authStore = useAuthStore();
+    const router = useRouter();
+
+    return { authStore, router };
+  },
   data() {
     return {
       form: {
@@ -101,7 +105,6 @@ export default {
       },
       isPasswordVisible: false,
       error: null,
-      success: null,
     };
   },
   methods: {
@@ -111,13 +114,15 @@ export default {
     async register() {
       try {
         this.error = null;
-        this.success = null;
         const response = await api.post('/register', this.form);
-        this.success = 'Registration successful! Please log in.';
+        // Сохраняем данные пользователя и токен через Pinia
+        await this.authStore.login({
+          email: this.form.email,
+          password: this.form.password,
+        });
         this.form = { name: '', email: '', password: '', password_confirmation: '' };
-        setTimeout(() => {
-          this.$router.push({ name: 'login' });
-        }, 2000);
+        // Перенаправляем на dashboard
+        this.router.push('/dashboard');
       } catch (error) {
         this.error = error.response?.data?.message || 'Registration failed';
       }
