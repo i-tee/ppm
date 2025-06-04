@@ -1,39 +1,62 @@
 // Импортируем необходимые функции и компоненты из Vue Router и нашего приложения
-import { createRouter, createWebHistory } from 'vue-router'; // Для создания роутера и истории браузера
-import Register from './components/Register.vue'; // Компонент страницы регистрации
-import Welcome from './components/Welcome.vue'; // Компонент приветственной страницы
-import Dashboard from './components/Dashboard.vue'; // Компонент защищённой страницы "Dashboard"
-import { useAuthStore } from './stores/auth'; // Хук для доступа к хранилищу аутентификации
+import { createRouter, createWebHistory } from 'vue-router';
+import Welcome from './components/Welcome.vue';
+import Register from './components/Register.vue';
+import Dashboard from './components/Dashboard.vue';
+import Overview from './components/dashboard/Overview.vue';
+import Promocodes from './components/dashboard/Promocodes.vue';
+import ReferralLinks from './components/dashboard/ReferralLinks.vue';
+import { useAuthStore } from './stores/auth';
 
 // Описываем маршруты приложения
 const routes = [
-  { 
-    path: '/', // Корневой путь
-    component: Welcome, // Привязываем компонент Welcome
-    name: 'welcome' // Имя маршрута
+  {
+    path: '/',
+    name: 'welcome',
+    component: Welcome,
+    meta: { requiresAuth: false },
   },
-  { 
-    path: '/register', // Путь для регистрации
-    component: Register, // Привязываем компонент Register
-    name: 'register' // Имя маршрута
+  {
+    path: '/register',
+    name: 'register',
+    component: Register,
+    meta: { requiresAuth: false },
   },
-  { 
-    path: '/dashboard', // Путь для dashboard
-    component: Dashboard, // Привязываем компонент Dashboard
-    name: 'dashboard', // Имя маршрута
-    meta: { requiresAuth: true } // Маршрут требует аутентификации
+  {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: Dashboard,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Overview',
+        component: Overview,
+      },
+      {
+        path: 'promocodes',
+        name: 'Promocodes',
+        component: Promocodes,
+      },
+      {
+        path: 'referral-links',
+        name: 'ReferralLinks',
+        component: ReferralLinks,
+      },
+    ],
   },
-  { 
-    path: '/:pathMatch(.*)*', // Любой несуществующий путь (404)
-    component: { template: '<div>404 - Страница не найдена</div>' }, // Встроенный компонент для 404
-    name: 'not-found' // Имя маршрута
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: { template: '<div>404 - Страница не найдена</div>' },
+    meta: { requiresAuth: false },
   },
 ];
 
 // Создаём экземпляр роутера с историей браузера и нашими маршрутами
 const router = createRouter({
-  history: createWebHistory(), // Используем HTML5 history mode
-  routes, // Передаём массив маршрутов
+  history: createWebHistory(),
+  routes,
 });
 
 // Глобальный перехватчик навигации для проверки аутентификации и перенаправлений
