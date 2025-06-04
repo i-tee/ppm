@@ -1,61 +1,71 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Реактивное приложение с авторизацией
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Обзор
 
-## About Laravel
+Это реактивное одностраничное приложение (SPA), созданное с использованием Laravel 12 и Vue.js. Проект представляет собой базовую стартовую точку для разработки приложений с уже настроенной системой авторизации. Включает регистрацию, вход, выход и защиту маршрутов, что делает его удобным для дальнейшего расширения под любые задачи. Локализация интерфейса настроена с использованием i18n.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Текущий этап
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Стабильный коммит**: `ab2a3e2`
+- **Автор**: i-tee
+- **Дата**: 04 июня 2025, 10:18 AM EEST
+- **Статус**: Стабильная база с авторизацией (начальная фаза разработки). Этот коммит устанавливает готовую основу для создания реактивных приложений.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Технологический стек
 
-## Learning Laravel
+- **Бэкенд**:
+  - Laravel 12 с Sanctum для токен-базированной авторизации.
+  - PHP 8.2 или выше.
+  - MySQL (или любой другой поддерживаемый Laravel движок базы данных).
+- **Фронтенд**:
+  - Vue.js 3 для создания реактивного интерфейса.
+  - Vite 6.3.5 для сборки и разработки.
+  - Pinia для управления состоянием.
+  - Axios для работы с API.
+  - Vuestic UI для стилизации компонентов и адаптивного дизайна.
+  - i18n для поддержки локализации интерфейса.
+- **Дополнительно**:
+  - Node.js 14.x или выше.
+  - NPM для управления зависимостями JavaScript.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Возможности
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Авторизация**: Полностью настроенные регистрация, вход и выход пользователей с использованием токенов.
+- **Защищённые маршруты**: Ограничение доступа к страницам только для авторизованных пользователей.
+- **Реактивный интерфейс**: Быстрый и современный фронтенд на Vue.js.
+- **Модульная структура**: Код организован для удобного расширения (Pinia, Axios, модули Vue).
+- **Адаптивный дизайн**: Стилизация с использованием Vuestic UI для удобного и последовательного опыта.
+- **Локализация**: Поддержка нескольких языков через i18n.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Требования
 
-## Laravel Sponsors
+### Бэкенд
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **Laravel**: Версия 12.x с установленным Sanctum.
+- **PHP**: 8.2 или выше.
+- **MySQL**: Для хранения данных.
+- **Composer**: Для управления зависимостями PHP.
+- **Nginx/Apache**: Настроенный с поддержкой SSL и CORS.
 
-### Premium Partners
+### Фронтенд
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Node.js**: Версия 14.x или выше.
+- **NPM**: Для управления зависимостями JavaScript.
+- **Vite**: Версия 6.3.5 или совместимая.
 
-## Contributing
+### Окружение
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- **Домен**: Настроенный с поддержкой HTTPS.
+- **API-эндпоинт**: Доступный по пути `/api` с правильной конфигурацией CORS.
 
-## Code of Conduct
+## Внесение вклада
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Приветствуются любые вклады! Пожалуйста, форкните репозиторий и отправьте пулл-реквесты. Для крупных изменений сначала откройте запрос, чтобы обсудить.
 
-## Security Vulnerabilities
+## Лицензия
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Лицензия MIT (или укажите свою предпочтительную лицензию).
 
-## License
+## Контакты
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Для вопросов или поддержки свяжитесь с i-tee, контакты тут -> tee.su
