@@ -5,7 +5,7 @@
   "register": "Register",
   "language": "Language",
   "home": "Home",
-  "dashboard": "Dashboard",
+  "_dashboard": "Dashboard",
   "logout": "Logout",
   "dashboard": {
     "title": "Partner Dashboard",

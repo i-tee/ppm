@@ -6,7 +6,7 @@
     >
       <va-sidebar-item-content>
         <va-icon name="dashboard" />
-        <va-sidebar-item-title>{{ $t('dashboard') }}</va-sidebar-item-title>
+        <va-sidebar-item-title>{{ $t('_dashboard') }}</va-sidebar-item-title>
       </va-sidebar-item-content>
     </va-sidebar-item>
     <va-sidebar-item
