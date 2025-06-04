@@ -1,12 +1,32 @@
 {
-    "welcome": "Welcome to the Avicenna Partner Cabinet",
-    "description": "This is your personal dashboard for managing the partner program.",
-    "login": "Login",
-    "register": "Register",
-    "language": "Language",
-    "vuestic": {
-        "select": {
-            "placeholder": "Select language"
-        }
+  "welcome": "Welcome to the Avicenna Partner Cabinet",
+  "description": "This is your personal dashboard for managing the partner program.",
+  "login": "Login",
+  "register": "Register",
+  "language": "Language",
+  "home": "Home",
+  "dashboard": "Dashboard",
+  "logout": "Logout",
+  "dashboard": {
+    "title": "Partner Dashboard",
+    "welcome": "Welcome to your dashboard!",
+    "total_earnings": "Total Earnings",
+    "clicks": "Clicks",
+    "conversions": "Conversions",
+    "earnings": "Earnings",
+    "earnings_chart": "Earnings Over Time",
+    "promocodes": "Promocodes",
+    "copy": "Copy",
+    "generate_promo": "Generate Promo",
+    "promo_generated": "Promo code generated!",
+    "referral_links": "Referral Links",
+    "generate_link": "Generate Link",
+    "link_generated": "Link generated!",
+    "copied": "Copied to clipboard!"
+  },
+  "vuestic": {
+    "select": {
+      "placeholder": "Select language"
     }
+  }
 }

@@ -20,6 +20,7 @@
         "vue": "^3.5.15",
         "vue-i18n": "^9.14.4",
         "vue-router": "^4.5.1",
+        "vuestic-admin": "^0.0.1-security",
         "vuestic-ui": "^1.10.3"
     }
 }
