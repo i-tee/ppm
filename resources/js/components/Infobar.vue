@@ -16,7 +16,7 @@
                 {{ t('infobar.description') }}
             </p>
             <!-- Сноска о разработчике -->
-            <div class="mt-8 text-xs text-gray-400 font-inter opacity-70">
+            <div class="mt-8 text-xs text-gray-200 font-inter opacity-70">
                 {{ t('infobar.developer') }}:
                 <a href="https://tee.su" target="_blank" rel="noopener" class="underline hover:text-white">
                     {{ t('infobar.author') }}
