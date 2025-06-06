@@ -1,99 +1,134 @@
+<!-- resources/js/components/Register.vue -->
 <template>
-  <div class="auth-wrapper">
-    <va-card class="auth-card" outlined>
-      <va-card-title class="justify-center text-center text-primary text-2xl">
-        <VaIcon name="person_add" class="mr-2" /> {{ $t('register') }}
-      </va-card-title>
-
-      <va-divider />
-
-      <va-card-content>
-        <p class="text-center text-secondary mb-4">{{ $t('register_description') }}</p>
-
-        <va-input
-          v-model="form.name"
-          type="text"
-          :label="$t('name')"
-          placeholder="John Doe"
-          class="mb-4"
-          prepend-inner-icon="person"
-        />
-
-        <va-input
-          v-model="form.email"
-          type="email"
-          :label="$t('email')"
-          placeholder="hello@epicmax.co"
-          class="mb-4"
-          prepend-inner-icon="email"
-        />
-
-        <va-input
-          v-model="form.password"
-          :type="isPasswordVisible ? 'text' : 'password'"
-          :label="$t('password')"
-          placeholder="*********"
-          class="mb-4"
-          prepend-inner-icon="lock"
-          @click-append-inner="togglePassword"
-        >
-          <template #appendInner>
-            <VaIcon
-              :name="isPasswordVisible ? 'visibility_off' : 'visibility'"
-              size="small"
-              color="primary"
-            />
-          </template>
-        </va-input>
-
-        <va-input
-          v-model="form.password_confirmation"
-          :type="isPasswordVisible ? 'text' : 'password'"
-          :label="$t('confirm_password')"
-          placeholder="*********"
-          class="mb-4"
-          prepend-inner-icon="lock"
-          @click-append-inner="togglePassword"
-        >
-          <template #appendInner>
-            <VaIcon
-              :name="isPasswordVisible ? 'visibility_off' : 'visibility'"
-              size="small"
-              color="primary"
-            />
-          </template>
-        </va-input>
-
-        <div v-if="error" class="text-center text-danger mb-4">
-          {{ error }}
-        </div>
-
-        <div class="flex justify-between mt-6">
-          <va-button @click="register" color="primary" class="flex-grow mr-2">
-            {{ $t('register') }}
-          </va-button>
-
-          <va-button :to="{ name: 'welcome' }" color="secondary" class="flex-grow ml-2">
+  <div class="flex h-screen">
+    <!-- Левая часть: Infobar -->
+    <div class="w-1/2 hidden md:block">
+      <Infobar />
+    </div>
+    <!-- Правая часть: Форма регистрации -->
+    <div class="w-full md:w-1/2 bg-gray-50 flex flex-col justify-center items-center p-6">
+      <div class="w-full max-w-md">
+        <!-- Навигация между входом и регистрацией -->
+        <div class="flex justify-center space-x-4 mb-8">
+          <router-link
+            to="/"
+            class="text-lg font-inter font-semibold text-gray-600 hover:text-indigo-600 pb-2"
+          >
             {{ $t('login') }}
-          </va-button>
+          </router-link>
+          <router-link
+            to="/register"
+            class="text-lg font-inter font-semibold text-indigo-600 border-b-2 border-indigo-600 pb-2"
+          >
+            {{ $t('register') }}
+          </router-link>
         </div>
-      </va-card-content>
-    </va-card>
+
+        <!-- Заголовок -->
+        <h2 class="text-3xl font-bold font-inter text-gray-900 mb-2 text-center">
+          {{ $t('register') }}
+        </h2>
+        <p class="text-center text-gray-600 font-inter mb-8">
+          {{ $t('register_description') }}
+        </p>
+
+        <!-- Форма -->
+        <div class="space-y-6">
+          <VaInput
+            v-model="form.name"
+            type="text"
+            :label="$t('name')"
+            placeholder="John Doe"
+            class="w-full font-inter"
+            prepend-inner-icon="person"
+            :error="!!error && error.includes('name')"
+            :error-message="error"
+          />
+          <VaInput
+            v-model="form.email"
+            type="email"
+            :label="$t('email')"
+            placeholder="hello@epicmax.co"
+            class="w-full font-inter"
+            prepend-inner-icon="email"
+            :error="!!error && error.includes('email')"
+            :error-message="error"
+          />
+          <VaInput
+            v-model="form.password"
+            :type="isPasswordVisible ? 'text' : 'password'"
+            :label="$t('password')"
+            placeholder="*********"
+            class="w-full font-inter"
+            prepend-inner-icon="lock"
+            @click-append-inner="togglePassword"
+            :error="!!error && error.includes('password')"
+            :error-message="error"
+          >
+            <template #appendInner>
+              <VaIcon
+                :name="isPasswordVisible ? 'visibility_off' : 'visibility'"
+                size="small"
+                color="primary"
+              />
+            </template>
+          </VaInput>
+          <VaInput
+            v-model="form.password_confirmation"
+            :type="isPasswordVisible ? 'text' : 'password'"
+            :label="$t('confirm_password')"
+            placeholder="*********"
+            class="w-full font-inter"
+            prepend-inner-icon="lock"
+            @click-append-inner="togglePassword"
+            :error="!!error && error.includes('password')"
+            :error-message="error"
+          >
+            <template #appendInner>
+              <VaIcon
+                :name="isPasswordVisible ? 'visibility_off' : 'visibility'"
+                size="small"
+                color="primary"
+              />
+            </template>
+          </VaInput>
+
+          <!-- Сообщение об ошибке -->
+          <div v-if="error" class="text-center text-red-600 font-inter">
+            {{ error }}
+          </div>
+
+          <!-- Кнопка регистрации -->
+          <VaButton
+            @click="register"
+            color="primary"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-inter py-3 rounded-lg transition"
+            :loading="authStore.loading"
+          >
+            {{ $t('register') }}
+          </VaButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import api from '../api'; // Импортируем настроенный axios
+import api from '../api';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n'; // Добавляем useI18n
+import Infobar from './Infobar.vue'; // Проверяем путь
 
 export default {
   name: 'Register',
+  components: { Infobar },
   setup() {
     const authStore = useAuthStore();
     const router = useRouter();
+    const { t } = useI18n(); // Используем useI18n для локализации
 
-    return { authStore, router };
+    return { authStore, router, t };
   },
   data() {
     return {
@@ -115,13 +150,11 @@ export default {
       try {
         this.error = null;
         const response = await api.post('/register', this.form);
-        // Сохраняем данные пользователя и токен через Pinia
         await this.authStore.login({
           email: this.form.email,
           password: this.form.password,
         });
         this.form = { name: '', email: '', password: '', password_confirmation: '' };
-        // Перенаправляем на dashboard
         this.router.push('/dashboard');
       } catch (error) {
         this.error = error.response?.data?.message || 'Registration failed';
@@ -130,31 +163,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.auth-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-  padding: 20px;
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 400px;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: var(--va-shadow);
-  background-color: var(--va-background-element);
-}
-
-.text-danger {
-  color: red;
-}
-
-.text-success {
-  color: green;
-}
-</style>

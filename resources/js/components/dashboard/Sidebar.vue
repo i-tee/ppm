@@ -27,6 +27,17 @@
         <va-sidebar-item-title>{{ $t('dashboard.referral_links') }}</va-sidebar-item-title>
       </va-sidebar-item-content>
     </va-sidebar-item>
+
+    <va-sidebar-item
+      :to="{ name: 'UserProfile' }"
+      :active="$route.name === 'UserProfile'"
+    >
+      <va-sidebar-item-content>
+      <va-icon name="person" />
+      <va-sidebar-item-title>{{ $t('dashboard.user_profile') }}</va-sidebar-item-title>
+      </va-sidebar-item-content>
+    </va-sidebar-item>
+
   </va-sidebar>
 </template>
 

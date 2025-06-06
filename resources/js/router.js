@@ -1,4 +1,3 @@
-// Импортируем необходимые функции и компоненты из Vue Router и нашего приложения
 import { createRouter, createWebHistory } from 'vue-router';
 import Welcome from './components/Welcome.vue';
 import Register from './components/Register.vue';
@@ -6,9 +5,9 @@ import Dashboard from './components/Dashboard.vue';
 import Overview from './components/dashboard/Overview.vue';
 import Promocodes from './components/dashboard/Promocodes.vue';
 import ReferralLinks from './components/dashboard/ReferralLinks.vue';
+import UserProfile from './components/dashboard/UserProfile.vue';
 import { useAuthStore } from './stores/auth';
 
-// Описываем маршруты приложения
 const routes = [
   {
     path: '/',
@@ -43,6 +42,11 @@ const routes = [
         name: 'ReferralLinks',
         component: ReferralLinks,
       },
+      {
+        path: 'profile',
+        name: 'UserProfile',
+        component: UserProfile,
+      },
     ],
   },
   {
@@ -53,32 +57,26 @@ const routes = [
   },
 ];
 
-// Создаём экземпляр роутера с историей браузера и нашими маршрутами
 const router = createRouter({
   history: createWebHistory(),
   routes,
 });
 
-// Глобальный перехватчик навигации для проверки аутентификации и перенаправлений
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
-  // Попробуем получить пользователя, если не авторизован
-  if (!authStore.isAuthenticated) {
-    await authStore.fetchUser().catch(() => {});
+  if (!authStore.isAuthenticated && to.meta.requiresAuth) {
+    // Если пользователь не авторизован и маршрут требует авторизации
+    await authStore.fetchUser().catch(() => {}); // Ловим ошибку, чтобы не попадала в консоль
   }
 
-  // Если пользователь авторизован
   if (authStore.isAuthenticated) {
-    // Если он пытается попасть на welcome или register, перенаправляем на dashboard
     if (to.name === 'welcome' || to.name === 'register') {
       return next({ name: 'dashboard' });
     }
     return next();
   }
 
-  // Если пользователь не авторизован
-  // Разрешаем только welcome и register, остальные — на welcome
   if (to.name !== 'welcome' && to.name !== 'register') {
     return next({ name: 'welcome' });
   }
@@ -86,5 +84,4 @@ router.beforeEach(async (to, from, next) => {
   return next();
 });
 
-// Экспортируем роутер для использования в приложении
 export default router;

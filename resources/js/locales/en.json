@@ -1,14 +1,26 @@
 {
   "welcome": "Welcome to the Avicenna Partner Cabinet",
   "description": "This is your personal dashboard for managing the partner program.",
+  "infobar": {
+    "title": "Welcome to Avicenna Partner!",
+    "description": "A platform for managing promocodes and referral links. Join and start earning today!",
+    "footer": "© 2025 Avicenna. All rights reserved."
+  },
   "login": "Login",
   "register": "Register",
+  "login_description": "Sign in to your account to continue",
+  "register_description": "Create an account to get started",
+  "name": "Name",
+  "email": "Email",
+  "password": "Password",
+  "confirm_password": "Confirm Password",
   "language": "Language",
   "home": "Home",
   "_dashboard": "Dashboard",
   "logout": "Logout",
   "dashboard": {
     "title": "Partner Dashboard",
+    "user_profile": "User Profile",
     "welcome": "Welcome to your dashboard!",
     "total_earnings": "Total Earnings",
     "clicks": "Clicks",
@@ -27,6 +39,20 @@
   "vuestic": {
     "select": {
       "placeholder": "Select language"
+    },
+    "profile": {
+      "title": "User Profile",
+      "name": "Name",
+      "email": "Email",
+      "save": "Save",
+      "saving": "Saving...",
+      "logout": "Logout",
+      "success": "Data successfully updated!",
+      "errors": {
+        "name_required": "Name is required",
+        "email_required": "Email is required",
+        "email_invalid": "Invalid email format"
+      }
     }
   }
 }
