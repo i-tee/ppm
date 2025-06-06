@@ -6,23 +6,8 @@
       <Infobar />
     </div>
     <!-- Правая часть: Форма входа -->
-    <div class="w-full md:w-1/2 bg-gray-50 flex flex-col justify-center items-center p-6">
+    <div class="w-full md:w-1/2 bg-gray-50 flex justify-center items-center p-6">
       <div class="w-full max-w-md">
-        <!-- Навигация между входом и регистрацией -->
-        <div class="flex justify-center space-x-4 mb-8">
-          <router-link
-            to="/"
-            class="text-lg font-inter font-semibold text-indigo-600 border-b-2 border-indigo-600 pb-2"
-          >
-            {{ $t('login') }}
-          </router-link>
-          <router-link
-            to="/register"
-            class="text-lg font-inter font-semibold text-gray-600 hover:text-indigo-600 pb-2"
-          >
-            {{ $t('register') }}
-          </router-link>
-        </div>
 
         <!-- Заголовок -->
         <h2 class="text-3xl font-bold font-inter text-gray-900 mb-2 text-center">
@@ -34,33 +19,14 @@
 
         <!-- Форма -->
         <div class="space-y-6">
-          <VaInput
-            v-model="form.email"
-            type="email"
-            :label="$t('email')"
-            placeholder="hello@epicmax.co"
-            class="w-full font-inter"
-            prepend-inner-icon="email"
-            :error="!!error && error.includes('email')"
-            :error-message="error"
-          />
-          <VaInput
-            v-model="form.password"
-            :type="isPasswordVisible ? 'text' : 'password'"
-            :label="$t('password')"
-            placeholder="*********"
-            class="w-full font-inter"
-            prepend-inner-icon="lock"
-            @click-append-inner="togglePassword"
-            :error="!!error && error.includes('password')"
-            :error-message="error"
-          >
+          <VaInput v-model="form.email" type="email" :label="$t('email')" placeholder="hello@epicmax.co"
+            class="w-full font-inter" prepend-inner-icon="email" :error="!!error && error.includes('email')"
+            :error-message="error" />
+          <VaInput v-model="form.password" :type="isPasswordVisible ? 'text' : 'password'" :label="$t('password')"
+            placeholder="*********" class="w-full font-inter" prepend-inner-icon="lock"
+            @click-append-inner="togglePassword" :error="!!error && error.includes('password')" :error-message="error">
             <template #appendInner>
-              <VaIcon
-                :name="isPasswordVisible ? 'visibility_off' : 'visibility'"
-                size="small"
-                color="primary"
-              />
+              <VaIcon :name="isPasswordVisible ? 'visibility_off' : 'visibility'" size="small" color="primary" />
             </template>
           </VaInput>
 
@@ -70,14 +36,19 @@
           </div>
 
           <!-- Кнопка входа -->
-          <VaButton
-            @click="handleLogin"
-            color="primary"
+          <VaButton @click="handleLogin" color="primary"
             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-inter py-3 rounded-lg transition"
-            :loading="authStore.loading"
-          >
+            :loading="authStore.loading">
             {{ $t('login') }}
           </VaButton>
+
+          <!-- Навигация между входом и регистрацией -->
+          <div class="flex text-center space-x-4 mb-8">
+            <router-link to="/register">
+              {{ $t('register') }}
+            </router-link>
+          </div>
+
         </div>
       </div>
     </div>
