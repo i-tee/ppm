@@ -1,7 +1,18 @@
+/* Подключение стилей Vuestic UI */
+@import 'vuestic-ui/styles/essential.css'; /* Обязательные стили для компонентов Vuestic */
+@import 'vuestic-ui/styles/typography.css'; /* Опционально, для типографики Vuestic */
+@import 'vuestic-ui/styles/grid.css'; /* Сетка Vuestic, уже была в app.js */
+
+/* Подключение Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Кастомные стили проекта */
 :root {
-  --va-font-family: 'Inter', sans-serif;
+  --va-font-family: 'Inter', sans-serif; /* Шрифт Inter для Vuestic UI */
 }
 
 body {
-  font-family: var(--va-font-family);
+  font-family: var(--va-font-family); /* Применение шрифта ко всему приложению */
 }
