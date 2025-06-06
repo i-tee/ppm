@@ -1,3 +1,4 @@
+// resources/js/stores/auth.js
 import { defineStore } from 'pinia';
 import api from '@/api';
 
@@ -15,12 +16,18 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       try {
         const response = await api.post('/login', credentials);
+        if (response.status === 401) {
+          this.error = response.data?.message || 'Ошибка авторизации';
+          throw new Error('Unauthorized');
+        }
         const { user, token } = response.data;
         this.user = user;
         this.token = token;
         localStorage.setItem('auth_token', token);
       } catch (error) {
         this.error = error.response?.data?.message || 'Ошибка авторизации';
+        this.loading = false;
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -29,7 +36,7 @@ export const useAuthStore = defineStore('auth', {
     async fetchUser() {
       if (!this.token) {
         this.user = null;
-        return; // Выходим, если нет токена
+        return;
       }
       this.loading = true;
       this.error = null;

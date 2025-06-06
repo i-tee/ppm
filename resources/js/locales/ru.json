@@ -1,7 +1,7 @@
 {
-  "welcome": "Добро пожаловать в партнерский кабинет Авиценна",
+  "welcome": "Добро пожаловать в партнерский кабинет Company",
   "description": "Это ваш личный кабинет для управления партнерской программой.",
-  "login": "Войти",
+  "login": "Вход",
   "email": "Email",
   "password": "Пароль",
   "register": "Регистрация",
@@ -9,7 +9,7 @@
   "confirm_password": "Подтвердите пароль",
   "register_description": "Создайте учетную запись, чтобы начать работу",
   "name": "Имя",
-  "login_description": "Войдите в свою учетную запись, чтобы продолжить",
+  "login_description": "Введите свои данные для входа",
   "home": "Главная",
   "_dashboard": "Кабинет партнера",
   "logout": "Выход",
@@ -32,6 +32,7 @@
     "copied": "Скопировано в буфер обмена!"
   },
   "vuestic": {
+    "progressState": "Состояние прогресса",
     "select": {
       "placeholder": "Выберите язык"
     },
@@ -53,6 +54,20 @@
   "infobar": {
     "title": "Добро пожаловать!",
     "description": "Платформа для управления учетной записью и разработки личного кабинета",
-    "footer": "© 2025 Avicenna®. Все права защищены."
-  }
+    "footer": "© 2025 Company®. Все права защищены.",
+    "author": "i-tee",
+    "developer": "Разработчик",
+    "project": "Проект",
+    "project_name": "i-tee/base-vue-app"
+  },
+  "invalid_email": "Введите валидный email-адрес",
+  "email_required": "Email обязателен",
+  "password_required": "Пароль обязателен",
+  "login_error": "Ошибка входа. Проверьте данные.",
+  "name_required": "Имя обязательно",
+  "password_min_length": "Пароль должен содержать минимум 8 символов",
+  "confirm_password_required": "Подтверждение пароля обязательно",
+  "passwords_mismatch": "Пароли не совпадают",
+  "invalid_credentials": "Неверные учетные данные",
+  "register_error": "Ошибка регистрации. Попробуйте снова."
 }

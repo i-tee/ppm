@@ -1,10 +1,14 @@
 {
-  "welcome": "Welcome to the Avicenna Partner Cabinet",
+  "welcome": "Welcome to the Company Cabinet",
   "description": "This is your personal dashboard for managing the partner program.",
   "infobar": {
-    "title": "Welcome to Avicenna Partner!",
+    "title": "Welcome to Company!",
     "description": "A platform for managing promocodes and referral links. Join and start earning today!",
-    "footer": "© 2025 Avicenna. All rights reserved."
+    "footer": "© 2025 Company. All rights reserved.",
+    "author": "i-tee",
+    "developer": "Developer",
+    "project": "i-tee/base-vue-app",
+    "project_name": "Company Cabinet"
   },
   "login": "Login",
   "register": "Register",
@@ -19,7 +23,7 @@
   "_dashboard": "Dashboard",
   "logout": "Logout",
   "dashboard": {
-    "title": "Partner Dashboard",
+    "title": "Dashboard",
     "user_profile": "User Profile",
     "welcome": "Welcome to your dashboard!",
     "total_earnings": "Total Earnings",
@@ -37,6 +41,7 @@
     "copied": "Copied to clipboard!"
   },
   "vuestic": {
+    "progressState": "Progress State",
     "select": {
       "placeholder": "Select language"
     },
@@ -54,5 +59,14 @@
         "email_invalid": "Invalid email format"
       }
     }
-  }
+  },
+  "email_required": "Email is required",
+  "password_required": "Password is required",
+  "name_required": "Name is required",
+  "invalid_credentials": "Invalid credentials",
+  "password_min_length": "Password must be at least 8 characters",
+  "confirm_password_required": "Password confirmation is required",
+  "passwords_mismatch": "Passwords do not match",
+  "login_error": "Login failed. Please check your credentials.",
+  "register_error": "Registration failed. Please try again."
 }

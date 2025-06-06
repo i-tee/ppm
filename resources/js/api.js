@@ -1,3 +1,4 @@
+// resources/js/api.js
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth'; // Импортируем store для доступа к токену
 
@@ -18,6 +19,29 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Интерцептор для обработки ошибок ответа
+api.interceptors.response.use(
+  (response) => {
+    // Успешный ответ (2xx) просто возвращаем
+    return response;
+  },
+  (error) => {
+    // Проверяем, есть ли ответ от сервера
+    if (error.response) {
+      // Если статус 401, просто передаём ошибку дальше без логирования
+      if (error.response.status === 401) {
+        return Promise.reject(error);
+      }
+      // Для других ошибок (например, 500) логируем в консоль
+      console.error('API Error:', error.response.data || error.message);
+    } else {
+      // Ошибки без ответа (например, сетевые ошибки)
+      console.error('Network Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default api;
