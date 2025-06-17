@@ -35,7 +35,7 @@
         <VaButton
           preset="secondary"
           class="flex-1 px-4 py-2 rounded font-inter"
-          @click="authStore.logout"
+          @click="handleLogout"
           :disabled="authStore.loading"
         >
           {{ t('vuestic.profile.logout') }}
@@ -114,6 +114,7 @@ import { useAuthStore } from '@/stores/auth';
 import { ref, reactive, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToast } from 'vuestic-ui';
+import { useRouter } from 'vue-router'; // Импортируем router
 import axios from 'axios';
 
 export default {
@@ -121,6 +122,7 @@ export default {
   setup() {
     const { t } = useI18n();
     const authStore = useAuthStore();
+    const router = useRouter(); // Получаем router
     const success = ref(false);
     const passwordLoading = ref(false);
     const showPasswordModal = ref(false);
@@ -175,6 +177,10 @@ export default {
       }
     };
 
+    const handleLogout = async () => {
+      await authStore.logout(router); // Передаем router в logout
+    };
+
     const changePassword = async () => {
       passwordErrors.newPassword = '';
       passwordErrors.confirmPassword = '';
@@ -222,7 +228,6 @@ export default {
         }, {
           headers: { 'Authorization': `Bearer ${authStore.token}` }
         });
-        //console.log('Response:', response.data);
         toast.init({
           message: t('vuestic.profile.password_changed'),
           color: 'success',
@@ -232,7 +237,6 @@ export default {
         passwordForm.newPassword = '';
         passwordForm.confirmPassword = '';
       } catch (error) {
-        //console.error('Error:', error.response ? error.response.data : error.message);
         const errorMessage = error.response?.data?.message || t('vuestic.profile.password_change_error');
         toast.init({
           message: errorMessage,
@@ -256,6 +260,7 @@ export default {
       passwordForm,
       passwordErrors,
       changePassword,
+      handleLogout, // Добавляем метод
     };
   },
 };

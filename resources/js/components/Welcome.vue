@@ -213,10 +213,6 @@ export default {
         this.router.push('/dashboard');
       } catch (error) {
         console.log('Ошибка в handleLogin:', error);
-        console.log('Полный ответ сервера:', error.response);
-        console.log('Данные ответа:', error.response?.data);
-        console.log('Статус:', error.response?.status);
-
         if (error.response?.status === 401) {
           this.formErrors.email = [this.$t('invalid_credentials')];
           this.formErrors.password = [this.$t('invalid_credentials')];
@@ -229,13 +225,14 @@ export default {
         } else {
           this.serverError = error.response?.data?.message || this.$t('login_error');
         }
-        console.log('После обработки ошибки, serverError:', this.serverError);
-        console.log('formErrors:', this.formErrors);
+      } finally {
+        if (this.authStore.loading) {
+          this.authStore.loading = false;
+        }
       }
     },
 
     async requestPasswordReset() {
-
       this.resetError = '';
 
       if (!this.resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.resetEmail)) {
@@ -250,9 +247,7 @@ export default {
       } catch (error) {
         this.resetError = error.response?.data?.message || this.$t('reset_error');
       }
-
     },
-    
   },
 };
 </script>

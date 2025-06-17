@@ -12,22 +12,18 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async login(credentials) {
+      if (this.loading) return;
       this.loading = true;
       this.error = null;
       try {
         const response = await api.post('/login', credentials);
-        if (response.status === 401) {
-          this.error = response.data?.message || 'Ошибка авторизации';
-          throw new Error('Unauthorized');
-        }
         const { user, token } = response.data;
         this.user = user;
         this.token = token;
         localStorage.setItem('auth_token', token);
       } catch (error) {
         this.error = error.response?.data?.message || 'Ошибка авторизации';
-        this.loading = false;
-        throw error; // Передаем ошибку дальше для Welcome.vue
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -67,7 +63,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async logout() {
+    async logout(router) { // Принимаем router как параметр
       this.loading = true;
       this.error = null;
       try {
@@ -75,13 +71,51 @@ export const useAuthStore = defineStore('auth', {
         this.user = null;
         this.token = null;
         localStorage.removeItem('auth_token');
-        window.location.href = '/login';
+        if (router) {
+          router.push('/login'); // Редирект через переданный router
+        }
       } catch (error) {
         this.error = error.response?.data?.message || 'Ошибка при выходе';
       } finally {
         this.loading = false;
       }
     },
+
+    async requestPasswordReset(email) {
+      this.loading = true;
+      try {
+        const response = await api.post('/forgot-password', { email });
+        return response.data;
+      } catch (error) {
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async resetPassword(token, newPassword, email, passwordConfirmation) {
+      this.loading = true;
+      try {
+        console.log('Sending reset request with:', { token, email, password: newPassword, password_confirmation: passwordConfirmation });
+        const response = await api.post('/reset-password', {
+          token: token,
+          email: email,
+          password: newPassword,
+          password_confirmation: passwordConfirmation, // Добавляем подтверждение
+        });
+        const { user, token: newToken } = response.data;
+        this.user = user;
+        this.token = newToken;
+        localStorage.setItem('auth_token', newToken);
+        return true;
+      } catch (error) {
+        console.log('Reset error on server:', error.response?.data || error.message);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
   },
 
   getters: {

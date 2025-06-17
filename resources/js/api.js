@@ -1,6 +1,6 @@
 // resources/js/api.js
 import axios from 'axios';
-import { useAuthStore } from '@/stores/auth'; // Импортируем store для доступа к токену
+import { useAuthStore } from '@/stores/auth';
 
 const api = axios.create({
   baseURL: 'https://partner.avicenna.com.ru/api',
@@ -9,7 +9,8 @@ const api = axios.create({
   },
 });
 
-// Интерцептор для добавления токена в заголовки
+let isRefreshing = false;
+
 api.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore();
@@ -21,26 +22,36 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Интерцептор для обработки ошибок ответа
 api.interceptors.response.use(
-  (response) => {
-    // Успешный ответ (2xx) просто возвращаем
-    return response;
-  },
-  (error) => {
-    // Проверяем, есть ли ответ от сервера
+  (response) => response,
+  async (error) => {
     if (error.response) {
-      // Для 401 просто передаём ошибку дальше без логирования
-      if (error.response.status === 401) {
-        return Promise.reject(error); // Передаём ошибку для обработки
+      console.error('API Error Details:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers,
+      });
+
+      if (error.response.status === 401 && !isRefreshing) {
+        const authStore = useAuthStore();
+        isRefreshing = true;
+        try {
+          // Не вызываем logout с редиректом, а просто очищаем состояние
+          authStore.user = null;
+          authStore.token = null;
+          localStorage.removeItem('auth_token');
+        } catch (logoutError) {
+          console.error('Error clearing auth state:', logoutError);
+        } finally {
+          isRefreshing = false;
+        }
       }
-      // Для других ошибок (например, 500) логируем в консоль
-      console.error('API Error:', error.response.data || error.message);
+
+      throw error.response.data || new Error('Server error');
     } else {
-      // Ошибки без ответа (например, сетевые ошибки)
       console.error('Network Error:', error.message);
+      throw new Error('Network error');
     }
-    return Promise.reject(error); // Передаём другие ошибки дальше
   }
 );
 

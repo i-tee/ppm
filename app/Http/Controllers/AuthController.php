@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -91,5 +93,52 @@ class AuthController extends Controller
 
         $user->update(['password' => Hash::make($request->new_password)]);
         return response()->json(['message' => 'Password changed successfully'], 200);
+    }
+
+    // Новый эндпоинт для запроса сброса пароля
+    public function forgotPassword(Request $request)
+    {
+        \Log::info('Forgot Password Request: ', $request->all()); // Логируем запрос
+        $request->validate(['email' => 'required|email']);
+
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        \Log::info('Password Reset Status: ' . $status); // Логируем статус
+
+        return $status === Password::RESET_LINK_SENT
+            ? response()->json(['message' => __($status)])
+            : response()->json(['message' => __($status)], 400);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed', // confirmed требует password_confirmation
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                // Вы можете убрать эту строку, если не хотите отправлять уведомление о сбросе пароля
+                // $user->sendPasswordResetNotification($password);
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json(['message' => 'Password reset successfully'], 200);
+        }
+
+        throw ValidationException::withMessages([
+            'error' => [__($status)],
+        ]);
     }
 }

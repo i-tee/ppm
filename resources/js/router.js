@@ -1,4 +1,3 @@
-// resources/js/router.js
 import { createRouter, createWebHistory } from 'vue-router';
 import Welcome from './components/Welcome.vue';
 import Register from './components/Register.vue';
@@ -7,6 +6,7 @@ import Overview from './components/dashboard/Overview.vue';
 import Promocodes from './components/dashboard/Promocodes.vue';
 import ReferralLinks from './components/dashboard/ReferralLinks.vue';
 import UserProfile from './components/dashboard/UserProfile.vue';
+import ResetPassword from './components/ResetPassword.vue';
 import { useAuthStore } from './stores/auth';
 
 const routes = [
@@ -20,6 +20,12 @@ const routes = [
     path: '/register',
     name: 'register',
     component: Register,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: ResetPassword,
     meta: { requiresAuth: false },
   },
   {
@@ -66,19 +72,29 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
-  if (!authStore.isAuthenticated && to.meta.requiresAuth) {
-    // Если пользователь не авторизован и маршрут требует авторизации
-    await authStore.fetchUser().catch(() => {}); // Ловим ошибку, чтобы не попадала в консоль
+  if (to.meta.requiresAuth && !authStore.token) {
+    return next({ name: 'welcome' });
   }
 
   if (authStore.isAuthenticated) {
     if (to.name === 'welcome' || to.name === 'register') {
       return next({ name: 'dashboard' });
     }
+    if (to.name === 'reset-password' && !to.query.token) {
+      return next({ name: 'not-found' });
+    }
+    try {
+      if (!authStore.user) {
+        await authStore.fetchUser();
+      }
+    } catch (error) {
+      authStore.logout();
+      return next({ name: 'welcome' });
+    }
     return next();
   }
 
-  if (to.name !== 'welcome' && to.name !== 'register') {
+  if (to.name !== 'welcome' && to.name !== 'register' && to.name !== 'reset-password') {
     return next({ name: 'welcome' });
   }
 

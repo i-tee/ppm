@@ -26,3 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('throttle:6,1')
         ->name('verification.resend');
 });
+
+// Новые маршруты для сброса пароля
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
