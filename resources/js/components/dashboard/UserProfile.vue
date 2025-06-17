@@ -1,66 +1,55 @@
 <!-- resources/js/components/dashboard/UserProfile.vue -->
 <template>
-  <VaCard class="p-6 bg-white shadow-lg rounded-lg max-w-lg mx-auto">
-    <VaCardTitle class="text-xl font-bold text-primary font-inter">
-      {{ t('vuestic.profile.title') }}
-    </VaCardTitle>
-    <VaCardContent>
-      <!-- Форма редактирования -->
-      <form @submit.prevent="handleSubmit" class="space-y-4">
-        <div>
-          <VaInput
-            v-model="form.name"
-            :label="t('vuestic.profile.name')"
-            class="font-inter"
-            :error="!!errors.name"
-            :error-message="errors.name"
-          />
-        </div>
-        <div>
-          <VaInput
-            v-model="form.email"
-            :label="t('vuestic.profile.email')"
-            type="email"
-            class="font-inter"
-            :error="!!errors.email"
-            :error-message="errors.email"
-          />
-        </div>
-        <div class="flex space-x-4">
-          <VaButton
-            type="submit"
-            preset="primary"
-            class="flex-1 bg-primary text-white hover:bg-secondary px-4 py-2 rounded transition font-inter"
-            :disabled="authStore.loading"
-          >
-            {{ authStore.loading ? t('vuestic.profile.saving') : t('vuestic.profile.save') }}
-          </VaButton>
-          <VaButton
-            preset="secondary"
-            class="flex-1 px-4 py-2 rounded font-inter"
-            @click="authStore.logout"
-            :disabled="authStore.loading"
-          >
-            {{ t('vuestic.profile.logout') }}
-          </VaButton>
-        </div>
-      </form>
-      <!-- Сообщение об ошибке -->
-      <div v-if="authStore.error" class="mt-4 text-danger font-inter">
-        {{ authStore.error }}
+  <div class="min-h-screen bg-gray-100 p-6">
+    <form @submit.prevent="handleSubmit" class="space-y-6">
+      <div>
+        <VaInput
+          v-model="form.name"
+          :label="t('vuestic.profile.name')"
+          class="font-inter"
+          :error="!!errors.name"
+          :error-message="errors.name"
+          :disabled="!authStore.user?.email_verified_at"
+        />
       </div>
-      <!-- Сообщение об успехе -->
-      <VaAlert v-if="success" color="success" class="mt-4 font-inter">
-        {{ t('vuestic.profile.success') }}
-      </VaAlert>
-    </VaCardContent>
-  </VaCard>
+      <div>
+        <VaInput
+          v-model="form.email"
+          :label="t('vuestic.profile.email')"
+          type="email"
+          class="font-inter"
+          :error="!!errors.email"
+          :error-message="errors.email"
+          :disabled="true"
+        />
+      </div>
+      <div class="flex space-x-4">
+        <VaButton
+          type="submit"
+          preset="primary"
+          class="flex-1 bg-primary text-white hover:bg-secondary px-4 py-2 rounded transition font-inter"
+          :disabled="authStore.loading || !authStore.user?.email_verified_at"
+        >
+          {{ authStore.loading ? t('vuestic.profile.saving') : t('vuestic.profile.save') }}
+        </VaButton>
+        <VaButton
+          preset="secondary"
+          class="flex-1 px-4 py-2 rounded font-inter"
+          @click="authStore.logout"
+          :disabled="authStore.loading"
+        >
+          {{ t('vuestic.profile.logout') }}
+        </VaButton>
+      </div>
+    </form>
+  </div>
 </template>
 
 <script>
 import { useAuthStore } from '@/stores/auth';
 import { ref, reactive, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useToast } from 'vuestic-ui';
 
 export default {
   name: 'UserProfile',
@@ -76,6 +65,8 @@ export default {
       name: '',
       email: '',
     });
+
+    const toast = useToast();
 
     onMounted(async () => {
       await authStore.fetchUser();
@@ -100,11 +91,30 @@ export default {
       });
       if (result) {
         success.value = true;
+        toast.init({
+          message: t('vuestic.profile.success'),
+          color: 'success',
+          duration: 3000, // 3 секунды
+        });
         setTimeout(() => (success.value = false), 3000);
       }
     };
 
-    return { t, authStore, form, errors, success, handleSubmit };
+    return {
+      t,
+      authStore,
+      form,
+      errors,
+      success,
+      handleSubmit,
+    };
   },
 };
 </script>
+
+<style scoped>
+.min-h-screen {
+  display: flex;
+  flex-direction: column;
+}
+</style>

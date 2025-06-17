@@ -44,12 +44,17 @@
       "saving": "Сохранение...",
       "logout": "Выйти",
       "success": "Данные успешно обновлены!",
+      "email_not_verified": "Email не подтверждён",
+      "resend_verification": "Отправить письмо для подтверждения",
+      "verification_email_sent": "Письмо для подтверждения отправлено",
+      "verification_email_failed": "Не удалось отправить письмо для подтверждения",
       "errors": {
         "name_required": "Имя обязательно",
         "email_required": "Email обязателен",
         "email_invalid": "Неверный формат email"
       }
-    }
+    },
+    "close": "Закрыть"
   },
   "infobar": {
     "title": "Добро пожаловать!",
