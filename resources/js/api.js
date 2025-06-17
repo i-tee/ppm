@@ -30,9 +30,9 @@ api.interceptors.response.use(
   (error) => {
     // Проверяем, есть ли ответ от сервера
     if (error.response) {
-      // Если статус 401, просто передаём ошибку дальше без логирования
+      // Для 401 просто передаём ошибку дальше без логирования
       if (error.response.status === 401) {
-        return Promise.reject(error);
+        return Promise.reject(error); // Передаём ошибку для обработки
       }
       // Для других ошибок (например, 500) логируем в консоль
       console.error('API Error:', error.response.data || error.message);
@@ -40,7 +40,7 @@ api.interceptors.response.use(
       // Ошибки без ответа (например, сетевые ошибки)
       console.error('Network Error:', error.message);
     }
-    return Promise.reject(error);
+    return Promise.reject(error); // Передаём другие ошибки дальше
   }
 );
 

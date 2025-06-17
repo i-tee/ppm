@@ -1,3 +1,4 @@
+// resources/js/router.js
 import { createRouter, createWebHistory } from 'vue-router';
 import Welcome from './components/Welcome.vue';
 import Register from './components/Register.vue';

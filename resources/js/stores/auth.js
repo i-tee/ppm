@@ -27,7 +27,7 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         this.error = error.response?.data?.message || 'Ошибка авторизации';
         this.loading = false;
-        throw error;
+        throw error; // Передаем ошибку дальше для Welcome.vue
       } finally {
         this.loading = false;
       }

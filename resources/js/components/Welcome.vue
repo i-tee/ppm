@@ -25,7 +25,8 @@
             placeholder="hello@epicmax.co"
             class="w-full font-inter"
             prepend-inner-icon="email"
-            :rules="[value => !!value || $t('email_required'), value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || $t('invalid_email')]"
+            :rules="[validateEmail]"
+            :error="formErrors.email.length > 0"
             :error-messages="formErrors.email"
           />
           <VaInput
@@ -36,7 +37,8 @@
             class="w-full font-inter"
             prepend-inner-icon="lock"
             @click-append-inner="togglePassword"
-            :rules="[value => !!value || $t('password_required')]"
+            :rules="[validatePassword]"
+            :error="formErrors.password.length > 0"
             :error-messages="formErrors.password"
           >
             <template #appendInner>
@@ -55,10 +57,48 @@
             color="primary"
             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-inter py-3 rounded-lg transition"
             :loading="authStore.loading"
-            :disabled="!isFormValid"
+            :disabled="!isFormValid || authStore.loading"
           >
             {{ $t('login') }}
           </VaButton>
+
+          <!-- Ссылка для сброса пароля и попап -->
+          <div class="text-center mt-4">
+            <a href="#" @click.prevent="showResetModal = true" class="text-indigo-600 hover:text-indigo-800 font-inter">
+              {{ $t('forgot_password') }}
+            </a>
+          </div>
+
+          <!-- Попап для сброса пароля -->
+          <VaModal
+            v-model="showResetModal"
+            title="Сброс пароля"
+            size="small"
+            :hide-default-actions="true"
+          >
+            <template #default>
+              <VaInput
+                v-model="resetEmail"
+                type="email"
+                :label="$t('email')"
+                placeholder="Введите ваш email"
+                class="w-full font-inter mb-4"
+                prepend-inner-icon="email"
+                :rules="[validateEmail]"
+                :error="resetError.length > 0"
+                :error-messages="resetError"
+              />
+              <VaButton
+                @click="requestPasswordReset"
+                color="primary"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-inter py-2 rounded-lg"
+                :loading="authStore.loading"
+                :disabled="!resetEmail || authStore.loading"
+              >
+                {{ $t('send_reset_instructions') }}
+              </VaButton>
+            </template>
+          </VaModal>
 
           <!-- Навигация между входом и регистрацией -->
           <div class="flex text-center space-x-4 mb-8">
@@ -76,6 +116,7 @@
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { ref, watch } from 'vue';
 import Infobar from './Infobar.vue';
 
 export default {
@@ -101,28 +142,29 @@ export default {
       },
       isPasswordVisible: false,
       serverError: null,
+      showResetModal: false,
+      resetEmail: '',
+      resetError: '',
     };
   },
 
   computed: {
     isFormValid() {
       const emailValid = this.form.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email);
-      const passwordValid = this.form.password;
-      const formErrorsEmpty =
-        this.formErrors.email.length === 0 &&
-        this.formErrors.password.length === 0;
-
-      console.log('isFormValid:', { emailValid, passwordValid, formErrorsEmpty, form: this.form, formErrors: this.formErrors });
+      const passwordValid = !!this.form.password;
+      const formErrorsEmpty = this.formErrors.email.length === 0 && this.formErrors.password.length === 0;
       return emailValid && passwordValid && formErrorsEmpty;
     },
   },
 
   watch: {
-    'form.email'() {
-      this.validateEmail();
+    'form.email'(newValue) {
+      this.resetErrors();
+      this.validateField('email', newValue);
     },
-    'form.password'() {
-      this.validatePassword();
+    'form.password'(newValue) {
+      this.resetErrors();
+      this.validateField('password', newValue);
     },
   },
 
@@ -130,28 +172,34 @@ export default {
     togglePassword() {
       this.isPasswordVisible = !this.isPasswordVisible;
     },
-    validateEmail() {
+    resetErrors() {
+      this.serverError = null;
       this.formErrors.email = [];
-      if (!this.form.email) {
-        this.formErrors.email.push(this.$t('email_required'));
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email)) {
-        this.formErrors.email.push(this.$t('invalid_email'));
+      this.formErrors.password = [];
+    },
+    validateField(field, value) {
+      this.formErrors[field] = [];
+      if (field === 'email') {
+        if (!value) this.formErrors.email.push(this.$t('email_required'));
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) this.formErrors.email.push(this.$t('invalid_email'));
+      } else if (field === 'password') {
+        if (!value) this.formErrors.password.push(this.$t('password_required'));
       }
     },
-    validatePassword() {
-      this.formErrors.password = [];
-      if (!this.form.password) {
-        this.formErrors.password.push(this.$t('password_required'));
-      }
+    validateEmail(value) {
+      this.validateField('email', value);
+      return this.formErrors.email.length === 0 || this.formErrors.email[0];
+    },
+    validatePassword(value) {
+      this.validateField('password', value);
+      return this.formErrors.password.length === 0 || this.formErrors.password[0];
     },
     async handleLogin() {
       console.log('Начало handleLogin, form:', this.form);
-      // Сбрасываем ошибки сервера
-      this.serverError = null;
+      this.resetErrors();
 
-      // Вызываем валидацию всех полей
-      this.validateEmail();
-      this.validatePassword();
+      this.validateField('email', this.form.email);
+      this.validateField('password', this.form.password);
 
       if (!this.isFormValid) {
         console.log('Форма невалидна, выход из handleLogin');
@@ -169,28 +217,35 @@ export default {
         console.log('Данные ответа:', error.response?.data);
         console.log('Статус:', error.response?.status);
 
-        if (error.response?.status === 401 || error.response?.status === 422) {
+        if (error.response?.status === 401) {
+          this.formErrors.email = [this.$t('invalid_credentials')];
+          this.formErrors.password = [this.$t('invalid_credentials')];
+          this.serverError = this.$t('invalid_credentials');
+        } else if (error.response?.status === 422) {
           const serverErrors = error.response?.data?.errors || {};
           this.formErrors.email = serverErrors.email || [];
           this.formErrors.password = serverErrors.password || [];
-
-          if (!this.formErrors.email.length && !this.formErrors.password.length) {
-            if (error.response?.status === 401) {
-              console.log('Устанавливаем serverError для 401');
-              this.serverError = this.$t('invalid_credentials');
-            } else if (error.response?.data?.message) {
-              console.log('Устанавливаем serverError из message');
-              this.serverError = error.response.data.message;
-            } else {
-              console.log('Устанавливаем serverError по умолчанию');
-              this.serverError = this.$t('login_error');
-            }
-          }
+          this.serverError = error.response?.data?.message || this.$t('login_error');
         } else {
-          console.log('Устанавливаем serverError для других ошибок');
           this.serverError = error.response?.data?.message || this.$t('login_error');
         }
         console.log('После обработки ошибки, serverError:', this.serverError);
+        console.log('formErrors:', this.formErrors);
+      }
+    },
+    async requestPasswordReset() {
+      this.resetError = '';
+      if (!this.resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.resetEmail)) {
+        this.resetError = this.$t('invalid_email');
+        return;
+      }
+
+      try {
+        await this.authStore.requestPasswordReset(this.resetEmail);
+        this.showResetModal = false;
+        this.serverError = this.$t('reset_instructions_sent');
+      } catch (error) {
+        this.resetError = error.response?.data?.message || this.$t('reset_error');
       }
     },
   },
