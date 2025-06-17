@@ -79,4 +79,17 @@ class AuthController extends Controller
         $user->update($validated);
         return response()->json($user);
     }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'new_password' => 'required|min:8',
+            'confirm_password' => 'required|same:new_password',
+        ]);
+
+        $user = $request->user();
+
+        $user->update(['password' => Hash::make($request->new_password)]);
+        return response()->json(['message' => 'Password changed successfully'], 200);
+    }
 }

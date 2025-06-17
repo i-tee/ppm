@@ -48,10 +48,23 @@
       "resend_verification": "Отправить письмо для подтверждения",
       "verification_email_sent": "Письмо для подтверждения отправлено",
       "verification_email_failed": "Не удалось отправить письмо для подтверждения",
+      "change_password": "Сменить пароль",
+      "current_password": "Текущий пароль",
+      "new_password": "Новый пароль",
+      "confirm_password": "Подтвердите пароль",
+      "set_new_password": "Установить новый пароль",
+      "cancel": "Отмена",
+      "password_changed": "Пароль успешно изменён",
+      "password_change_error": "Не удалось изменить пароль",
       "errors": {
         "name_required": "Имя обязательно",
         "email_required": "Email обязателен",
-        "email_invalid": "Неверный формат email"
+        "email_invalid": "Неверный формат email",
+        "current_password_required": "Текущий пароль обязателен",
+        "new_password_required": "Новый пароль обязателен",
+        "confirm_password_required": "Подтверждение пароля обязательно",
+        "password_min_length": "Пароль должен содержать минимум 8 символов",
+        "passwords_mismatch": "Пароли не совпадают"
       }
     },
     "close": "Закрыть"
