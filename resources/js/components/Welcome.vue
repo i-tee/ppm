@@ -81,7 +81,7 @@
                 v-model="resetEmail"
                 type="email"
                 :label="$t('email')"
-                placeholder="Введите ваш email"
+                :placeholder="$t('enter_your_email')"
                 class="w-full font-inter mb-4"
                 prepend-inner-icon="email"
                 :rules="[validateEmail]"
@@ -233,8 +233,11 @@ export default {
         console.log('formErrors:', this.formErrors);
       }
     },
+
     async requestPasswordReset() {
+
       this.resetError = '';
+
       if (!this.resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.resetEmail)) {
         this.resetError = this.$t('invalid_email');
         return;
@@ -247,7 +250,9 @@ export default {
       } catch (error) {
         this.resetError = error.response?.data?.message || this.$t('reset_error');
       }
+
     },
+    
   },
 };
 </script>

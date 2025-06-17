@@ -86,6 +86,7 @@
   "reset_instructions_sent": "Инструкции по сбросу пароля отправлены на ваш email",
   "reset_error": "Ошибка при сбросе пароля",
   "reset_password": "Сброс пароля",
+  "enter_your_email": "Введите ваш email",
   "set_new_password": "Задайте новый пароль для вашего аккаунта",
   "new_password": "Новый пароль",
   "save_new_password": "Сохранить новый пароль",
