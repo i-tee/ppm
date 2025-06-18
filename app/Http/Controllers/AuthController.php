@@ -98,14 +98,14 @@ class AuthController extends Controller
     // Новый эндпоинт для запроса сброса пароля
     public function forgotPassword(Request $request)
     {
-        \Log::info('Forgot Password Request: ', $request->all()); // Логируем запрос
+        //\Log::info('Forgot Password Request: ', $request->all()); // Логируем запрос
         $request->validate(['email' => 'required|email']);
 
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
-        \Log::info('Password Reset Status: ' . $status); // Логируем статус
+        //\Log::info('Password Reset Status: ' . $status); // Логируем статус
 
         return $status === Password::RESET_LINK_SENT
             ? response()->json(['message' => __($status)])
