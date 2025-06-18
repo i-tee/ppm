@@ -26,11 +26,11 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response) {
-      console.error('API Error Details:', {
-        status: error.response.status,
-        data: error.response.data,
-        headers: error.response.headers,
-      });
+      // console.error('API Error Details:', {
+      //   status: error.response.status,
+      //   data: error.response.data,
+      //   headers: error.response.headers,
+      // });
 
       if (error.response.status === 401 && !isRefreshing) {
         const authStore = useAuthStore();
@@ -41,7 +41,7 @@ api.interceptors.response.use(
           authStore.token = null;
           localStorage.removeItem('auth_token');
         } catch (logoutError) {
-          console.error('Error clearing auth state:', logoutError);
+          //console.error('Error clearing auth state:', logoutError);
         } finally {
           isRefreshing = false;
         }
@@ -49,7 +49,7 @@ api.interceptors.response.use(
 
       throw error.response.data || new Error('Server error');
     } else {
-      console.error('Network Error:', error.message);
+      //console.error('Network Error:', error.message);
       throw new Error('Network error');
     }
   }

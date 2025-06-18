@@ -62,9 +62,16 @@
             {{ $t('login') }}
           </VaButton>
 
+          <!-- Навигация между входом и регистрацией -->
+          <div class="flex text-center space-x-4 mb-8">
+            <router-link to="/register">
+              {{ $t('register') }}
+            </router-link>
+          </div>
+
           <!-- Ссылка для сброса пароля и попап -->
           <div class="text-center mt-4">
-            <a href="#" @click.prevent="showResetModal = true" class="text-indigo-600 hover:text-indigo-800 font-inter">
+            <a href="#" @click.prevent="showResetModal = true, mailTransport()" class="text-gray-300 hover:text-gray-800 font-inter">
               {{ $t('forgot_password') }}
             </a>
           </div>
@@ -100,12 +107,6 @@
             </template>
           </VaModal>
 
-          <!-- Навигация между входом и регистрацией -->
-          <div class="flex text-center space-x-4 mb-8">
-            <router-link to="/register">
-              {{ $t('register') }}
-            </router-link>
-          </div>
         </div>
       </div>
     </div>
@@ -169,6 +170,9 @@ export default {
   },
 
   methods: {
+    mailTransport() {
+      this.resetEmail = this.form.email;
+    },
     togglePassword() {
       this.isPasswordVisible = !this.isPasswordVisible;
     },
@@ -195,24 +199,24 @@ export default {
       return this.formErrors.password.length === 0 || this.formErrors.password[0];
     },
     async handleLogin() {
-      console.log('Начало handleLogin, form:', this.form);
+      //console.log('Начало handleLogin, form:', this.form);
       this.resetErrors();
 
       this.validateField('email', this.form.email);
       this.validateField('password', this.form.password);
 
       if (!this.isFormValid) {
-        console.log('Форма невалидна, выход из handleLogin');
+        //console.log('Форма невалидна, выход из handleLogin');
         return;
       }
 
       try {
-        console.log('Перед вызовом authStore.login');
+        //console.log('Перед вызовом authStore.login');
         await this.authStore.login(this.form);
-        console.log('После успешного логина, переход на /dashboard');
+        //console.log('После успешного логина, переход на /dashboard');
         this.router.push('/dashboard');
       } catch (error) {
-        console.log('Ошибка в handleLogin:', error);
+        //console.log('Ошибка в handleLogin:', error);
         if (error.response?.status === 401) {
           this.formErrors.email = [this.$t('invalid_credentials')];
           this.formErrors.password = [this.$t('invalid_credentials')];

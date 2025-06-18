@@ -12,53 +12,32 @@
         <h2 class="text-3xl font-bold font-inter text-gray-900 mb-2 text-center">
           {{ $t('reset_password') }}
         </h2>
-        <p class="text-center text-gray-600 font-inter mb-8">
+        <p class="text-center text-gray-600 font-inter mb-2">
           {{ $t('set_new_password_description') }}
+        </p>
+        <p class="text-center text-gray-800 font-inter mb-6">
+          {{ email }}
         </p>
 
         <!-- Форма -->
         <div class="space-y-6">
-          <VaInput
-            v-model="email"
-            type="email"
-            :label="$t('email')"
-            placeholder="example@email.com"
-            class="w-full font-inter"
-            prepend-inner-icon="email"
-            :rules="[validateEmail]"
-            :error="formErrors.email.length > 0"
-            :error-messages="formErrors.email"
-          />
+          <VaInput ref="emailInput" v-model="email" type="email" :label="$t('email')" placeholder="example@email.com"
+            class="w-full font-inter" prepend-inner-icon="email" :rules="[validateEmail]"
+            :error="formErrors.email.length > 0" :error-messages="formErrors.email" />
 
-          <VaInput
-            v-model="newPassword"
-            :type="isPasswordVisible ? 'text' : 'password'"
-            :label="$t('new_password')"
-            placeholder="*********"
-            class="w-full font-inter"
-            prepend-inner-icon="lock"
-            @click-append-inner="togglePassword"
-            :rules="[validatePassword]"
-            :error="formErrors.password.length > 0"
-            :error-messages="formErrors.password"
-          >
+          <VaInput v-model="newPassword" :type="isPasswordVisible ? 'text' : 'password'" :label="$t('new_password')"
+            placeholder="*********" class="w-full font-inter" prepend-inner-icon="lock"
+            @click-append-inner="togglePassword" :rules="[validatePassword]" :error="formErrors.password.length > 0"
+            :error-messages="formErrors.password">
             <template #appendInner>
               <VaIcon :name="isPasswordVisible ? 'visibility_off' : 'visibility'" size="small" color="primary" />
             </template>
           </VaInput>
 
-          <VaInput
-            v-model="confirmPassword"
-            :type="isPasswordVisible ? 'text' : 'password'"
-            :label="$t('confirm_password')"
-            placeholder="*********"
-            class="w-full font-inter"
-            prepend-inner-icon="lock"
-            @click-append-inner="togglePassword"
-            :rules="[validateConfirmPassword]"
-            :error="formErrors.confirm.length > 0"
-            :error-messages="formErrors.confirm"
-          >
+          <VaInput v-model="confirmPassword" :type="isPasswordVisible ? 'text' : 'password'"
+            :label="$t('confirm_password')" placeholder="*********" class="w-full font-inter" prepend-inner-icon="lock"
+            @click-append-inner="togglePassword" :rules="[validateConfirmPassword]"
+            :error="formErrors.confirm.length > 0" :error-messages="formErrors.confirm">
             <template #appendInner>
               <VaIcon :name="isPasswordVisible ? 'visibility_off' : 'visibility'" size="small" color="primary" />
             </template>
@@ -70,13 +49,9 @@
           </div>
 
           <!-- Кнопка сброса пароля -->
-          <VaButton
-            @click="handleResetPassword"
-            color="primary"
+          <VaButton @click="handleResetPassword" color="primary"
             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-inter py-3 rounded-lg transition"
-            :loading="authStore.loading"
-            :disabled="!isFormValid || authStore.loading"
-          >
+            :loading="authStore.loading" :disabled="!isFormValid || authStore.loading">
             {{ $t('save_new_password') }}
           </VaButton>
 
@@ -134,6 +109,18 @@ export default {
     },
   },
 
+  mounted() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const encodedEmail = urlParams.get('email');
+
+    if (encodedEmail) {
+      const decodedEmail = decodeURIComponent(encodedEmail);
+      this.email = decodedEmail; // Устанавливаем email из URL
+      // Скрываем поле email, если оно уже заполнено
+      this.$refs.emailInput.$el.style.display = 'none';
+    }
+  },
+
   watch: {
     email(value) {
       this.formErrors.email = [];
@@ -172,22 +159,22 @@ export default {
       return this.formErrors.email.length === 0;
     },
     async handleResetPassword() {
-      console.log('Handle Reset Password triggered');
+      //console.log('Handle Reset Password triggered');
       this.serverError = null;
       if (!this.validateEmail(this.email) || !this.validatePassword(this.newPassword) || !this.validateConfirmPassword(this.confirmPassword)) {
-        console.log('Validation failed:', this.formErrors);
+        //console.log('Validation failed:', this.formErrors);
         return;
       }
 
       try {
         const token = this.route.query.token;
-        console.log('Token:', token, 'Email:', this.email, 'New Password:', this.newPassword, 'Confirm Password:', this.confirmPassword);
+        //console.log('Token:', token, 'Email:', this.email, 'New Password:', this.newPassword, 'Confirm Password:', this.confirmPassword);
         if (!token) throw new Error(this.$t('invalid_reset_token'));
         await this.authStore.resetPassword(token, this.newPassword, this.email, this.confirmPassword); // Убедимся, что все поля передаются
-        console.log('Reset successful, redirecting to /dashboard');
+        //console.log('Reset successful, redirecting to /dashboard');
         this.router.push('/dashboard');
       } catch (error) {
-        console.log('Reset error:', error.response?.data || error.message);
+        //console.log('Reset error:', error.response?.data || error.message);
         this.serverError = error.response?.data?.message || this.$t('reset_error');
         if (error.response?.status === 422) {
           this.serverError = error.response?.data?.errors?.password?.[0] || this.$t('reset_error');

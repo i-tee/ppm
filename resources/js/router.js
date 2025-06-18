@@ -7,6 +7,7 @@ import Promocodes from './components/dashboard/Promocodes.vue';
 import ReferralLinks from './components/dashboard/ReferralLinks.vue';
 import UserProfile from './components/dashboard/UserProfile.vue';
 import ResetPassword from './components/ResetPassword.vue';
+import NotFound from './components/NotFound.vue';
 import { useAuthStore } from './stores/auth';
 
 const routes = [
@@ -59,7 +60,7 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
-    component: { template: '<div>404 - Страница не найдена</div>' },
+    component: NotFound,
     meta: { requiresAuth: false },
   },
 ];
