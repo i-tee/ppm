@@ -1,11 +1,14 @@
 <!-- resources/js/components/Infobar.vue -->
 <template>
-    <div
-        class="h-screen bg-gradient-to-br from-blue-500 to-blue-900 text-white flex items-center justify-center p-6">
+    <div class="h-screen bg-gradient-to-br from-blue-500 to-blue-900 text-white flex items-center justify-center p-6">
         <div class="text-center space-y-10 max-w-lg">
-            <!-- Плейсхолдер для логотипа или изображения -->
-            <div class="w-48 h-48 bg-gray-300 rounded-full flex items-center justify-center mx-auto">
-                <span class="text-gray-600 font-inter">Логотип</span>
+            <!-- Логотип -->
+            <!-- Чтобы управлять иконками:
+            - Используйте va-icon с правильным именем иконки.
+            - Можете динамически задавать имя иконки через :name.
+            - Стилизуйте иконки с помощью size, color и class. -->
+            <div>
+                <p>{{ t('infobar.ooo') }}</p>
             </div>
             <!-- Заголовок -->
             <h1 class="text-4xl md:text-5xl font-bold font-inter">
@@ -17,15 +20,20 @@
             </p>
             <!-- Сноска о разработчике -->
             <div class="mt-8 text-xs text-gray-200 font-inter opacity-70">
-                {{ t('infobar.developer') }}:
-                <a href="https://tee.su" target="_blank" rel="noopener" class="underline hover:text-white">
-                    {{ t('infobar.author') }}
-                </a>
-                <span class="mx-1">|</span>
-                {{ t('infobar.project') }}:
-                <a href="https://github.com/i-tee/base-vue-app" target="_blank" rel="noopener" class="underline hover:text-white">
-                    {{ t('infobar.project_name') }}
-                </a>
+                <p>
+                    <a :href="`https://${t('infobar.main_contacts')}`" target="_blank" rel="noopener"
+                        class="underline hover:text-white">
+                        {{ t('infobar.ooo') }}
+                    </a>
+                    <span> </span>
+                    <span>©</span>
+                    <span> </span>
+                    <span>{{ new Date().getFullYear() }}</span>
+                    <span> </span>
+                    <span class="mx-1">|</span>
+                    <span> </span>
+                    <span>{{ t('infobar.brand_1') }}</span>
+                </p>
             </div>
         </div>
     </div>

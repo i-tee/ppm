@@ -8,6 +8,9 @@
     <!-- Правая часть: Форма регистрации -->
     <div class="w-full md:w-1/2 bg-gray-50 flex justify-center items-center p-6">
       <div class="w-full max-w-md">
+        <!-- Логотип -->
+        <Logo />
+        <br>
         <!-- Заголовок -->
         <h2 class="text-3xl font-bold font-inter text-gray-900 mb-2 text-center">
           {{ $t('register') }}
@@ -102,10 +105,11 @@ import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import Infobar from './Infobar.vue';
+import Logo from './parts/Logo.vue';
 
 export default {
   name: 'Register',
-  components: { Infobar },
+  components: { Infobar, Logo },
   setup() {
     const authStore = useAuthStore();
     const router = useRouter();
