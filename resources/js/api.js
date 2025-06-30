@@ -14,8 +14,8 @@ let isRefreshing = false;
 api.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore();
-    if (authStore.token) {
-      config.headers.Authorization = `Bearer ${authStore.token}`;
+    if (authStore.token || sessionStorage.getItem('social_token')) {
+      config.headers.Authorization = `Bearer ${authStore.token || sessionStorage.getItem('social_token')}`;
     }
     return config;
   },
@@ -26,30 +26,22 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response) {
-      // console.error('API Error Details:', {
-      //   status: error.response.status,
-      //   data: error.response.data,
-      //   headers: error.response.headers,
-      // });
-
       if (error.response.status === 401 && !isRefreshing) {
         const authStore = useAuthStore();
         isRefreshing = true;
         try {
-          // Не вызываем logout с редиректом, а просто очищаем состояние
           authStore.user = null;
           authStore.token = null;
           localStorage.removeItem('auth_token');
+          sessionStorage.removeItem('social_token');
         } catch (logoutError) {
-          //console.error('Error clearing auth state:', logoutError);
+          console.error('Error clearing auth state:', logoutError);
         } finally {
           isRefreshing = false;
         }
       }
-
       throw error.response.data || new Error('Server error');
     } else {
-      //console.error('Network Error:', error.message);
       throw new Error('Network error');
     }
   }

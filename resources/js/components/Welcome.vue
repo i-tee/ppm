@@ -65,6 +65,13 @@
             {{ $t('login') }}
           </VaButton>
 
+          <!-- Ссылка для авторизации через Google -->
+          <div class="text-center mt-4">
+            <a href="/auth/google/redirect" class="text-blue-600 hover:text-blue-800 font-inter">
+              Войти через Google
+            </a>
+          </div>
+
           <!-- Навигация между входом и регистрацией -->
           <div class="flex text-center space-x-4 mb-8">
             <router-link to="/register">
@@ -109,7 +116,6 @@
               </VaButton>
             </template>
           </VaModal>
-
         </div>
       </div>
     </div>
@@ -203,24 +209,17 @@ export default {
       return this.formErrors.password.length === 0 || this.formErrors.password[0];
     },
     async handleLogin() {
-      //console.log('Начало handleLogin, form:', this.form);
       this.resetErrors();
 
       this.validateField('email', this.form.email);
       this.validateField('password', this.form.password);
 
-      if (!this.isFormValid) {
-        //console.log('Форма невалидна, выход из handleLogin');
-        return;
-      }
+      if (!this.isFormValid) return;
 
       try {
-        //console.log('Перед вызовом authStore.login');
         await this.authStore.login(this.form);
-        //console.log('После успешного логина, переход на /dashboard');
         this.router.push('/dashboard');
       } catch (error) {
-        //console.log('Ошибка в handleLogin:', error);
         if (error.response?.status === 401) {
           this.formErrors.email = [this.$t('invalid_credentials')];
           this.formErrors.password = [this.$t('invalid_credentials')];
@@ -234,9 +233,7 @@ export default {
           this.serverError = error.response?.data?.message || this.$t('login_error');
         }
       } finally {
-        if (this.authStore.loading) {
-          this.authStore.loading = false;
-        }
+        if (this.authStore.loading) this.authStore.loading = false;
       }
     },
 
@@ -254,6 +251,19 @@ export default {
         this.serverError = this.$t('reset_instructions_sent');
       } catch (error) {
         this.resetError = error.response?.data?.message || this.$t('reset_error');
+      }
+    },
+
+    mounted() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const email = urlParams.get('email');
+      if (token && email) {
+        const authStore = useAuthStore();
+        authStore.token = token;
+        authStore.user = { email }; // Минимальные данные пользователя
+        localStorage.setItem('auth_token', token);
+        this.router.push('/dashboard');
       }
     },
   },

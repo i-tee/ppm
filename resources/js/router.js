@@ -13,6 +13,10 @@ import { useAuthStore } from './stores/auth';
 const routes = [
   {
     path: '/',
+    redirect: '/welcome', // Перенаправляем / на /welcome
+  },
+  {
+    path: '/welcome',
     name: 'welcome',
     component: Welcome,
     meta: { requiresAuth: false },
@@ -72,6 +76,16 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  const email = urlParams.get('email');
+
+  // Устанавливаем токен из URL, если он есть
+  if (token && email && !authStore.token) {
+    authStore.token = token;
+    authStore.user = { email };
+    localStorage.setItem('auth_token', token);
+  }
 
   if (to.meta.requiresAuth && !authStore.token) {
     return next({ name: 'welcome' });

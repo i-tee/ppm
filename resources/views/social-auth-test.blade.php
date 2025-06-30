@@ -23,6 +23,18 @@
             max-width: 100px;
             border-radius: 50%;
         }
+        .auth-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .auth-button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -36,10 +48,31 @@
                 <li><strong>Email:</strong> {{ session('social_user.email') ?? 'Не указан' }}</li>
                 <li><strong>Аватар:</strong> @if (session('social_user.avatar')) <img src="{{ session('social_user.avatar') }}" alt="Avatar"> @else Нет аватара @endif</li>
             </ul>
-            <a href="/">Вернуться на главную</a>
+            @if (!request()->query('token'))
+                <form action="/auth/social/authenticate" method="POST">
+                    @csrf
+                    <button type="submit" class="auth-button">Авторизоваться или зарегистрироваться</button>
+                </form>
+            @else
+                <p>Авторизация успешна! Токен получен.</p>
+                <a href="/" class="auth-button" onclick="authenticateAndRedirect(event)">Перейти на дашборд</a>
+            @endif
         @else
             <p>Данные не найдены. <a href="/">Попробовать снова</a></p>
         @endif
     </div>
+
+    <script>
+        function authenticateAndRedirect(event) {
+            event.preventDefault();
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const email = urlParams.get('email');
+            if (token) {
+                // Отправляем данные на фронтенд для авторизации
+                window.location.href = `/welcome?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
+            }
+        }
+    </script>
 </body>
 </html>

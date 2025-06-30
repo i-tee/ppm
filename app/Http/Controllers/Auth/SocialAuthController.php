@@ -7,6 +7,9 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class SocialAuthController extends Controller
 {
@@ -26,7 +29,6 @@ class SocialAuthController extends Controller
         try {
             $socialUser = Socialite::driver('google')->user();
 
-            // Преобразуем данные пользователя в массив
             $userData = [
                 'provider' => 'google',
                 'id' => $socialUser->getId(),
@@ -35,18 +37,40 @@ class SocialAuthController extends Controller
                 'avatar' => $socialUser->getAvatar(),
             ];
 
-            // Логируем данные для отладки
             Log::channel('socialite')->info('Social User Data', $userData);
 
-            // Сохраняем данные в сессию с указанием провайдера
             $request->session()->put('social_user', $userData);
 
-            // Редирект на общую тестовую страницу
             return redirect('/social-auth-test');
-            
         } catch (\Exception $e) {
             Log::channel('socialite')->error('Social Auth Error', ['error' => $e->getMessage(), 'provider' => 'google']);
             return redirect('/')->with('error', 'Ошибка авторизации через Google');
         }
+    }
+
+    /**
+     * Авторизация или регистрация пользователя из социальных данных.
+     */
+    public function authenticateFromSocial(Request $request): RedirectResponse
+    {
+        $socialUser = $request->session()->get('social_user');
+
+        if (!$socialUser) {
+            return redirect('/')->with('error', 'Нет данных для авторизации');
+        }
+
+        $user = User::firstOrCreate(
+            ['email' => $socialUser['email']],
+            [
+                'name' => $socialUser['name'],
+                'password' => Hash::make(\Str::random(16)), // Генерируем случайный пароль
+            ]
+        );
+
+        // Создаем токен Sanctum
+        $token = $user->createToken('spa-token')->plainTextToken;
+
+        // Возвращаем токен в JSON для фронтенда
+        return redirect()->to('/social-auth-test?token=' . urlencode($token) . '&email=' . urlencode($socialUser['email']));
     }
 }
