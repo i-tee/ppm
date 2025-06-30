@@ -10,6 +10,7 @@
         "aws/aws-sdk-php": "^3.343",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.1",
+        "laravel/socialite": "^5.21",
         "laravel/tinker": "^2.10.1",
         "mailersend/laravel-driver": "^2.10",
         "resend/resend-php": "^0.18.0",
