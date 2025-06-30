@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
+use Carbon\Carbon;
 
 class SocialAuthController extends Controller
 {
@@ -59,6 +60,7 @@ class SocialAuthController extends Controller
             return redirect('/')->with('error', 'Нет данных для авторизации');
         }
 
+        // Проверяем или создаем пользователя с подтвержденным email
         $user = User::firstOrCreate(
             ['email' => $socialUser['email']],
             [
@@ -67,10 +69,16 @@ class SocialAuthController extends Controller
             ]
         );
 
+        // Устанавливаем email_verified_at, если еще не подтвержден
+        if (!$user->email_verified_at) {
+            $user->email_verified_at = Carbon::now();
+            $user->save();
+        }
+
         // Создаем токен Sanctum
         $token = $user->createToken('spa-token')->plainTextToken;
 
-        // Возвращаем токен в JSON для фронтенда
-        return redirect()->to('/social-auth-test?token=' . urlencode($token) . '&email=' . urlencode($socialUser['email']));
+        // Передаем токен и данные пользователя в редирект
+        return redirect()->to('/welcome?token=' . urlencode($token) . '&email=' . urlencode($socialUser['email']) . '&email_verified=1');
     }
 }

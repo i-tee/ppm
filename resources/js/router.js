@@ -13,7 +13,7 @@ import { useAuthStore } from './stores/auth';
 const routes = [
   {
     path: '/',
-    redirect: '/welcome', // Перенаправляем / на /welcome
+    redirect: '/welcome',
   },
   {
     path: '/welcome',
@@ -79,12 +79,21 @@ router.beforeEach(async (to, from, next) => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
   const email = urlParams.get('email');
+  const verified = urlParams.get('email_verified') === '1';
 
-  // Устанавливаем токен из URL, если он есть
+  // Устанавливаем токен и минимальные данные
   if (token && email && !authStore.token) {
     authStore.token = token;
-    authStore.user = { email };
+    authStore.user = { email, email_verified: verified };
     localStorage.setItem('auth_token', token);
+
+    // Немедленно подтягиваем полные данные пользователя
+    try {
+      await authStore.fetchUser();
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      authStore.logout();
+    }
   }
 
   if (to.meta.requiresAuth && !authStore.token) {
