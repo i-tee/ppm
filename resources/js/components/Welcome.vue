@@ -21,29 +21,13 @@
 
         <!-- Форма -->
         <div class="space-y-6">
-          <VaInput
-            v-model="form.email"
-            type="email"
-            :label="$t('email')"
-            placeholder="hello@epicmax.co"
-            class="w-full font-inter"
-            prepend-inner-icon="email"
-            :rules="[validateEmail]"
-            :error="formErrors.email.length > 0"
-            :error-messages="formErrors.email"
-          />
-          <VaInput
-            v-model="form.password"
-            :type="isPasswordVisible ? 'text' : 'password'"
-            :label="$t('password')"
-            placeholder="*********"
-            class="w-full font-inter"
-            prepend-inner-icon="lock"
-            @click-append-inner="togglePassword"
-            :rules="[validatePassword]"
-            :error="formErrors.password.length > 0"
-            :error-messages="formErrors.password"
-          >
+          <VaInput v-model="form.email" type="email" :label="$t('email')" placeholder="hello@epicmax.co"
+            class="w-full font-inter" prepend-inner-icon="email" :rules="[validateEmail]"
+            :error="formErrors.email.length > 0" :error-messages="formErrors.email" />
+          <VaInput v-model="form.password" :type="isPasswordVisible ? 'text' : 'password'" :label="$t('password')"
+            placeholder="*********" class="w-full font-inter" prepend-inner-icon="lock"
+            @click-append-inner="togglePassword" :rules="[validatePassword]" :error="formErrors.password.length > 0"
+            :error-messages="formErrors.password">
             <template #appendInner>
               <VaIcon :name="isPasswordVisible ? 'visibility_off' : 'visibility'" size="small" color="primary" />
             </template>
@@ -55,13 +39,9 @@
           </div>
 
           <!-- Кнопка входа -->
-          <VaButton
-            @click="handleLogin"
-            color="primary"
+          <VaButton @click="handleLogin" color="primary"
             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-inter py-3 rounded-lg transition"
-            :loading="authStore.loading"
-            :disabled="!isFormValid || authStore.loading"
-          >
+            :loading="authStore.loading" :disabled="!isFormValid || authStore.loading">
             {{ $t('login') }}
           </VaButton>
 
@@ -69,6 +49,9 @@
           <div class="text-center mt-4">
             <a href="/auth/google/redirect" class="text-blue-600 hover:text-blue-800 font-inter">
               Войти через Google
+            </a>
+            <a href="/auth/yandex/redirect" class="text-blue-600 hover:text-blue-800 font-inter">
+              Войти через Яндекс
             </a>
           </div>
 
@@ -81,37 +64,21 @@
 
           <!-- Ссылка для сброса пароля и попап -->
           <div class="text-center mt-4">
-            <a href="#" @click.prevent="showResetModal = true, mailTransport()" class="text-gray-300 hover:text-gray-800 font-inter">
+            <a href="#" @click.prevent="showResetModal = true, mailTransport()"
+              class="text-gray-300 hover:text-gray-800 font-inter">
               {{ $t('forgot_password') }}
             </a>
           </div>
 
           <!-- Попап для сброса пароля -->
-          <VaModal
-            v-model="showResetModal"
-            title="Сброс пароля"
-            size="small"
-            :hide-default-actions="true"
-          >
+          <VaModal v-model="showResetModal" title="Сброс пароля" size="small" :hide-default-actions="true">
             <template #default>
-              <VaInput
-                v-model="resetEmail"
-                type="email"
-                :label="$t('email')"
-                :placeholder="$t('enter_your_email')"
-                class="w-full font-inter mb-4"
-                prepend-inner-icon="email"
-                :rules="[validateEmail]"
-                :error="resetError.length > 0"
-                :error-messages="resetError"
-              />
-              <VaButton
-                @click="requestPasswordReset"
-                color="primary"
+              <VaInput v-model="resetEmail" type="email" :label="$t('email')" :placeholder="$t('enter_your_email')"
+                class="w-full font-inter mb-4" prepend-inner-icon="email" :rules="[validateEmail]"
+                :error="resetError.length > 0" :error-messages="resetError" />
+              <VaButton @click="requestPasswordReset" color="primary"
                 class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-inter py-2 rounded-lg"
-                :loading="authStore.loading"
-                :disabled="!resetEmail || authStore.loading"
-              >
+                :loading="authStore.loading" :disabled="!resetEmail || authStore.loading">
                 {{ $t('send_reset_instructions') }}
               </VaButton>
             </template>

@@ -39,6 +39,14 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'redirect_dev' => env('GOOGLE_REDIRECT_URI_DEV'),
+    ],
+
+    'yandex' => [
+        'client_id' => env('YANDEX_CLIENT_ID'),
+        'client_secret' => env('YANDEX_CLIENT_SECRET'),
+        'redirect' => env('YANDEX_REDIRECT_URI'),
+        'redirect_dev' => env('YANDEX_REDIRECT_URI_DEV'),
     ],
 
 ];

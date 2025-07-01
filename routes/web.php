@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\SocialAuthController;
 
 Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
+Route::get('/auth/yandex/redirect', [SocialAuthController::class, 'redirectToYandex']);
+Route::get('/auth/yandex/callback', [SocialAuthController::class, 'handleYandexCallback']);
 Route::post('/auth/social/authenticate', [SocialAuthController::class, 'authenticateFromSocial']);
 Route::get('/social-auth-test', function () {
     if (session()->has('social_user')) {
@@ -13,14 +15,10 @@ Route::get('/social-auth-test', function () {
     }
     return redirect('/')->with('error', 'Нет данных пользователя');
 });
-
 Route::get('/welcome', function () {
-    return view('app'); // Рендерим Vue-приложение
+    return view('app');
 })->name('welcome');
-
 Route::get('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
-
-// Исключаем /welcome из "ловушки"
 Route::get('/{any}', function () {
-    return view('app'); // app.blade.php
+    return view('app');
 })->where('any', '^((?!welcome).)*$');

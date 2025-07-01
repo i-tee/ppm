@@ -68,3 +68,6 @@ export default defineComponent({
   color: #888;
 }
 </style>
+
+
+ <!-- https://ui.vuestic.dev/ui-elements/layout -->
