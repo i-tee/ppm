@@ -1,21 +1,54 @@
 <template>
-  <div class="dashboard-layout">
-    <!-- Боковое меню -->
-    <Sidebar />
 
-    <!-- Основной контент -->
-    <div class="dashboard-content">
-      <!-- Шапка -->
-      <Header v-if="!isLoading" :user="currentUser" />
-      <div v-else class="text-secondary">Загрузка...</div>
+  <VaLayout
+    :top="{ fixed: true, order: 2 }"
+    :left="{ fixed: true, absolute: breakpoints.smDown, order: 1, overlay: breakpoints.smDown && isSidebarVisible }"
+    @left-overlay-click="isSidebarVisible = false"
+  >
 
-      <router-view />
-    </div>
-  </div>
+    <template #top>
+      <VaNavbar shadowed>
+        <template #left>
+          <VaButton
+            preset="secondary"
+            :icon="isSidebarVisible ? 'menu_open' : 'menu'"
+            @click="isSidebarVisible = !isSidebarVisible"
+          />
+        </template>
+        <template #center>
+          <span class="text-secondary">Dashboard</span>
+        </template>
+        <template #right>
+          <Header v-if="!isLoading" :user="currentUser" />
+        </template>
+      </VaNavbar>
+    </template>
+
+
+    <template #left>
+      <VaSidebar v-model="isSidebarVisible">
+        <Sidebar />
+      </VaSidebar>
+    </template>
+
+    <template #content>
+      <main>
+      <router-view v-slot="{ Component }">
+        <component
+        :is="Component"
+        v-if="!isLoading"
+        :user="currentUser"
+        />
+      </router-view>
+      </main>
+    </template>
+
+  </VaLayout>
 </template>
 
 <script>
-import { defineComponent, onMounted, computed, ref } from 'vue';
+import { defineComponent, onMounted, computed, ref, watchEffect } from 'vue';
+import { useBreakpoint } from 'vuestic-ui';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import Sidebar from './dashboard/Sidebar.vue';
@@ -25,9 +58,16 @@ export default defineComponent({
   name: 'Dashboard',
   components: {
     Sidebar,
-    Header,
+    Header
   },
   setup() {
+    const breakpoints = useBreakpoint();
+    const isSidebarVisible = ref(breakpoints.smUp);
+
+    watchEffect(() => {
+      isSidebarVisible.value = breakpoints.smUp;
+    });
+
     const authStore = useAuthStore();
     const router = useRouter();
     const isLoading = ref(true);
@@ -47,6 +87,8 @@ export default defineComponent({
     return {
       currentUser,
       isLoading,
+      isSidebarVisible,
+      breakpoints,
     };
   },
 });
@@ -68,5 +110,6 @@ export default defineComponent({
   color: #888;
 }
 </style>
+
 
 <!-- https://ui.vuestic.dev/ui-elements/layout -->

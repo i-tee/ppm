@@ -1,23 +1,18 @@
 <template>
-  <va-card class="mb-4">
-    <va-card-title class="text-primary text-2xl">
-      {{ $t('dashboard.title') }} {{ user && user.name ? user.name : 'Не загрузилось имя' }}
-    </va-card-title>
-    <va-card-content>
-      <p class="text-secondary">{{ $t('dashboard.welcome') }}</p>
-      <div v-if="user && !user.email_verified_at" class="mt-2">
-        <VaButton
-          preset="secondary"
-          class="ml-4"
-          :loading="isSendingVerification"
-          @click="sendVerificationEmail"
-        >
-          {{ $t('vuestic.profile.resend_verification') }}
-        </VaButton>
-        <span class="text-warning ml-2">{{ $t('vuestic.profile.email_not_verified') }}</span>
-      </div>
-    </va-card-content>
-  </va-card>
+  <div class="flex items-center space-x-4">
+    <RouterLink :to="{ name: 'UserProfile' }" class="flex items-center space-x-2 cursor-pointer">
+      <span>
+        <span v-if="user && !user.email_verified_at" class="text-warning-500 cursor-help"
+          :title="$t('vuestic.profile.email_not_verified')">
+          ⚠️
+        </span>
+        {{ user?.name || 'UserName' }}
+      </span>
+      <span>
+        <VaAvatar src="https://randomuser.me/api/portraits/women/5.jpg" />
+      </span>
+    </RouterLink>
+  </div>
 </template>
 
 <script>
