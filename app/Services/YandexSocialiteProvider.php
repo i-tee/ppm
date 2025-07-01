@@ -38,7 +38,9 @@ class YandexSocialiteProvider extends AbstractProvider implements ProviderInterf
             'nickname' => $user['login'],
             'name' => $user['real_name'] ?? $user['login'],
             'email' => $user['default_email'] ?? null,
-            'avatar' => $user['default_avatar_id'] ? 'https://avatars.yandex.net/get-yandex/' . $user['default_avatar_id'] : null,
+            'avatar' => isset($user['default_avatar_id'])
+                ? 'https://avatars.yandex.net/get-yapic/' . $user['default_avatar_id'] . '/islands-200'
+                : null,
         ]);
     }
 

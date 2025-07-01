@@ -74,6 +74,9 @@ class SocialAuthController extends Controller
 
             return redirect('/social-auth-test');
         } catch (\Exception $e) {
+
+            dd($e->getMessage());
+
             \Log::error('Yandex Callback Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return redirect('/')->with('error', 'Ошибка авторизации через Яндекс: ' . $e->getMessage());
         }
