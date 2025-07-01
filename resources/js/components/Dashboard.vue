@@ -69,5 +69,4 @@ export default defineComponent({
 }
 </style>
 
-
- <!-- https://ui.vuestic.dev/ui-elements/layout -->
+<!-- https://ui.vuestic.dev/ui-elements/layout -->

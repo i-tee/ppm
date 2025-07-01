@@ -47,12 +47,9 @@
 
           <!-- Ссылка для авторизации через Google -->
           <div class="text-center mt-4">
-            <a href="/auth/google/redirect" class="text-blue-600 hover:text-blue-800 font-inter">
-              Войти через Google
-            </a>
-            <a href="/auth/yandex/redirect" class="text-blue-600 hover:text-blue-800 font-inter">
-              Войти через Яндекс
-            </a>
+            <a href="/auth/google/redirect" class="text-blue-600 hover:text-blue-800 font-inter">Google</a>
+            <span> | </span>
+            <a href="/auth/yandex/redirect" class="text-blue-600 hover:text-blue-800 font-inter">Яндекс</a>
           </div>
 
           <!-- Навигация между входом и регистрацией -->
