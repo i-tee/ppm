@@ -9,10 +9,11 @@
         {{ user?.name || 'UserName' }}
       </span>
       <span>
-        <VaAvatar src="https://randomuser.me/api/portraits/women/5.jpg" />
+        <VaAvatar :src="user?.avatar || 'UserName'" />
       </span>
     </RouterLink>
   </div>
+
 </template>
 
 <script>

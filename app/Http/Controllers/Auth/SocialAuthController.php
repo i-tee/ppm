@@ -34,7 +34,7 @@ class SocialAuthController extends Controller
         \Log::info('Yandex Redirect Params', [
             'client_id' => config('services.yandex.client_id'),
             'redirect_uri' => $redirectUri,
-            'scopes' => $provider->getScopes(), // Используем геттер вместо прямого доступа
+            'scopes' => $provider->getScopes(),
         ]);
 
         return $provider->redirect();
@@ -74,7 +74,6 @@ class SocialAuthController extends Controller
 
             return redirect('/social-auth-test');
         } catch (\Exception $e) {
-
             dd($e->getMessage());
 
             \Log::error('Yandex Callback Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -119,21 +118,35 @@ class SocialAuthController extends Controller
             return redirect('/')->with('error', 'Нет данных для авторизации');
         }
 
-        $user = User::firstOrCreate(
-            ['email' => $socialUser['email']],
-            [
-                'name' => $socialUser['name'],
-                'password' => Hash::make(\Str::random(16)),
-            ]
-        );
+        // Ищем или создаём пользователя
+        $user = User::where('email', $socialUser['email'])->first();
 
+        if ($user) {
+            // Пользователь существует, обновляем аватар, если его нет
+            if (!$user->avatar && !empty($socialUser['avatar'])) {
+                $user->avatar = $socialUser['avatar'];
+                $user->save();
+            }
+        } else {
+            // Создаём нового пользователя с аватаром
+            $user = User::create([
+                'name' => $socialUser['name'],
+                'email' => $socialUser['email'],
+                'password' => Hash::make(\Str::random(16)),
+                'avatar' => $socialUser['avatar'] ?? null,
+            ]);
+        }
+
+        // Отмечаем email как верифицированный, если ещё не сделано
         if (!$user->email_verified_at) {
             $user->email_verified_at = Carbon::now();
             $user->save();
         }
 
+        // Генерируем токен
         $token = $user->createToken('spa-token')->plainTextToken;
 
+        // Перенаправляем на страницу приветствия
         return redirect()->to('/welcome?token=' . urlencode($token) . '&email=' . urlencode($socialUser['email']) . '&email_verified=1');
     }
 }

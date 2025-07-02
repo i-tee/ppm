@@ -29,4 +29,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Новые маршруты для сброса пароля
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+//Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');

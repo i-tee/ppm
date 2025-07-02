@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 
+Route::get('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
 Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
 Route::get('/auth/yandex/redirect', [SocialAuthController::class, 'redirectToYandex']);
@@ -18,7 +19,6 @@ Route::get('/social-auth-test', function () {
 Route::get('/welcome', function () {
     return view('app');
 })->name('welcome');
-Route::get('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
 Route::get('/{any}', function () {
     return view('app');
 })->where('any', '^((?!welcome).)*$');
