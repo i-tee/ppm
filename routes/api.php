@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\MailController;
+//use App\Http\Controllers\MailController;
 use App\Http\Controllers\Auth\VerificationController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,4 +29,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Новые маршруты для сброса пароля
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-//Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');

@@ -112,6 +112,18 @@ class AuthController extends Controller
             : response()->json(['message' => __($status)], 400);
     }
 
+    public function showResetPasswordForm(Request $request)
+    {
+        $token = $request->query('token');
+        $email = $request->query('email');
+
+        if (!$token || !$email) {
+            return redirect('/welcome')->with('error', 'Недействительная ссылка');
+        }
+
+        return view('app', ['token' => $token, 'email' => $email]);
+    }
+
     public function resetPassword(Request $request)
     {
         $request->validate([
