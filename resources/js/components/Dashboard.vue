@@ -16,10 +16,12 @@
           />
         </template>
         <template #center>
-          <span class="text-secondary">Dashboard</span>
+          <router-link to="/dashboard" class="flex items-center cursor-pointer">
+            <Logo class="max-h-8" />
+          </router-link>
         </template>
         <template #right>
-          <Header v-if="!isLoading" :user="currentUser" />
+          <User v-if="!isLoading" :user="currentUser" />
         </template>
       </VaNavbar>
     </template>
@@ -52,13 +54,15 @@ import { useBreakpoint } from 'vuestic-ui';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import Sidebar from './dashboard/Sidebar.vue';
-import Header from './dashboard/Header.vue';
+import User from './parts/User.vue';
+import Logo from './parts/Logo.vue';
 
 export default defineComponent({
   name: 'Dashboard',
   components: {
     Sidebar,
-    Header
+    User,
+    Logo,
   },
   setup() {
     const breakpoints = useBreakpoint();
