@@ -155,58 +155,20 @@ class AuthController extends Controller
         ]);
     }
 
-    // app/Http/Controllers/AuthController.php
     public function uploadAvatar(Request $request)
     {
-        \Log::info('Avatar upload started', ['user_id' => $request->user()->id]);
-        
-        $validator = \Validator::make($request->all(), [
-            'avatar' => 'required|file|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        ], [
-            'avatar.required' => 'Файл не был загружен',
-            'avatar.file' => 'Загруженный объект не является файлом',
-            'avatar.image' => 'Файл должен быть изображением',
-            'avatar.mimes' => 'Допустимые форматы: jpeg, png, jpg, gif, webp',
-            'avatar.max' => 'Максимальный размер файла 2MB',
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        if ($validator->fails()) {
-            \Log::error('Validation failed', [
-                'errors' => $validator->errors()->all(),
-                'input' => $request->all(),
-                'files' => $request->file() ? array_keys($request->file()) : 'No files'
-            ]);
-            
-            return response()->json([
-                'message' => 'Ошибка валидации',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $user = $request->user();
+        $path = $request->file('avatar')->store('avatars', 'public');
 
-        try {
-            \Log::info('Validation passed', [
-                'file_name' => $request->file('avatar')->getClientOriginalName(),
-                'file_size' => $request->file('avatar')->getSize(),
-                'mime_type' => $request->file('avatar')->getMimeType()
-            ]);
+        $user->update(['avatar' => $path]);
 
-            $result = $request->user()->updateAvatar($request->file('avatar'));
-
-            \Log::info('Avatar updated successfully', [
-                'path' => $result['avatar_url']
-            ]);
-
-            return response()->json($result);
-        } catch (\Exception $e) {
-            \Log::error('Avatar upload failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'message' => 'Ошибка загрузки аватара',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'avatar_url' => Storage::url($path),
+            'user' => $user->fresh() // Возвращаем обновленного пользователя
+        ]);
     }
 }

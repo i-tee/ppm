@@ -36,7 +36,6 @@ class User extends Authenticatable implements MustVerifyEmail
     // app/Models/User.php
     public function updateAvatar($file)
     {
-        \Log::info('Updating avatar for user: ' . $this->id);
 
         try {
             // Проверяем что файл действительно загружен
@@ -47,13 +46,11 @@ class User extends Authenticatable implements MustVerifyEmail
             // Удаляем старый аватар только если он локальный
             if ($this->avatar && !filter_var($this->avatar, FILTER_VALIDATE_URL)) {
                 $oldPath = str_replace('/storage/', '', $this->avatar);
-                \Log::info('Deleting old avatar: ' . $oldPath);
                 Storage::disk('public')->delete($oldPath);
             }
 
             // Сохраняем новый файл
             $path = $file->store('avatars', 'public');
-            \Log::info('New avatar stored at: ' . $path);
 
             $this->avatar = $path;
             $this->save();
@@ -63,21 +60,24 @@ class User extends Authenticatable implements MustVerifyEmail
                 'user' => $this->fresh()
             ];
         } catch (\Exception $e) {
-            \Log::error('Avatar update failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             throw $e;
         }
     }
 
-    // Метод для получения URL аватара
+    protected $appends = ['avatar_url']; // Добавляем аксессор в JSON
+
     public function getAvatarUrlAttribute()
     {
-        if (!$this->avatar) return null;
+        if (!$this->avatar) {
+            return asset('storage/avatars/avatar.png'); // файл в public/avatars
+        }
 
-        return filter_var($this->avatar, FILTER_VALIDATE_URL)
-            ? $this->avatar
-            : Storage::url($this->avatar);
+        // Если это URL (начинается с http/https)
+        if (str_starts_with($this->avatar, 'http')) {
+            return $this->avatar;
+        }
+
+        // Для локальных файлов
+        return asset('storage/' . ltrim($this->avatar, '/'));
     }
 }

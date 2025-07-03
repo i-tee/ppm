@@ -119,19 +119,22 @@ export const useAuthStore = defineStore('auth', {
     async uploadAvatar(formData) {
       this.loading = true;
       try {
-        console.log('Preparing upload...');
         const response = await api.post('/user/avatar', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
-        console.log('Upload successful:', response.data);
-        this.user = response.data.user;
-        return true;
+
+        // Обновляем только аватар у текущего пользователя
+        if (this.user) {
+          this.user.avatar = response.data.user.avatar;
+          this.user.avatar_url = response.data.avatar_url; // Добавляем вычисляемый URL
+        }
+
+        return response.data;
       } catch (error) {
-        console.error('Store upload error:', error);
-        this.error = error.response?.data?.message || 'Upload failed';
-        throw error; // Пробрасываем ошибку дальше
+        this.error = error.response?.data?.message || 'Ошибка загрузки аватара';
+        throw error;
       } finally {
         this.loading = false;
       }

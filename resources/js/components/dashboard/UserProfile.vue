@@ -1,45 +1,5 @@
 <!-- resources/js/components/dashboard/UserProfile.vue -->
 <template>
-  <!-- Место для аватара -->
-  <div class="flex flex-col items-center mb-6">
-    <div class="relative">
-      <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gray-100">
-        <img v-if="authStore.user?.avatar" :src="avatarUrl" alt="Avatar" class="w-full h-full object-cover">
-        <va-icon v-else name="account_circle" size="xx-large" class="text-gray-400" />
-      </div>
-      <va-button icon="edit" size="small" class="absolute -bottom-2 -right-2 !rounded-full shadow-md"
-        @click="openAvatarUpload" :disabled="!authStore.user?.email_verified_at" />
-    </div>
-    <div class="mt-2 text-center">
-      <h3 class="text-lg font-semibold">{{ authStore.user?.name }}</h3>
-      <p class="text-sm text-gray-500">{{ authStore.user?.email }}</p>
-    </div>
-  </div>
-
-  <!-- Модальное окно для загрузки аватара -->
-  <VaModal v-model="showAvatarModal" :title="t('vuestic.profile.upload_avatar')" size="small" no-outside-dismiss>
-    <template #default>
-      <div class="flex flex-col items-center">
-        <div v-if="avatarPreview" class="mb-4">
-          <img :src="avatarPreview" alt="Preview" class="max-w-[200px] max-h-[200px] rounded-md">
-        </div>
-        <va-file-upload
-          v-model="avatarFile"
-          dropzone
-          file-types="image/*"
-          :max-files="1"
-          :max-size="2048"
-          :disabled="avatarLoading"
-          @file-added="handleFileAdded"
-        />
-        <va-button class="mt-4" @click="uploadAvatar" :disabled="!avatarFile.length || avatarLoading" :loading="avatarLoading">
-          {{ t('vuestic.profile.upload_button') }}
-        </va-button>
-      </div>
-    </template>
-  </VaModal>
-
-  <!-- ... (остальной шаблон остается без изменений) ... -->
 
   <div v-if="user && !user.email_verified_at">
     <VaAlert color="warning" icon="warning" class="m-6">
@@ -62,6 +22,39 @@
       </a>
     </div>
   </div>
+
+  <!-- Место для аватара -->
+  <div class="flex flex-col items-center mb-6">
+    <div class="relative">
+      <div
+        class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gray-100">
+        <img :src="avatarUrl" alt="Avatar" class="w-full h-full object-cover">
+      </div>
+      <va-button icon="edit" size="small" class="absolute -bottom-2 -right-2 !rounded-full shadow-md"
+        @click="openAvatarUpload" :disabled="!authStore.user?.email_verified_at" />
+    </div>
+    <div class="mt-2 text-center">
+      <h3 class="text-lg font-semibold">{{ authStore.user?.name }}</h3>
+      <p class="text-sm text-gray-500">{{ authStore.user?.email }}</p>
+    </div>
+  </div>
+
+  <!-- Модальное окно для загрузки аватара -->
+  <VaModal v-model="showAvatarModal" :title="t('vuestic.profile.upload_avatar')" size="small" no-outside-dismiss>
+    <template #default>
+      <div class="flex flex-col items-center">
+        <div v-if="avatarPreview" class="mb-4">
+          <img :src="avatarPreview" alt="Preview" class="max-w-[200px] max-h-[200px] rounded-md">
+        </div>
+        <va-file-upload v-model="avatarFile" dropzone file-types="image/*" :max-files="1" :max-size="2048"
+          :disabled="avatarLoading" @file-added="handleFileAdded" />
+        <va-button class="mt-4" @click="uploadAvatar" :disabled="!avatarFile.length || avatarLoading"
+          :loading="avatarLoading">
+          {{ t('vuestic.profile.upload_button') }}
+        </va-button>
+      </div>
+    </template>
+  </VaModal>
 
   <div class="min-h-screen bg-gray-100 p-6">
     <form @submit.prevent="handleSubmit" class="space-y-6">
@@ -136,6 +129,21 @@ export default {
       type: Object,
       default: null,
     },
+  },
+  methods: {
+    async uploadAvatar() {
+      try {
+        const formData = new FormData();
+        formData.append('avatar', this.avatarFile[0].file);
+
+        const response = await this.authStore.uploadAvatar(formData);
+
+        // Автоматически обновится через реактивность Pinia
+        this.$toast.success('Аватар успешно обновлен!');
+      } catch (error) {
+        this.$toast.error(error.message);
+      }
+    }
   },
   setup(props, { emit }) {
     const { t } = useI18n();
@@ -262,6 +270,7 @@ export default {
       await authStore.fetchUser();
       form.name = authStore.user?.name || '';
       form.email = authStore.user?.email || '';
+      console.log('User profile mounted:', authStore.user);
     });
 
     const handleSubmit = async () => {
