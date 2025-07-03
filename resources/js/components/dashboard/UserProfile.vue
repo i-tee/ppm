@@ -1,8 +1,47 @@
 <!-- resources/js/components/dashboard/UserProfile.vue -->
 <template>
+  <!-- Место для аватара -->
+  <div class="flex flex-col items-center mb-6">
+    <div class="relative">
+      <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gray-100">
+        <img v-if="authStore.user?.avatar" :src="avatarUrl" alt="Avatar" class="w-full h-full object-cover">
+        <va-icon v-else name="account_circle" size="xx-large" class="text-gray-400" />
+      </div>
+      <va-button icon="edit" size="small" class="absolute -bottom-2 -right-2 !rounded-full shadow-md"
+        @click="openAvatarUpload" :disabled="!authStore.user?.email_verified_at" />
+    </div>
+    <div class="mt-2 text-center">
+      <h3 class="text-lg font-semibold">{{ authStore.user?.name }}</h3>
+      <p class="text-sm text-gray-500">{{ authStore.user?.email }}</p>
+    </div>
+  </div>
+
+  <!-- Модальное окно для загрузки аватара -->
+  <VaModal v-model="showAvatarModal" :title="t('vuestic.profile.upload_avatar')" size="small" no-outside-dismiss>
+    <template #default>
+      <div class="flex flex-col items-center">
+        <div v-if="avatarPreview" class="mb-4">
+          <img :src="avatarPreview" alt="Preview" class="max-w-[200px] max-h-[200px] rounded-md">
+        </div>
+        <va-file-upload
+          v-model="avatarFile"
+          dropzone
+          file-types="image/*"
+          :max-files="1"
+          :max-size="2048"
+          :disabled="avatarLoading"
+          @file-added="handleFileAdded"
+        />
+        <va-button class="mt-4" @click="uploadAvatar" :disabled="!avatarFile.length || avatarLoading" :loading="avatarLoading">
+          {{ t('vuestic.profile.upload_button') }}
+        </va-button>
+      </div>
+    </template>
+  </VaModal>
+
+  <!-- ... (остальной шаблон остается без изменений) ... -->
 
   <div v-if="user && !user.email_verified_at">
-
     <VaAlert color="warning" icon="warning" class="m-6">
       <div>
         <span>
@@ -14,18 +53,14 @@
         </span>
       </div>
     </VaAlert>
-
     <div class="m-6 mt-0 items-center space-x-2 w-auto inline-flex">
-      <VaButton icon-right="mail" :loading="isSendingVerification" @click="sendVerificationEmail" size="small"></VaButton>
-      <a
-      href="#"
-      @click.prevent="sendVerificationEmail"
-      class="underline text-primary cursor-pointer whitespace-nowrap"
-      >
-      {{ $t('vuestic.profile.resend_verification') }}
+      <VaButton icon-right="mail" :loading="isSendingVerification" @click="sendVerificationEmail" size="small">
+      </VaButton>
+      <a href="#" @click.prevent="sendVerificationEmail"
+        class="underline text-primary cursor-pointer whitespace-nowrap">
+        {{ $t('vuestic.profile.resend_verification') }}
       </a>
     </div>
-
   </div>
 
   <div class="min-h-screen bg-gray-100 p-6">
@@ -88,10 +123,10 @@
 
 <script>
 import { useAuthStore } from '@/stores/auth';
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToast } from 'vuestic-ui';
-import { useRouter } from 'vue-router'; // Импортируем router
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 export default {
@@ -102,10 +137,82 @@ export default {
       default: null,
     },
   },
-  setup(props, { emit }) { // Добавляем context для $emit
+  setup(props, { emit }) {
     const { t } = useI18n();
     const authStore = useAuthStore();
-    const router = useRouter(); // Получаем router
+    const router = useRouter();
+    const toast = useToast();
+
+    // Avatar logic
+    const showAvatarModal = ref(false);
+    const avatarFile = ref([]);
+    const avatarLoading = ref(false);
+    const avatarPreview = ref(null);
+
+    const avatarUrl = computed(() => {
+      return authStore.user?.avatar_url || '';
+    });
+
+    const openAvatarUpload = () => {
+      avatarFile.value = [];
+      avatarPreview.value = null;
+      showAvatarModal.value = true;
+    };
+
+    const handleFileAdded = (files) => {
+      if (files.length > 0) {
+        const file = files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          avatarPreview.value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+      // Ограничиваем до одного файла
+      if (files.length > 1) {
+        avatarFile.value = [files[0]];
+        toast.init({
+          message: t('vuestic.profile.only_one_file_allowed'),
+          color: 'warning',
+          duration: 3000,
+        });
+      } else {
+        avatarFile.value = files;
+      }
+    };
+
+    const uploadAvatar = async () => {
+      if (!avatarFile.value.length) return;
+
+      avatarLoading.value = true;
+      try {
+        const formData = new FormData();
+        formData.append('avatar', avatarFile.value[0]);
+
+        await authStore.uploadAvatar(formData);
+        toast.init({
+          message: t('vuestic.profile.avatar_uploaded'),
+          color: 'success',
+          duration: 3000,
+        });
+        showAvatarModal.value = false;
+      } catch (error) {
+        let errorMessage = error.response?.data?.error
+          || error.response?.data?.message
+          || error.message
+          || t('vuestic.profile.avatar_upload_error');
+
+        toast.init({
+          message: errorMessage,
+          color: 'danger',
+          duration: 5000,
+        });
+      } finally {
+        avatarLoading.value = false;
+      }
+    };
+
+    // Existing logic
     const success = ref(false);
     const passwordLoading = ref(false);
     const showPasswordModal = ref(false);
@@ -119,17 +226,16 @@ export default {
         toast.init({
           message: t('vuestic.profile.verification_email_sent'),
           color: 'success',
-          duration: 3000, // 3 секунды
+          duration: 3000,
         });
         await authStore.fetchUser();
-        // Отправляем событие родителю
-        emit('user-updated', authStore.user); // Используем emit вместо window.$emit
+        emit('user-updated', authStore.user);
       } catch (error) {
         console.log('Error response:', error.response ? error.response.data : error.message);
         toast.init({
           message: error.response?.data?.message || error.message || t('vuestic.profile.verification_email_failed'),
           color: 'danger',
-          duration: 5000, // 5 секунд
+          duration: 5000,
         });
       } finally {
         isSendingVerification.value = false;
@@ -151,8 +257,6 @@ export default {
       newPassword: '',
       confirmPassword: '',
     });
-
-    const toast = useToast();
 
     onMounted(async () => {
       await authStore.fetchUser();
@@ -187,7 +291,7 @@ export default {
     };
 
     const handleLogout = async () => {
-      await authStore.logout(router); // Передаем router в logout
+      await authStore.logout(router);
     };
 
     const changePassword = async () => {
@@ -271,7 +375,16 @@ export default {
       changePassword,
       isSendingVerification,
       sendVerificationEmail,
-      handleLogout, // Добавляем метод
+      handleLogout,
+      // Avatar logic
+      showAvatarModal,
+      avatarFile,
+      avatarLoading,
+      avatarPreview,
+      avatarUrl,
+      openAvatarUpload,
+      uploadAvatar,
+      handleFileAdded,
     };
   },
 };

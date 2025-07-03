@@ -116,6 +116,27 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async uploadAvatar(formData) {
+      this.loading = true;
+      try {
+        console.log('Preparing upload...');
+        const response = await api.post('/user/avatar', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        console.log('Upload successful:', response.data);
+        this.user = response.data.user;
+        return true;
+      } catch (error) {
+        console.error('Store upload error:', error);
+        this.error = error.response?.data?.message || 'Upload failed';
+        throw error; // Пробрасываем ошибку дальше
+      } finally {
+        this.loading = false;
+      }
+    },
+
   },
 
   getters: {

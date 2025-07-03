@@ -35,6 +35,13 @@
     "copied": "Скопировано в буфер обмена!"
   },
   "vuestic": {
+    "close": "Закрыть",
+    "removeFile": "Удалить файл",
+    "dropzone": "Перетащите файл сюда или нажмите для выбора",
+    "fileTypeIncorrect": "Неверный тип файла",
+    "uploadFile": "Загрузить файл",
+    "cancel": "Отмена",
+    "ok": "ОК",
     "progressState": "Состояние прогресса",
     "select": {
       "placeholder": "Выберите язык"
@@ -43,6 +50,7 @@
       "title": "Профиль пользователя",
       "name": "Имя",
       "email": "Email",
+      "only_one_file_allowed": "Допускается загрузка только одного файла",
       "save": "Сохранить",
       "saving": "Сохранение...",
       "logout": "Выйти",
@@ -60,6 +68,10 @@
       "cancel": "Отмена",
       "password_changed": "Пароль успешно изменён",
       "password_change_error": "Не удалось изменить пароль",
+      "upload_avatar": "Загрузить аватар",
+      "upload_button": "Загрузить",
+      "avatar_uploaded": "Аватар успешно загружен!",
+      "avatar_upload_error": "Ошибка загрузки аватара",
       "errors": {
         "name_required": "Имя обязательно",
         "email_required": "Email обязателен",
@@ -70,8 +82,7 @@
         "password_min_length": "Пароль должен содержать минимум 8 символов",
         "passwords_mismatch": "Пароли не совпадают"
       }
-    },
-    "close": "Закрыть"
+    }
   },
   "infobar": {
     "title": "Добро пожаловать!",

@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 //use App\Http\Controllers\MailController;
 use App\Http\Controllers\Auth\VerificationController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 
 //Route::get('/mail', [MailController::class, 'sendWelcomeEmail']);
 
@@ -17,6 +19,8 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/user/change-password', [AuthController::class, 'changePassword']);
+
+    Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
