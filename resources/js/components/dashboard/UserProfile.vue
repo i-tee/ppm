@@ -1,43 +1,91 @@
 <!-- resources/js/components/dashboard/UserProfile.vue -->
 <template>
 
-  <div v-if="user && !user.email_verified_at">
-    <VaAlert color="warning" icon="warning" class="m-6">
-      <div>
-        <span>
-          {{ $t('vuestic.profile.email_not_verified') }}!
-        </span>
-        <span> </span>
-        <span>
-          {{ $t('vuestic.profile.resend_verification_description') }}
-        </span>
+  <div class="row align-content-center">
+    <div v-if="user && !user.email_verified_at">
+      <VaAlert color="warning" icon="warning" class="m-6">
+        <div>
+          <span>
+            {{ $t('vuestic.profile.email_not_verified') }}!
+          </span>
+          <span> </span>
+          <span>
+            {{ $t('vuestic.profile.resend_verification_description') }}
+          </span>
+        </div>
+      </VaAlert>
+      <div class="m-6 mt-0 items-center space-x-2 w-auto inline-flex">
+        <VaButton icon-right="mail" :loading="isSendingVerification" @click="sendVerificationEmail" size="small">
+        </VaButton>
+        <a href="#" @click.prevent="sendVerificationEmail"
+          class="underline text-primary cursor-pointer whitespace-nowrap">
+          {{ $t('vuestic.profile.resend_verification') }}
+        </a>
       </div>
-    </VaAlert>
-    <div class="m-6 mt-0 items-center space-x-2 w-auto inline-flex">
-      <VaButton icon-right="mail" :loading="isSendingVerification" @click="sendVerificationEmail" size="small">
-      </VaButton>
-      <a href="#" @click.prevent="sendVerificationEmail"
-        class="underline text-primary cursor-pointer whitespace-nowrap">
-        {{ $t('vuestic.profile.resend_verification') }}
-      </a>
     </div>
   </div>
 
   <!-- Место для аватара -->
   <div class="flex flex-col items-center mb-6">
+
     <div class="relative">
       <div
         class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gray-100">
         <img :src="avatarUrl" alt="Avatar" class="w-full h-full object-cover">
       </div>
-      <va-button icon="edit" size="small" class="absolute -bottom-2 -right-2 !rounded-full shadow-md"
+      <va-button icon="edit" size="small" class="absolute top-1 -right-3 !rounded-full shadow-md"
         @click="openAvatarUpload" :disabled="!authStore.user?.email_verified_at" />
     </div>
+
     <div class="mt-2 text-center">
-      <h3 class="text-lg font-semibold">{{ authStore.user?.name }}</h3>
-      <p class="text-sm text-gray-500">{{ authStore.user?.email }}</p>
+
+      <form @submit.prevent="handleSubmit">
+
+        <div>
+          <VaValue v-slot="v">
+            <input ref="nameInput" class="item__input text-center -js-focusMe" v-if="v.value" v-model="form.name"
+              :disabled="!authStore.user?.email_verified_at">
+            <span v-else>
+              {{ form.name }}
+            </span>
+            <VaButton :icon="v.value ? 'save' : 'edit'" preset="plain" size="small" class="absolute -js-buttonName"
+              :disabled="!authStore.user?.email_verified_at" @click="
+    if (v.value && form.name !== authStore.user?.name) {
+                handleSubmit();
+              }
+                v.value = !v.value;
+                // дождаться рендера input и потом сфокусироваться
+                $nextTick(() => {
+                  myFunction();
+                });
+                " />
+
+          </VaValue>
+          <div v-if="errors.name" class="text-danger text-xs mt-4">{{ errors.name }}</div>
+        </div>
+
+        <div>
+          <p class="text-sm text-gray-500">{{ authStore.user?.email }}</p>
+        </div>
+
+      </form>
+
     </div>
+
   </div>
+
+  <!-- Кнопка для логаута -->
+  <VaButton preset="secondary" class="flex-1 px-4 py-2 rounded font-inter" @click="handleLogout"
+    :disabled="authStore.loading">
+    {{ t('vuestic.profile.logout') }}
+  </VaButton>
+
+  <!-- Кнопка для открытия попапа -->
+  <VaButton preset="primary" class="bg-primary text-white hover:bg-secondary px-4 py-2 rounded transition font-inter"
+    @click="showPasswordModal = true" :disabled="!authStore.user?.email_verified_at">
+    {{ t('vuestic.profile.change_password') }}
+  </VaButton>
+
 
   <!-- Модальное окно для загрузки аватара -->
   <VaModal v-model="showAvatarModal" :title="t('vuestic.profile.upload_avatar')" size="small" no-outside-dismiss>
@@ -56,62 +104,30 @@
     </template>
   </VaModal>
 
-  <div class="min-h-screen bg-gray-100 p-6">
-    <form @submit.prevent="handleSubmit" class="space-y-6">
-      <div>
-        <VaInput v-model="form.name" :label="t('vuestic.profile.name')" class="font-inter" :error="!!errors.name"
-          :error-message="errors.name" :disabled="!authStore.user?.email_verified_at" />
-      </div>
-      <div>
-        <VaInput v-model="form.email" :label="t('vuestic.profile.email')" type="email" class="font-inter"
-          :error="!!errors.email" :error-message="errors.email" :disabled="true" />
-      </div>
-      <div class="flex space-x-4">
-        <VaButton type="submit" preset="primary"
-          class="flex-1 bg-primary text-white hover:bg-secondary px-4 py-2 rounded transition font-inter"
-          :disabled="authStore.loading || !authStore.user?.email_verified_at">
-          {{ authStore.loading ? t('vuestic.profile.saving') : t('vuestic.profile.save') }}
-        </VaButton>
-        <VaButton preset="secondary" class="flex-1 px-4 py-2 rounded font-inter" @click="handleLogout"
-          :disabled="authStore.loading">
-          {{ t('vuestic.profile.logout') }}
-        </VaButton>
-      </div>
-    </form>
-
-    <!-- Кнопка для открытия попапа -->
-    <div class="mt-6">
-      <VaButton preset="primary"
-        class="bg-primary text-white hover:bg-secondary px-4 py-2 rounded transition font-inter"
-        @click="showPasswordModal = true" :disabled="!authStore.user?.email_verified_at">
-        {{ t('vuestic.profile.change_password') }}
+  <!-- Попап для изменения пароля -->
+  <VaModal v-model="showPasswordModal" :title="t('vuestic.profile.change_password')" size="small" no-outside-dismiss
+    no-esc-dismiss :hide-default-actions="true">
+    <template #default>
+      <form @submit.prevent="changePassword" class="space-y-4">
+        <VaInput v-model="passwordForm.newPassword" :label="t('vuestic.profile.new_password')" type="password"
+          class="font-inter" :error="!!passwordErrors.newPassword" :error-message="passwordErrors.newPassword"
+          :toggle-password="true" />
+        <VaInput v-model="passwordForm.confirmPassword" :label="t('vuestic.profile.confirm_password')" type="password"
+          class="font-inter" :error="!!passwordErrors.confirmPassword" :error-message="passwordErrors.confirmPassword"
+          :toggle-password="true" />
+      </form>
+    </template>
+    <template #footer>
+      <VaButton preset="secondary" class="mr-2" @click="showPasswordModal = false" :disabled="passwordLoading">
+        {{ t('vuestic.profile.cancel') }}
       </VaButton>
-    </div>
+      <VaButton preset="primary" class="bg-primary text-white hover:bg-secondary" @click="changePassword"
+        :loading="passwordLoading" type="submit">
+        {{ t('vuestic.profile.set_new_password') }}
+      </VaButton>
+    </template>
+  </VaModal>
 
-    <!-- Попап для изменения пароля -->
-    <VaModal v-model="showPasswordModal" :title="t('vuestic.profile.change_password')" size="small" no-outside-dismiss
-      no-esc-dismiss :hide-default-actions="true">
-      <template #default>
-        <form @submit.prevent="changePassword" class="space-y-4">
-          <VaInput v-model="passwordForm.newPassword" :label="t('vuestic.profile.new_password')" type="password"
-            class="font-inter" :error="!!passwordErrors.newPassword" :error-message="passwordErrors.newPassword"
-            :toggle-password="true" />
-          <VaInput v-model="passwordForm.confirmPassword" :label="t('vuestic.profile.confirm_password')" type="password"
-            class="font-inter" :error="!!passwordErrors.confirmPassword" :error-message="passwordErrors.confirmPassword"
-            :toggle-password="true" />
-        </form>
-      </template>
-      <template #footer>
-        <VaButton preset="secondary" class="mr-2" @click="showPasswordModal = false" :disabled="passwordLoading">
-          {{ t('vuestic.profile.cancel') }}
-        </VaButton>
-        <VaButton preset="primary" class="bg-primary text-white hover:bg-secondary" @click="changePassword"
-          :loading="passwordLoading" type="submit">
-          {{ t('vuestic.profile.set_new_password') }}
-        </VaButton>
-      </template>
-    </VaModal>
-  </div>
 </template>
 
 <script>
@@ -143,9 +159,24 @@ export default {
       } catch (error) {
         this.$toast.error(error.message);
       }
+    },
+
+    myFunction() {
+      this.$nextTick(() => {
+        // Vue 3: $refs is now a proxy, so access .value for DOM elements
+        const input = this.$refs.nameInput;
+        if (input && input.focus) {
+          input.focus();
+        } else if (input && input.$el && input.$el.focus) {
+          input.$el.focus();
+        }
+      });
+      console.log('Функция вызвана!');
     }
+
   },
   setup(props, { emit }) {
+
     const { t } = useI18n();
     const authStore = useAuthStore();
     const router = useRouter();
@@ -270,7 +301,7 @@ export default {
       await authStore.fetchUser();
       form.name = authStore.user?.name || '';
       form.email = authStore.user?.email || '';
-      console.log('User profile mounted:', authStore.user);
+      //console.log('User profile mounted:', authStore.user);
     });
 
     const handleSubmit = async () => {

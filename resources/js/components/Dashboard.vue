@@ -1,19 +1,14 @@
 <template>
 
-  <VaLayout
-    :top="{ fixed: true, order: 2 }"
+  <VaLayout :top="{ fixed: true, order: 2 }"
     :left="{ fixed: true, absolute: breakpoints.smDown, order: 1, overlay: breakpoints.smDown && isSidebarVisible }"
-    @left-overlay-click="isSidebarVisible = false"
-  >
+    @left-overlay-click="isSidebarVisible = false">
 
     <template #top>
       <VaNavbar shadowed>
         <template #left>
-          <VaButton
-            preset="secondary"
-            :icon="isSidebarVisible ? 'menu_open' : 'menu'"
-            @click="isSidebarVisible = !isSidebarVisible"
-          />
+          <VaButton preset="secondary" :icon="isSidebarVisible ? 'menu_open' : 'menu'"
+            @click="isSidebarVisible = !isSidebarVisible" />
         </template>
         <template #center>
           <router-link to="/dashboard" class="flex items-center cursor-pointer">
@@ -26,7 +21,6 @@
       </VaNavbar>
     </template>
 
-
     <template #left>
       <VaSidebar v-model="isSidebarVisible">
         <Sidebar />
@@ -34,15 +28,13 @@
     </template>
 
     <template #content>
-      <main>
-      <router-view v-slot="{ Component }">
-        <component
-        :is="Component"
-        v-if="!isLoading"
-        :user="currentUser"
-        />
-      </router-view>
-      </main>
+      <div class="p-4 bg-white dashboard-layout">
+        <main>
+          <router-view v-slot="{ Component }">
+            <component :is="Component" v-if="!isLoading" :user="currentUser" />
+          </router-view>
+        </main>
+      </div>
     </template>
 
   </VaLayout>
