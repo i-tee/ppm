@@ -28,8 +28,8 @@
     </template>
 
     <template #content>
-      <div class="p-4 bg-white dashboard-layout">
-        <main>
+      <div class="p-4 dashboard-layout" style="min-height: unset; height: 100%;">
+        <main style="min-height: unset;">
           <router-view v-slot="{ Component }">
             <component :is="Component" v-if="!isLoading" :user="currentUser" />
           </router-view>
