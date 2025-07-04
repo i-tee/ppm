@@ -37,7 +37,7 @@
         }
     </style>
 </head>
-<body>
+<body style="display: none">
     <div class="auth-container">
         <h1>Данные пользователя от {{ session('social_user.provider') ?? 'неизвестного провайдера' }}</h1>
         @if (session()->has('social_user'))
@@ -49,7 +49,7 @@
                 <li><strong>Аватар:</strong> @if (session('social_user.avatar')) <img src="{{ session('social_user.avatar') }}" alt="Avatar"> @else Нет аватара @endif</li>
             </ul>
             @if (!request()->query('token'))
-                <form action="/auth/social/authenticate" method="POST">
+                <form id="authenticate" action="/auth/social/authenticate" method="POST">
                     @csrf
                     <button type="submit" class="auth-button">Авторизоваться или зарегистрироваться</button>
                 </form>
@@ -73,6 +73,12 @@
                 window.location.href = `/welcome?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
             }
         }
+        document.addEventListener('DOMContentLoaded', function() {
+            var form = document.getElementById('authenticate');
+            if (form) {
+            form.submit();
+            }
+        });
     </script>
 </body>
 </html>

@@ -72,12 +72,12 @@ class SocialAuthController extends Controller
 
             $request->session()->put('social_user', $userData);
 
-            return redirect('/social-auth-test');
+            return redirect('/auth');
         } catch (\Exception $e) {
             dd($e->getMessage());
 
             \Log::error('Yandex Callback Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return redirect('/')->with('error', 'Ошибка авторизации через Яндекс: ' . $e->getMessage());
+            return redirect('/')->with('error', 'Error during Yandex authentication: ' . $e->getMessage());
         }
     }
 
@@ -100,10 +100,10 @@ class SocialAuthController extends Controller
             ];
             Log::channel('socialite')->info('Google User Data', $userData);
             $request->session()->put('social_user', $userData);
-            return redirect('/social-auth-test');
+            return redirect('/auth');
         } catch (\Exception $e) {
             Log::channel('socialite')->error('Google Auth Error', ['error' => $e->getMessage()]);
-            return redirect('/')->with('error', 'Ошибка авторизации через Google');
+            return redirect('/')->with('error', 'Error during Google authentication: ' . $e->getMessage());
         }
     }
 
@@ -115,7 +115,7 @@ class SocialAuthController extends Controller
         $socialUser = $request->session()->get('social_user');
 
         if (!$socialUser) {
-            return redirect('/')->with('error', 'Нет данных для авторизации');
+            return redirect('/')->with('error', 'No data for authentication');
         }
 
         // Ищем или создаём пользователя

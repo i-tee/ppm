@@ -1,15 +1,17 @@
 <template>
   <div class="flex items-center space-x-4">
     <RouterLink :to="{ name: 'UserProfile' }" class="flex items-center space-x-2 cursor-pointer">
-      <span>
+      <span class="text-end">
         <span v-if="user && !user.email_verified_at" class="text-warning-500 cursor-help"
           :title="$t('vuestic.profile.email_not_verified')">
           ⚠️
         </span>
-        {{ user?.name || 'UserName' }}
+        <span class="hidden sm:block">
+          {{ user?.name || user.mail }}
+        </span>
       </span>
       <span>
-        <VaAvatar :src="user.avatar_url" />
+        <VaAvatar class="w-10 h-10" :src="user.avatar_url" />
       </span>
     </RouterLink>
   </div>

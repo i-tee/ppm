@@ -10,19 +10,15 @@ Route::get('/auth/yandex/redirect', [SocialAuthController::class, 'redirectToYan
 Route::get('/auth/yandex/callback', [SocialAuthController::class, 'handleYandexCallback']);
 Route::post('/auth/social/authenticate', [SocialAuthController::class, 'authenticateFromSocial']);
 
-Route::get('/social-auth-test', function () {
+Route::get('/auth', function () {
     if (session()->has('social_user')) {
-        return view('social-auth-test');
+        return view('auth');
     }
-    return redirect('/')->with('error', 'Нет данных пользователя');
+    return redirect('/')->with('error', 'no data for user');
 });
-
-Route::get('/welcome', function () {
-    return view('app');
-})->name('welcome');
 
 Route::get('/reset-password', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
 
 Route::get('/{any}', function () {
     return view('app');
-})->where('any', '^((?!welcome).)*$');
+})->where('any', '.*');

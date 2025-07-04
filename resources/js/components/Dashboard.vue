@@ -12,7 +12,7 @@
         </template>
         <template #center>
           <router-link to="/dashboard" class="flex items-center cursor-pointer">
-            <Logo class="max-h-8" />
+            <Logo class="max-h-6" />
           </router-link>
         </template>
         <template #right>
