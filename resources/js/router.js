@@ -4,8 +4,10 @@ import Register from './components/Register.vue';
 import Dashboard from './components/Dashboard.vue';
 import Overview from './components/dashboard/Overview.vue';
 import Promocodes from './components/dashboard/Promocodes.vue';
+import Dev from './components/dashboard/Dev.vue';
+import Types from './components/dashboard/Types.vue';
 import ReferralLinks from './components/dashboard/ReferralLinks.vue';
-import UserProfile from './components/dashboard/UserProfile.vue';
+import Account from './components/dashboard/Account.vue';
 import ResetPassword from './components/ResetPassword.vue';
 import NotFound from './components/NotFound.vue';
 import { useAuthStore } from './stores/auth';
@@ -50,14 +52,24 @@ const routes = [
         component: Promocodes,
       },
       {
+        path: 'dev',
+        name: 'Dev',
+        component: Dev,
+      },
+      {
+        path: 'types',
+        name: 'Types',
+        component: Types,
+      },
+      {
+        path: 'account',
+        name: 'Account',
+        component: Account,
+      },
+      {
         path: 'referral-links',
         name: 'ReferralLinks',
         component: ReferralLinks,
-      },
-      {
-        path: 'profile',
-        name: 'UserProfile',
-        component: UserProfile,
       },
     ],
   },

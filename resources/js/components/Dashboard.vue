@@ -23,7 +23,7 @@
 
     <template #left>
       <VaSidebar v-model="isSidebarVisible">
-        <Sidebar />
+        <Sidebar :user="currentUser" />
       </VaSidebar>
     </template>
 

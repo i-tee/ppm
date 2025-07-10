@@ -1,6 +1,6 @@
 <template>
   <div class="flex items-center space-x-4">
-    <RouterLink :to="{ name: 'UserProfile' }" class="flex items-center space-x-2 cursor-pointer">
+    <RouterLink :to="{ name: 'Account' }" class="flex items-center space-x-2 cursor-pointer">
       <span class="text-end">
         <span v-if="user && !user.email_verified_at" class="text-warning-500 cursor-help"
           :title="$t('vuestic.profile.email_not_verified')">

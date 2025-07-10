@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 //use App\Http\Controllers\MailController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\PartnersSettingController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -22,6 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
 
+    Route::get('/ps', [PartnersSettingController::class, 'index']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/user', [AuthController::class, 'update']);
@@ -31,6 +34,5 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('verification.resend');
 });
 
-// Новые маршруты для сброса пароля
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');

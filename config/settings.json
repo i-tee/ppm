@@ -1,16 +1,74 @@
 {
-  "cooperation_types": [
-	{
-	  "id": 1,
-	  "name": "Частная практика как физлицо"
-	},
-	{
-	  "id": 2,
-	  "name": "Частная практика как ИП, самозанятое лицо, или ООО"
-	},
-	{
-	  "id": 3,
-	  "name": "Сотрудничество с Авиценна как оптовый покупатель с персонализированными оптовыми ценами"
-	}
-  ]
+	"cooperation_types": [
+		{
+			"id": 1,
+			"name": "influencer",
+			"description": "influencer_desc",
+			"active": false
+		},
+		{
+			"id": 2,
+			"name": "agent",
+			"description": "agent_desc",
+			"active": true
+		},
+		{
+			"id": 3,
+			"name": "wholesale",
+			"description": "wholesale_desc",
+			"active": false
+		},
+		{
+			"id": 4,
+			"name": "distributor",
+			"description": "distributor_desc",
+			"active": false
+		}
+	],
+	"partner_types": [
+		{
+			"id": 1,
+			"name": "individual",
+			"description": "individual_desc",
+			"active": false
+		},
+		{
+			"id": 2,
+			"name": "self-employed",
+			"description": "selfemployed_desc",
+			"active": true
+		},
+		{
+			"id": 3,
+			"name": "entrepreneur",
+			"description": "entrepreneur_desc",
+			"active": true
+		},
+		{
+			"id": 4,
+			"name": "company",
+			"description": "company_desc",
+			"active": false
+		}
+	],
+	"access_levels": [
+		{
+			"id": 1,
+			"name": "superadmin",
+			"description": "Superadmin has full access to all system features and settings.",
+			"active": true
+		},
+		{
+			"id": 2,
+			"name": "admin",
+			"description": "Admin has access to most system features with some restrictions.",
+			"active": true
+		},
+		{
+			"id": 3,
+			"name": "manager",
+			"description": "Manager has limited access to specific system features.",
+			"active": true
+		}
+	]
 }
