@@ -78,6 +78,9 @@ export default defineComponent({
         router.push('/login');
       }
       isLoading.value = false;
+
+      console.log('Dashboard mounted, current user:', currentUser.value);
+
     });
 
     return {

@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard.vue';
 import Overview from './components/dashboard/Overview.vue';
 import Promocodes from './components/dashboard/Promocodes.vue';
 import Dev from './components/dashboard/Dev.vue';
+import PartnerApplications from './components/dashboard/PartnerApplications.vue';
 import Types from './components/dashboard/Types.vue';
 import ReferralLinks from './components/dashboard/ReferralLinks.vue';
 import Account from './components/dashboard/Account.vue';
@@ -55,6 +56,11 @@ const routes = [
         path: 'dev',
         name: 'Dev',
         component: Dev,
+      },
+      {
+        path: 'partner-applications',
+        name: 'PartnerApplications',
+        component: PartnerApplications,
       },
       {
         path: 'types',

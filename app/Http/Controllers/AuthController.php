@@ -68,8 +68,9 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        return $request->user();
+        return response()->json($request->user()->load('accessLevels'));
     }
+
 
     public function update(Request $request)
     {

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\UserAccessLevel;
+use App\Models\PartnerApplication;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -24,6 +26,42 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'remember_token',
     ];
+
+    public function partnerApplications()
+    {
+        return $this->hasMany(PartnerApplication::class);
+    }
+
+    public function responsibleApplications()
+    {
+        return $this->hasMany(PartnerApplication::class, 'responsible_user_id');
+    }
+
+    public function accessLevels()
+    {
+        return $this->hasMany(UserAccessLevel::class);
+    }
+
+    public function getEffectiveAccessLevelsAttribute(): array
+    {
+        if (!$this->relationLoaded('accessLevels')) {
+            $this->load('accessLevels');
+        }
+
+        $accessLevelIds = $this->accessLevels->pluck('access_level_id')->filter()->unique()->values()->all();
+
+        if (empty($accessLevelIds)) {
+            return $this->hasVerifiedEmail() ? [0] : [-1];
+        }
+
+        return $accessLevelIds;
+    }
+
+    public function hasAccessLevel(int $levelId): bool
+    {
+        return $this->accessLevels()->where('access_level_id', $levelId)->exists();
+    }
+
 
     protected function casts(): array
     {
@@ -64,7 +102,7 @@ class User extends Authenticatable implements MustVerifyEmail
         }
     }
 
-    protected $appends = ['avatar_url']; // Добавляем аксессор в JSON
+    protected $appends = ['avatar_url', 'effective_access_levels']; // Добавляем аксессор в JSON
 
     public function getAvatarUrlAttribute()
     {
