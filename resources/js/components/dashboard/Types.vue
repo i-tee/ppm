@@ -5,7 +5,8 @@
     <div>
       <div v-if="apiData">
         <div>
-          <div v-if="apiData.cooperation_types && apiData.cooperation_types.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-if="apiData.cooperation_types && apiData.cooperation_types.length"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div v-for="type in apiData.cooperation_types" :key="'coop-' + type.id" class="mb-4">
               <VaCard class="p-4 max-w-md h-full">
                 <div class="va-card-title mb-2 va-h6">
@@ -34,28 +35,36 @@
 
     <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true">
 
+      <VaProgressBar v-if="submitting" indeterminate color="primary" class="mb-4" />
+
       <VaForm ref="formRef" class="p-4 space-y-4">
         <h3 class="va-h5 mb-2">{{ $t('partners.cooperation_types.' + selectedType?.name + '.title') }}</h3>
         <p class="mb-2">{{ $t('partners.cooperation_types.' + selectedType?.name + '.description') }}</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <VaInput v-model="form.full_name" :label="$t('form.full_name')" :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+            <VaInput v-model="form.full_name" :label="$t('form.full_name')"
+              :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
           </div>
           <div>
-            <VaInput v-model="form.phone" type="tel" :label="$t('form.phone')" :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+            <VaInput v-model="form.phone" type="tel" :label="$t('form.phone')"
+              :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
           </div>
           <div>
-            <VaInput v-model="form.email" :label="$t('form.email')" type="email" :rules="[(v) => !v || /.+@.+\..+/.test(v) || $t('validation.email')]" class="w-full" />
+            <VaInput v-model="form.email" :label="$t('form.email')" type="email"
+              :rules="[(v) => !v || /.+@.+\..+/.test(v) || $t('validation.email')]" class="w-full" />
           </div>
           <div class="col-span-1 md:col-span-2 bg-gray-50 p-2 rounded-lg">
-            <VaSwitch v-model="isCompanyEnabled" :label="$t('partners.affiliation')" @update:modelValue="toggleCompanyInput" class="mb-2" />
-            <VaInput v-model="form.company_name" :label="$t('form.company_name')" :disabled="!isCompanyEnabled" class="w-full transition-opacity duration-300" :class="{ 'opacity-50': !isCompanyEnabled }" />
+            <VaSwitch v-model="isCompanyEnabled" :label="$t('partners.affiliation')"
+              @update:modelValue="toggleCompanyInput" class="mb-2" />
+            <VaInput v-model="form.company_name" :label="$t('form.company_name')" :disabled="!isCompanyEnabled"
+              class="w-full transition-opacity duration-300" :class="{ 'opacity-50': !isCompanyEnabled }" />
           </div>
           <div>
             <VaInput v-model="form.experience" :label="$t('form.experience')" class="w-full" />
           </div>
           <div>
-            <VaSelect v-model="form.partner_type_id" :label="$t('business_form')" :options="filteredPartnerTypes" :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+            <VaSelect v-model="form.partner_type_id" :label="$t('business_form')" :options="filteredPartnerTypes"
+              :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
           </div>
           <div class="col-span-1 md:col-span-2">
             <VaTextarea v-model="form.comment" :label="$t('form.comment')" rows="3" class="w-full" />
@@ -123,7 +132,6 @@ const filteredPartnerTypes = computed(() => {
       value: type.id,
       text: t(`partners.partner_types.${type.name}`),
     }));
-  console.log('Filtered Partner Types:', options);
   return options;
 });
 
@@ -164,7 +172,9 @@ function resetForm() {
 }
 
 async function validateAndSubmit() {
+
   const isValid = await formRef.value.validate();
+
   if (!isValid) {
     toast.init({
       message: t('validation.errors_found'),
@@ -174,8 +184,14 @@ async function validateAndSubmit() {
   }
 
   submitting.value = true;
+
+  const sendData = { ...form.value }; // Spread-оператор
+  sendData.partner_type_id = sendData.partner_type_id.value
+
+  //console.log(sendData);
+
   try {
-    const resp = await axios.post('/api/partner-applications', form.value, {
+    const resp = await axios.post('/api/partner-applications', sendData, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     toast.init({
@@ -201,10 +217,9 @@ onMounted(async () => {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     apiData.value = response.data;
-    console.log('API Data Loaded:', apiData.value);
   } catch (err) {
     error.value = err.response ? err.response.data : err.message;
-    console.error('Error loading API data:', error.value);
   }
 });
+
 </script>
