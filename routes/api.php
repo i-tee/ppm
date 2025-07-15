@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 //use App\Http\Controllers\MailController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\PartnersSettingController;
+use App\Http\Controllers\PartnerApplicationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -20,6 +21,8 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/user/change-password', [AuthController::class, 'changePassword']);
+
+    Route::post('/partner-applications', [PartnerApplicationController::class, 'store']);
 
     Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
 

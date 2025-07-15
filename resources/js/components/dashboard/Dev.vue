@@ -17,6 +17,7 @@ import axios from 'axios';
 export default {
     name: 'Dev',
     setup() {
+        
         const apiData = ref(null);
         const error = ref(null);
         const authStore = useAuthStore();

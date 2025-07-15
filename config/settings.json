@@ -16,7 +16,7 @@
 			"id": 3,
 			"name": "wholesale",
 			"description": "wholesale_desc",
-			"active": false
+			"active": true
 		},
 		{
 			"id": 4,
@@ -30,7 +30,7 @@
 			"id": 1,
 			"name": "individual",
 			"description": "individual_desc",
-			"active": false
+			"active": true
 		},
 		{
 			"id": 2,
@@ -48,7 +48,7 @@
 			"id": 4,
 			"name": "company",
 			"description": "company_desc",
-			"active": false
+			"active": true
 		}
 	],
 	"access_levels": [

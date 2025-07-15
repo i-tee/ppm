@@ -50,11 +50,11 @@ class PartnerApplication extends Model
     public function getStatusNameAttribute(): string
     {
         return match ($this->status_id) {
-            0 => 'Новая',
-            1 => 'В обработке',
-            2 => 'Принята',
-            3 => 'Отклонена',
-            default => 'Неизвестно',
+            0 => 'new',
+            1 => 'in_progress',
+            2 => 'accepted',
+            3 => 'rejected',
+            default => 'unknown',
         };
     }
 }
