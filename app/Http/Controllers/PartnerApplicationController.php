@@ -18,8 +18,19 @@ class PartnerApplicationController extends Controller
             'company_name' => 'nullable|string|max:255',
             'experience' => 'nullable|string',
             'comment' => 'nullable|string',
+            'city' => 'nullable|string|max:255',
+            'links' => 'nullable|array',
+            'links.*' => 'nullable|string',
             // status_id не валидируем, чтобы задавать его серверной логикой
         ]);
+
+        // Очистка и подготовка links
+        if (isset($validated['links'])) {
+            $validated['links'] = array_values(array_filter($validated['links']));
+            if (empty($validated['links'])) {
+                $validated['links'] = null; // Для NULL вместо пустого массива
+            }
+        }
 
         // Автоматически устанавливаем:
         // - user_id (текущий авторизованный пользователь)

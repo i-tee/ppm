@@ -18,6 +18,12 @@ class PartnerApplication extends Model
         'company_name',
         'experience',
         'comment',
+        'city',
+        'links'
+    ];
+
+    protected $casts = [
+        'links' => 'array', // Автоматическое преобразование JSON ↔ array
     ];
 
     // Автор заявки
