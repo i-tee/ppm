@@ -209,7 +209,7 @@
     "phone": "Телефон",
     "city": "Город",
     "link": "Ссылка",
-    "links_prehead": "Можно оставить ссылки на Ваши соцсети, профили, группы и другие ресурсы",
+    "links_prehead": "Ссылки на соцсети, сайты, профили, группы и другие ресурсы",
     "add_link": "Добавить ссылку",
     "email": "Email",
     "company_name": "Компания",
@@ -258,5 +258,11 @@
     "in_progress": "Рассматривается",
     "accepted": "Принято",
     "rejected": "Отклонено"
+  },
+  "filters": {
+    "all": "Показать все",
+    "any_cooperation": "any_cooperation",
+    "any_partner": "any_partner",
+    "any_status": "any_status"
   }
 }

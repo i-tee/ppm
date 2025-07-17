@@ -1,22 +1,29 @@
 <template>
   <template v-if="isAdmin">
     <div>
-      <h2>{{ $t('partnerApplications.title') }}</h2>
+      <p class="va-h4 my-4">{{ $t('partnerApplications.title') }}</p>
 
       <!-- Фильтры -->
       <div class="filters mb-4 flex gap-4">
         <VaSelect v-model="filters.status_id" :options="statusOptions" :label="$t('partnerApplications.status')" />
-        <VaSelect v-model="filters.cooperation_type_id" :options="cooperationTypeOptions" :label="$t('partnerApplications.cooperation_type')" />
-        <VaSelect v-model="filters.partner_type_id" :options="partnerTypeOptions" :label="$t('partnerApplications.partner_type')" />
+        <VaSelect v-model="filters.cooperation_type_id" :options="cooperationTypeOptions"
+          :label="$t('partnerApplications.cooperation_type')" />
+        <VaSelect v-model="filters.partner_type_id" :options="partnerTypeOptions"
+          :label="$t('partnerApplications.partner_type')" />
       </div>
 
-      <!-- Таблица -->
-      <VaDataTable :items="applications" :columns="columns" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :per-page="perPage" :current-page="currentPage" @sorted="fetchApplications" @page-selected="fetchApplications">
-        <template #cell(actions)="slotProps">
-          <VaButton flat small @click="editApplication(slotProps.item)">{{ $t('actions.edit') }}</VaButton>
-          <VaButton flat small color="danger" @click="deleteApplication(slotProps.item.id)">{{ $t('actions.delete') }}</VaButton>
-        </template>
-      </VaDataTable>
+      <VaCard>
+        <!-- Таблица -->
+        <VaDataTable :items="applications" :columns="columns" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc"
+          :per-page="perPage" :current-page="currentPage" @sorted="fetchApplications"
+          @page-selected="fetchApplications">
+          <template #cell(actions)="slotProps">
+            <VaButton flat small @click="editApplication(slotProps.item)">{{ $t('actions.edit') }}</VaButton>
+            <VaButton flat small color="danger" @click="deleteApplication(slotProps.item.id)">{{ $t('actions.delete') }}
+            </VaButton>
+          </template>
+        </VaDataTable>
+      </VaCard>
 
       <!-- Пагинация -->
       <VaPagination v-model="currentPage" :pages="totalPages" class="mt-4" />
@@ -29,13 +36,16 @@
         <VaForm ref="formRef" class="p-4 space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <VaInput v-model="form.full_name" :label="$t('form.full_name')" :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+              <VaInput v-model="form.full_name" :label="$t('form.full_name')"
+                :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
             </div>
             <div>
-              <VaInput v-model="form.email" :label="$t('form.email')" type="email" :rules="[(v) => !v || /.+@.+\..+/.test(v) || $t('validation.email')]" class="w-full" />
+              <VaInput v-model="form.email" :label="$t('form.email')" type="email"
+                :rules="[(v) => !v || /.+@.+\..+/.test(v) || $t('validation.email')]" class="w-full" />
             </div>
             <div>
-              <VaInput v-model="form.phone" type="tel" :label="$t('form.phone')" :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+              <VaInput v-model="form.phone" type="tel" :label="$t('form.phone')"
+                :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
             </div>
             <div>
               <VaInput v-model="form.city" :label="$t('form.city')" class="w-full" />
@@ -43,29 +53,38 @@
             <div class="col-span-1 md:col-span-2 border-2 border-gray-200 p-6 rounded-lg my-2">
               <p class="mb-4">{{ $t('form.links_prehead') }}</p>
               <div v-for="(link, index) in form.links" :key="index" class="mb-2 flex items-end">
-                <VaInput v-model="form.links[index]" :label="$t('form.link') + ' #' + (index + 1)" type="url" class="flex-grow" />
-                <VaButton @click="removeLink(index)" color="danger" icon="close" class="ml-2 !w-8 !h-8 !min-w-8 !min-h-8 !p-0 flex-shrink-0" preset="plain" />
+                <VaInput v-model="form.links[index]" :label="$t('form.link') + ' #' + (index + 1)" type="url"
+                  class="flex-grow" />
+                <VaButton @click="removeLink(index)" color="danger" icon="close"
+                  class="ml-2 !w-8 !h-8 !min-w-8 !min-h-8 !p-0 flex-shrink-0" preset="plain" />
               </div>
               <VaButton @click="addLink" color="secondary" size="small">{{ $t('form.add_link') }}</VaButton>
             </div>
             <div>
-              <VaSelect v-model="form.partner_type_id" :label="$t('business_form')" :options="partnerTypeOptions" :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+              <VaSelect v-model="form.partner_type_id" :label="$t('business_form')" :options="partnerTypeOptions"
+                :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
             </div>
             <div>
               <VaInput v-model="form.experience" :label="$t('form.experience')" class="w-full" />
             </div>
             <div class="col-span-1 md:col-span-2 border-2 border-gray-200 p-6 rounded-md my-2">
-              <VaSwitch v-model="isCompanyEnabled" :label="$t('partners.affiliation')" @update:modelValue="toggleCompanyInput" class="mb-2" />
-              <VaInput v-model="form.company_name" :label="$t('form.company_name')" :disabled="!isCompanyEnabled" class="w-full transition-opacity duration-300 bg-white-50" :class="{ 'opacity-50': !isCompanyEnabled }" />
+              <VaSwitch v-model="isCompanyEnabled" :label="$t('partners.affiliation')"
+                @update:modelValue="toggleCompanyInput" class="mb-2" />
+              <VaInput v-model="form.company_name" :label="$t('form.company_name')" :disabled="!isCompanyEnabled"
+                class="w-full transition-opacity duration-300 bg-white-50"
+                :class="{ 'opacity-50': !isCompanyEnabled }" />
             </div>
             <div class="col-span-1 md:col-span-2">
               <VaTextarea v-model="form.comment" :label="$t('form.comment')" rows="3" class="w-full" />
             </div>
             <div>
-              <VaSelect v-model="form.cooperation_type_id" :options="cooperationTypeOptions" :label="$t('partnerApplications.cooperation_type')" :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+              <VaSelect v-model="form.cooperation_type_id" :options="cooperationTypeOptions"
+                :label="$t('partnerApplications.cooperation_type')" :rules="[(v) => !!v || $t('validation.required')]"
+                class="w-full" />
             </div>
             <div>
-              <VaSelect v-model="form.status_id" :options="statusOptions" :label="$t('partnerApplications.status')" :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+              <VaSelect v-model="form.status_id" :options="statusOptions" :label="$t('partnerApplications.status')"
+                :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
             </div>
           </div>
         </VaForm>
