@@ -242,6 +242,8 @@
     "full_name": "ФИО",
     "phone": "Телефон",
     "email": "Email",
+    "created_at": "Создано",
+    "updated_at": "Обновлено",
     "status": "Статус",
     "create": "Создать заявку",
     "cooperation_type": "Тип сотрудничества",
@@ -250,5 +252,11 @@
     "city": "Город",
     "experience": "Опыт",
     "comment": "Комментарий"
+  },
+  "status": {
+    "new": "Новая",
+    "in_progress": "Рассматривается",
+    "accepted": "Принято",
+    "rejected": "Отклонено"
   }
 }
