@@ -1,7 +1,9 @@
 {
   "errors": {
     "no_access": "У вас нет доступа к этому разделу",
-    "submit_error": "Ошибка при отправке заявки"
+    "submit_error": "Ошибка при отправке заявки",
+    "fetch_failed": "Не удалось загрузить данные",
+    "save_failed": "Не удалось сохранить данные"
   },
   "page_not_found": "Страница не найдена",
   "page_not_found_description": "Извините, запрошенная страница не существует.",
@@ -43,6 +45,9 @@
   },
   "vuestic": {
     "close": "Закрыть",
+    "sortColumnBy": "Сортировать по",
+    "goToSpecificPage": "Перейти на страницу",
+    "pagination": "Разбиение по страницам",
     "select": "Выберите значение",
     "noOptions": "Нет доступных опций",
     "removeFile": "Удалить файл",
@@ -217,8 +222,33 @@
     "email": "Некорректный email"
   },
   "success": {
-    "application_submitted": "Заявка успешно отправлена"
+    "application_submitted": "Заявка успешно отправлена",
+    "saved": "Данные успешно сохранены",
+    "deleted": "Заявка успешно удалена"
+  },
+  "confirm": {
+    "delete": "Вы уверены, что хотите удалить эту заявку?"
+  },
+  "actions": {
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "title": "Действия",
+    "save": "Сохранить"
   },
   "business_form": "Форма ведения деятельности",
-  "loading_data": "Загрузка данных..."
+  "loading_data": "Загрузка данных...",
+  "partnerApplications": {
+    "title": "Заявки на сотрудничество",
+    "full_name": "ФИО",
+    "phone": "Телефон",
+    "email": "Email",
+    "status": "Статус",
+    "create": "Создать заявку",
+    "cooperation_type": "Тип сотрудничества",
+    "partner_type": "Тип партнера",
+    "company_name": "Название компании",
+    "city": "Город",
+    "experience": "Опыт",
+    "comment": "Комментарий"
+  }
 }

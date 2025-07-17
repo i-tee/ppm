@@ -23,6 +23,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/change-password', [AuthController::class, 'changePassword']);
 
     Route::post('/partner-applications', [PartnerApplicationController::class, 'store']);
+    Route::get('/partner-applications', [PartnerApplicationController::class, 'index']);
+    Route::get('/partner-applications/{id}', [PartnerApplicationController::class, 'show']);
+    Route::put('/partner-applications/{id}', [PartnerApplicationController::class, 'update']);
+    Route::delete('/partner-applications/{id}', [PartnerApplicationController::class, 'destroy']);
 
     Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
 

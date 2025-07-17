@@ -7,6 +7,39 @@ use App\Models\PartnerApplication;
 
 class PartnerApplicationController extends Controller
 {
+    public function index(Request $request)
+    {
+        $query = PartnerApplication::query();
+
+        // Фильтры
+        if ($request->has('status_id')) {
+            $query->where('status_id', $request->status_id);
+        }
+        if ($request->has('cooperation_type_id')) {
+            $query->where('cooperation_type_id', $request->cooperation_type_id);
+        }
+        if ($request->has('partner_type_id')) {
+            $query->where('partner_type_id', $request->partner_type_id);
+        }
+
+        // Сортировка
+        if ($request->has('sort_by')) {
+            $query->orderBy($request->sort_by, $request->sort_direction ?? 'asc');
+        }
+
+        // Пагинация
+        $perPage = $request->per_page ?? 15;
+        $applications = $query->paginate($perPage);
+
+        return response()->json($applications);
+    }
+
+    public function show($id)
+    {
+        $application = PartnerApplication::findOrFail($id);
+        return response()->json($application);
+    }
+
     public function store(Request $req)
     {
         $validated = $req->validate([
@@ -21,30 +54,69 @@ class PartnerApplicationController extends Controller
             'city' => 'nullable|string|max:255',
             'links' => 'nullable|array',
             'links.*' => 'nullable|string',
-            // status_id не валидируем, чтобы задавать его серверной логикой
         ]);
 
-        // Очистка и подготовка links
         if (isset($validated['links'])) {
             $validated['links'] = array_values(array_filter($validated['links']));
             if (empty($validated['links'])) {
-                $validated['links'] = null; // Для NULL вместо пустого массива
+                $validated['links'] = null;
             }
         }
 
-        // Автоматически устанавливаем:
-        // - user_id (текущий авторизованный пользователь)
-        // - status_id = 0 (новый) если не указан
         $data = array_merge($validated, [
             'user_id' => $req->user()->id,
-            'status_id' => $req->input('status_id', 0), // По умолчанию "new"
+            'status_id' => $req->input('status_id', 0),
         ]);
 
         $app = PartnerApplication::create($data);
 
         return response()->json([
             'message' => 'Application submitted successfully',
-            'data' => $app->load('user') // Опционально: загружаем связанного пользователя
+            'data' => $app->load('user')
         ], 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $application = PartnerApplication::findOrFail($id);
+
+        $validated = $request->validate([
+            'full_name' => 'sometimes|string|max:255',
+            'phone' => 'sometimes|string|max:20',
+            'email' => 'sometimes|email|max:255',
+            'cooperation_type_id' => 'sometimes|integer',
+            'partner_type_id' => 'sometimes|integer',
+            'status_id' => 'sometimes|integer',
+            'company_name' => 'sometimes|string|max:255',
+            'experience' => 'sometimes|string',
+            'comment' => 'sometimes|string',
+            'city' => 'sometimes|string|max:255',
+            'links' => 'sometimes|array',
+            'links.*' => 'sometimes|string',
+        ]);
+
+        if (isset($validated['links'])) {
+            $validated['links'] = array_values(array_filter($validated['links']));
+            if (empty($validated['links'])) {
+                $validated['links'] = null;
+            }
+        }
+
+        $application->update($validated);
+
+        return response()->json([
+            'message' => 'Application updated successfully',
+            'data' => $application
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $application = PartnerApplication::findOrFail($id);
+        $application->delete();
+
+        return response()->json([
+            'message' => 'Application deleted successfully'
+        ]);
     }
 }
