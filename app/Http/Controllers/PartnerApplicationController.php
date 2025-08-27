@@ -83,21 +83,26 @@ class PartnerApplicationController extends Controller
         $validated = $request->validate([
             'full_name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
-            'email' => 'sometimes|email|max:255',
+            'email' => 'sometimes|nullable|email|max:255',
             'cooperation_type_id' => 'sometimes|integer',
-            'partner_type_id' => 'sometimes|integer',
+            'partner_type_id' => 'sometimes|nullable|integer',
             'status_id' => 'sometimes|integer',
-            'company_name' => 'sometimes|string|max:255',
-            'experience' => 'sometimes|string',
-            'comment' => 'sometimes|string',
-            'city' => 'sometimes|string|max:255',
-            'links' => 'sometimes|array',
-            'links.*' => 'sometimes|string',
+            'company_name' => 'sometimes|nullable|string|max:255',
+            'experience' => 'sometimes|nullable|string',
+            'comment' => 'sometimes|nullable|string',
+            'city' => 'sometimes|nullable|string|max:255',
+            'links' => 'sometimes|nullable|array',
+            'links.*' => 'sometimes|nullable|string',
         ]);
 
-        if (isset($validated['links'])) {
-            $validated['links'] = array_values(array_filter($validated['links']));
-            if (empty($validated['links'])) {
+        // Очистка ссылок
+        if (array_key_exists('links', $validated)) {
+            if (is_array($validated['links'])) {
+                $validated['links'] = array_values(array_filter($validated['links']));
+                if (empty($validated['links'])) {
+                    $validated['links'] = null;
+                }
+            } else {
                 $validated['links'] = null;
             }
         }

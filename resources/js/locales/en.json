@@ -9,6 +9,7 @@
   "password": "Password",
   "register": "Register",
   "language": "Language",
+  "delete": "Delete",
   "confirm_password": "Confirm Password",
   "register_description": "Create an account to get started",
   "name": "Name",

@@ -4,33 +4,54 @@
       <p class="va-h4 my-4">{{ $t('partnerApplications.title') }}</p>
 
       <!-- Фильтры -->
-      <div class="filters mb-4 flex gap-4">
+      <div class="filters mb-4 flex gap-4 flex-wrap items-end">
         <VaSelect v-model="filters.status_id" :options="statusOptions" :label="$t('partnerApplications.status')" />
+
         <VaSelect v-model="filters.cooperation_type_id" :options="cooperationTypeOptions"
           :label="$t('partnerApplications.cooperation_type')" />
+
         <VaSelect v-model="filters.partner_type_id" :options="partnerTypeOptions"
           :label="$t('partnerApplications.partner_type')" />
       </div>
 
       <VaCard>
-        <!-- Таблица -->
         <VaDataTable :items="applications" :columns="columns">
-          <!-- КНОПКИ ДЛЯ КАЖДОЙ СТРОКИ -->
+          <!-- СЛОТ ДЛЯ status_name -->
+          <template #cell(status_name)="slotProps">
+            {{ getStatusText[slotProps.rowData.status_id] || slotProps.rowData.status_id }}
+          </template>
+
+          <!-- СЛОТ ДЛЯ partner_type_name -->
+          <template #cell(partner_type_name)="slotProps">
+            {{ getPartnerTypeText[slotProps.rowData.partner_type_id] || slotProps.rowData.partner_type_id }}
+          </template>
+
+          <!-- СЛОТ ДЛЯ cooperation_type_name -->
+          <template #cell(cooperation_type_name)="slotProps">
+            {{ getCooperationTypeText[slotProps.rowData.cooperation_type_id] || slotProps.rowData.cooperation_type_id }}
+          </template>
+
+          <!-- СЛОТ ДЛЯ created_at -->
+          <!-- <template #cell(created_at)="slotProps">
+            {{ formatDate(slotProps.rowData.created_at) }}
+          </template> -->
+
+          <!-- СЛОТ ДЛЯ updated_at -->
+          <!-- <template #cell(updated_at)="slotProps">
+            {{ formatDate(slotProps.rowData.updated_at) }}
+          </template> -->
+
+          <!-- СЛОТ ДЛЯ actions (кнопки) -->
           <template #cell(actions)="slotProps">
-            <!-- РЕДАКТИРОВАНИЕ -->
             <VaButton flat small @click="editApplication(slotProps.row)">
               <va-icon name="edit" />
-            </VaButton>
-            <!-- УДАЛЕНИЕ -->
-            <VaButton flat small color="danger" @click="deleteApplication(slotProps.row.rowData.id || slotProps.row.itemKey.id)">
-              <va-icon name="delete" />
             </VaButton>
           </template>
         </VaDataTable>
       </VaCard>
 
       <!-- Пагинация -->
-      <VaPagination v-model="currentPage" :pages="totalPages" class="mt-4" />
+      <VaPagination v-model="currentPage" :pages="totalPages" class="mt-4" @update:model-value="fetchApplications" />
 
       <!-- Кнопка для создания -->
       <VaButton @click="openCreateModal" class="mt-4">{{ $t('partnerApplications.create') }}</VaButton>
@@ -94,8 +115,10 @@
         </VaForm>
         <template #footer>
           <div class="flex justify-end space-x-4">
+            <VaButton v-if="form.id" @click="deleteApplication(form.id), showModal = false" color="secondary"
+              preset="plain">{{ $t('delete') }}</VaButton>
             <VaButton @click="showModal = false" color="secondary">{{ $t('modal.cancel') }}</VaButton>
-            <VaButton @click="saveApplication" color="primary">{{ $t('modal.submit') }}</VaButton>
+            <VaButton @click="saveApplication" color="primary">{{ $t('partnerApplications.save') }}</VaButton>
           </div>
         </template>
       </VaModal>
@@ -169,15 +192,50 @@ const cooperationTypeOptions = ref([]);
 const partnerTypeOptions = ref([]);
 const apiData = ref(null);
 
+// Вычисляемые свойства для получения текстовых значений по ID
+const getStatusText = computed(() => {
+  const map = {};
+  statusOptions.value.forEach(opt => {
+    map[opt.value] = opt.text;
+  });
+  return map;
+});
+
+const getPartnerTypeText = computed(() => {
+  const map = {};
+  partnerTypeOptions.value.forEach(opt => {
+    map[opt.value] = opt.text;
+  });
+  return map;
+});
+
+const getCooperationTypeText = computed(() => {
+  const map = {};
+  cooperationTypeOptions.value.forEach(opt => {
+    map[opt.value] = opt.text;
+  });
+  return map;
+});
+
+import { watch } from 'vue';
+
+watch(filters, () => {
+  currentPage.value = 1;
+  fetchApplications();
+}, { deep: true });
+
 const columns = [
-  { key: 'id', label: 'ID', sortable: true },
+  // { key: 'id', label: 'ID', sortable: true },
   { key: 'full_name', label: t('partnerApplications.full_name'), sortable: true },
-  { key: 'phone', label: t('partnerApplications.phone'), sortable: true },
-  { key: 'email', label: t('partnerApplications.email'), sortable: true },
-  { key: 'status_name', label: t('partnerApplications.status'), sortable: true },
+  { key: 'city', label: t('partnerApplications.city'), sortable: true },
+  // { key: 'phone', label: t('partnerApplications.phone'), sortable: true },
+  // { key: 'email', label: t('partnerApplications.email'), sortable: true },
+  { key: 'cooperation_type_name', label: t('partnerApplications.cooperation_type'), sortable: false }, // Новая колонка
+  { key: 'partner_type_name', label: t('partnerApplications.partner_type'), sortable: false }, // Новая колонка
+  // { key: 'status_name', label: t('partnerApplications.status'), sortable: false }, // Новая колонка
   { key: 'comment', label: t('partnerApplications.comment'), sortable: true },
-  { key: 'created_at', label: t('partnerApplications.created_at'), sortable: true },
-  { key: 'updated_at', label: t('partnerApplications.updated_at'), sortable: true },
+  // { key: 'created_at', label: t('partnerApplications.created_at'), sortable: true },
+  // { key: 'updated_at', label: t('partnerApplications.updated_at'), sortable: true },
   { key: 'actions', label: t('actions.title') },
 ];
 
@@ -196,6 +254,16 @@ const fetchApplications = async () => {
   } catch (error) {
     toast.init({ message: t('errors.fetch_failed'), color: 'danger' });
   }
+};
+
+const resetFilters = () => {
+  filters.value = {
+    status_id: null,
+    cooperation_type_id: null,
+    partner_type_id: null,
+  };
+  // currentPage.value = 1; // Это уже делает watch(filters)
+  // fetchApplications();   // Это тоже уже делает watch(filters)
 };
 
 const openCreateModal = () => {
@@ -260,7 +328,12 @@ const saveApplication = async () => {
     console.log('Отправляемые данные:', sendData); // Логируем перед отправкой
 
     // Проверка на null для обязательных полей
-    if (!sendData.full_name || !sendData.phone || !sendData.email || !sendData.cooperation_type_id || !sendData.partner_type_id || !sendData.status_id) {
+    if (!sendData.full_name ||
+      !sendData.phone ||
+      !sendData.email ||
+      sendData.cooperation_type_id == null ||
+      sendData.partner_type_id == null ||
+      sendData.status_id == null) {
       toast.init({ message: t('validation.errors_found'), color: 'danger' });
       return;
     }
@@ -275,7 +348,7 @@ const saveApplication = async () => {
     fetchApplications();
     toast.init({ message: t('success.saved'), color: 'success' });
   } catch (error) {
-    console.error('Ошибка:', error.response ? error.response.data : error.message); // Логируем детали ошибки
+    console.error('Ошибка иши:', error.response ? error.response.data : error.message); // Логируем детали ошибки
     toast.init({ message: error.response?.data?.message || t('errors.save_failed'), color: 'danger' });
   }
 };
@@ -308,6 +381,26 @@ function toggleCompanyInput(value) {
   if (!value) form.value.company_name = '';
 }
 
+// Функция форматирования даты без библиотек
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+
+  try {
+    const date = new Date(dateString);
+
+    // Получаем компоненты даты
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы с 0
+    const year = date.getFullYear();
+
+    return `${hours}:${minutes} ${day}.${month}.${year}`;
+  } catch (e) {
+    return dateString; // если ошибка — вернём как есть
+  }
+};
+
 onMounted(async () => {
   if (isAdmin.value) {
     try {
@@ -316,12 +409,19 @@ onMounted(async () => {
       });
       apiData.value = response.data;
 
+      // 1. Заполняем statusOptions
       statusOptions.value = [
         { value: 0, text: t('status.new') },
         { value: 1, text: t('status.in_progress') },
         { value: 2, text: t('status.accepted') },
         { value: 3, text: t('status.rejected') },
       ];
+
+      if (statusOptions.value.length > 0) {
+        // filters.value.status_id = statusOptions.value[0].value; // Было (число)
+        filters.value.status_id = statusOptions.value[0]; // Стало (объект)
+      }
+      // -------------------------------------------------------
 
       cooperationTypeOptions.value = apiData.value.cooperation_types.map(type => ({
         value: type.id,
@@ -333,7 +433,7 @@ onMounted(async () => {
         text: t(`partners.partner_types.${type.name}`)
       }));
 
-      // Инициализируем fetch после загрузки опций
+      // 2. Загружаем данные с установленным фильтром
       await fetchApplications();
     } catch (err) {
       toast.init({ message: t('errors.fetch_failed'), color: 'danger' });
