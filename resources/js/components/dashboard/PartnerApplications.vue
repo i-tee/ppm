@@ -14,12 +14,16 @@
 
       <VaCard>
         <!-- Таблица -->
-        <VaDataTable :items="applications" :columns="columns" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc"
-          :per-page="perPage" :current-page="currentPage" @sorted="fetchApplications"
-          @page-selected="fetchApplications">
+        <VaDataTable :items="applications" :columns="columns">
+          <!-- КНОПКИ ДЛЯ КАЖДОЙ СТРОКИ -->
           <template #cell(actions)="slotProps">
-            <VaButton flat small @click="editApplication(slotProps.item)">{{ $t('actions.edit') }}</VaButton>
-            <VaButton flat small color="danger" @click="deleteApplication(slotProps.item.id)">{{ $t('actions.delete') }}
+            <!-- РЕДАКТИРОВАНИЕ -->
+            <VaButton flat small @click="editApplication(slotProps.row)">
+              <va-icon name="edit" />
+            </VaButton>
+            <!-- УДАЛЕНИЕ -->
+            <VaButton flat small color="danger" @click="deleteApplication(slotProps.row.rowData.id || slotProps.row.itemKey.id)">
+              <va-icon name="delete" />
             </VaButton>
           </template>
         </VaDataTable>
@@ -97,11 +101,13 @@
       </VaModal>
     </div>
   </template>
+
   <template v-else>
     <VaAlert color="danger" class="mt-4">
       {{ $t('errors.no_access') }}
     </VaAlert>
   </template>
+
 </template>
 
 <script setup>
@@ -213,14 +219,31 @@ const openCreateModal = () => {
 };
 
 const editApplication = (application) => {
+  // application — это slotProps.row
+  const item = application.itemKey || application.rowData;
+
+  if (!item) {
+    toast.init({ message: t('errors.invalid_application'), color: 'danger' });
+    return;
+  }
+
+  console.log('slotProps.row:', application);
+
+  // Находим соответствующие объекты для select'ов
+  const cooperationType = cooperationTypeOptions.value.find(opt => opt.value === item.cooperation_type_id);
+  const partnerType = partnerTypeOptions.value.find(opt => opt.value === item.partner_type_id);
+  const status = statusOptions.value.find(opt => opt.value === item.status_id);
+
+  // Заполняем форму
   form.value = {
-    ...application,
-    links: application.links ? [...application.links] : [],
-    cooperation_type_id: application.cooperation_type_id,
-    partner_type_id: application.partner_type_id,
-    status_id: application.status_id
+    ...item,
+    links: Array.isArray(item.links) ? [...item.links] : [],
+    cooperation_type_id: cooperationType || null,
+    partner_type_id: partnerType || null,
+    status_id: status || null,
   };
-  isCompanyEnabled.value = !!application.company_name;
+
+  isCompanyEnabled.value = !!item.company_name;
   modalTitle.value = t('partnerApplications.edit');
   showModal.value = true;
 };
@@ -259,6 +282,9 @@ const saveApplication = async () => {
 
 const deleteApplication = async (id) => {
   if (confirm(t('confirm.delete'))) {
+
+    console.log(id);
+
     try {
       await axios.delete(`/api/partner-applications/${id}`);
       fetchApplications();
