@@ -20,6 +20,14 @@
                     {{ $t('partners.apply') }}
                   </VaButton>
                 </div>
+                <div>
+                  <p>Тесты</p>
+                  <div>
+                    {{ type.id }}
+                  </div>
+                  <p v-if="hasApplication(0, type.id) || hasApplication(1, type.id)">Заявка подана</p>
+                  <p v-else>Заявка не подана</p>
+                </div>
               </VaCard>
             </div>
           </div>
@@ -117,10 +125,28 @@
 
 <script setup>
 import { useAuthStore } from '@/stores/auth';
+import { usePartnerApplications } from '@/composables/usePartnerApplications';
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useToast } from 'vuestic-ui';
+
+// Подключаем composable
+const {
+  hasAnyApplications,
+  applicationsCount,
+  partnerApplications,
+  responsibleApplications,
+  hasActiveApplications,
+  hasApplication,
+  getApplication,
+  hasApplicationsWithStatus
+} = usePartnerApplications();
+
+console.log('hasAnyApplications:', hasAnyApplications.value);
+console.log('applicationsCount:', applicationsCount.value);
+console.log('partnerApplications:', partnerApplications.value);
+console.log('hasActiveApplications:', hasActiveApplications.value);
 
 const { t } = useI18n();
 const toast = useToast();

@@ -66,9 +66,19 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out']);
     }
 
+    // public function user(Request $request)
+    // {
+    //     return response()->json($request->user()->load('accessLevels'));
+    // }
+
     public function user(Request $request)
     {
-        return response()->json($request->user()->load('accessLevels'));
+        $user = $request->user();
+
+        // Загружаем отношения
+        $user->load(['accessLevels', 'partnerApplications', 'responsibleApplications']);
+
+        return response()->json($user);
     }
 
 
