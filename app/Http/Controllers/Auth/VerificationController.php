@@ -27,12 +27,15 @@ class VerificationController extends Controller
             event(new Verified($user));
         }
 
+        // Отправка уведомления об успешной верификации
+        $user->sendVerificationCompleteNotification();
+
         // Обновляем пользователя и возвращаем успешный ответ с редиректом
         $user->refresh();
         return response()->json([
             'data' => $data,
             'user' => $user,
-        ], 303)->header('Location', '/dashboard/profile'); // 303 See Other для редиректа
+        ], 303)->header('Location', '/dashboard/types');
     }
 
     public function resend(Request $request)

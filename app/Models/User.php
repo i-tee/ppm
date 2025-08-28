@@ -8,6 +8,9 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\VerifyComplateNotification;
+use App\Notifications\EmailVerificationNotification;
+use App\Notifications\ResetPasswordNotification;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
 
@@ -117,5 +120,20 @@ class User extends Authenticatable implements MustVerifyEmail
 
         // Для локальных файлов
         return asset('storage/' . ltrim($this->avatar, '/'));
+    }
+
+    public function sendVerificationCompleteNotification()
+    {
+        $this->notify(new VerifyComplateNotification());
+    }
+
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new EmailVerificationNotification());
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }
