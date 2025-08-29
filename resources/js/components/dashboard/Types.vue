@@ -36,6 +36,14 @@
                     </div>
                   </div>
 
+                  <div v-else-if="hasApplication(3, type.id)" class="row">
+                    <div class="col">
+                      <VaButton color="warning" class="w-40" @click="iAlert($t('partners.rejected_alert'))">
+                        {{ $t('partners.rejected') }}
+                      </VaButton>
+                    </div>
+                  </div>
+
                   <div v-else class="row">
                     <div class="col">
                       <VaButton :disabled="!type.active" color="primary" class="w-40" @click="openDialog(type)">

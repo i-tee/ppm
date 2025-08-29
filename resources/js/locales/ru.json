@@ -142,6 +142,8 @@
     "apply": "Подать заявку",
     "actived_alert": "Заявка одобрена",
     "actived": "Активно",
+    "rejected": "Отклонено",
+    "rejected_alert": "Заявка отклонена, обратитесь в поддержку.",
     "cooperation_types": {
       "cooperation_types": "Виды сотрудничества",
       "influencer": {
