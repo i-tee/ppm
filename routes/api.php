@@ -5,9 +5,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\PartnersSettingController;
 use App\Http\Controllers\PartnerApplicationController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+
 
 //Route::get('/mail', [MailController::class, 'sendWelcomeEmail']);
 
@@ -39,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/email/resend', [VerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
         ->name('verification.resend');
+
+    Route::post('/notifications/send', [NotificationController::class, 'send']);
 });
 
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);

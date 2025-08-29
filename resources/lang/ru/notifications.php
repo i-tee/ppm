@@ -20,5 +20,11 @@ return [
         'password_reset_action'        => 'Сбросить пароль',
         'password_reset_expires'       => 'Ссылка действительна :count минут.',
         'password_reset_no_request'    => 'Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.',
+        'application_approved_subject' => 'Ваша заявка принята!',
+        'application_approved_line1' => 'Поздравляем! Ваша заявка на партнерство была **одобрена**.',
+        'application_approved_line2' => 'Теперь вы можете получить доступ к панели партнёра и начать работу.',
+        'go_to_dashboard' => 'Перейти в кабинет',
+        'regards' => 'С уважением',
+        'team' => 'команда',
     ],
 ];

@@ -19,12 +19,20 @@
 
                   <div v-if="hasApplication(0, type.id) || hasApplication(1, type.id)" class="row">
                     <div class="col">
-                      <VaButton color="secondary" disabled class="w-40" @click="VaAlert('xXx')">
+                      <VaButton color="secondary" class="w-40" @click="iAlert($t('partners.onvalidate_alert'))">
                         {{ $t('partners.onvalidate') }}
                       </VaButton>
                     </div>
                     <div class="col flex flex-col justify-center p-2">
                       <p class="text-xs text-gray-500 mt-1 text-center">{{ $t('partners.onvalidate_descr') }}</p>
+                    </div>
+                  </div>
+
+                  <div v-else-if="hasApplication(2, type.id)" class="row">
+                    <div class="col">
+                      <VaButton color="success" class="w-40" @click="iAlert($t('partners.actived_alert'))">
+                        {{ $t('partners.actived') }}
+                      </VaButton>
                     </div>
                   </div>
 
@@ -218,6 +226,13 @@ function openDialog(type) {
   form.value.cooperation_type_id = type.id;
   form.value.partner_type_id = null;
   showDialog.value = true;
+}
+
+function iAlert(message) {
+  toast.init({
+    message,
+    color: 'info',
+  });
 }
 
 function toggleCompanyInput(value) {

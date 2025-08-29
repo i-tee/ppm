@@ -138,7 +138,10 @@
     "onvalidate": "На проверке...",
     "ondevelopment": "В разработке...",
     "onvalidate_descr": "Не более двух рабочих дней",
+    "onvalidate_alert": "Уже подана заявка на этот тип сотрудничества. Пожалуйста, дождитесь её рассмотрения.",
     "apply": "Подать заявку",
+    "actived_alert": "Заявка одобрена",
+    "actived": "Активно",
     "cooperation_types": {
       "cooperation_types": "Виды сотрудничества",
       "influencer": {
