@@ -1,6 +1,7 @@
-// resources/js/composables/usePartnerApplications.js
+// @/composables/usePartnerApplications.js
 
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue'; // ✅ Импорты добавлены
+import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
 /**
@@ -9,102 +10,121 @@ import { useAuthStore } from '@/stores/auth';
 export function usePartnerApplications() {
   const authStore = useAuthStore();
 
+  // Локальное хранилище заявок (если нужно отдельно от user)
+  const applications = ref([]);
+
+  // Функция для загрузки заявок с API
+  const loadApplications = async () => {
+    try {
+      const response = await axios.get('/api/partner-applications', {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
+      });
+      applications.value = response.data;
+    } catch (e) {
+      console.error('Failed to load partner applications', e);
+    }
+  };
+
+  // Загружаем при инициализации
+  onMounted(() => {
+    loadApplications();
+  });
+
+  // === Вычисляемые свойства ===
+
   /**
-   * Проверяет, есть ли у пользователя заявка с определённым статусом и типом
-   * @param {number} statusId - ID статуса заявки
-   * @param {number} typeId - ID типа заявки
-   * @returns {boolean}
+   * Проверяет, есть ли заявка с определённым статусом и типом
+   * Использует данные из currentUser (если они есть)
    */
   const hasApplication = (statusId, typeId) => {
-    if (!authStore.currentUser?.partner_applications?.length) return false;
+    const apps = authStore.currentUser?.partner_applications;
+    if (!Array.isArray(apps)) return false;
 
-    return authStore.currentUser.partner_applications.some(app =>
+    return apps.some(app =>
       app.status_id === statusId && app.cooperation_type_id === typeId
     );
   };
 
   /**
-   * Получает конкретную заявку по статусу и типу
-   * @param {number} statusId - ID статуса заявки
-   * @param {number} typeId - ID типа заявки
-   * @returns {Object|null}
+   * Возвращает заявку по статусу и типу
    */
   const getApplication = (statusId, typeId) => {
-    if (!authStore.currentUser?.partner_applications?.length) return null;
+    const apps = authStore.currentUser?.partner_applications;
+    if (!Array.isArray(apps)) return null;
 
-    return authStore.currentUser.partner_applications.find(app =>
-      app.status_id === statusId && app.partner_type_id === typeId
-    );
+    return apps.find(app =>
+      app.status_id === statusId && app.cooperation_type_id === typeId
+    ) || null;
   };
 
   /**
-   * Проверяет, есть ли у пользователя хотя бы одна заявка
-   * @returns {boolean}
+   * Есть ли у пользователя любые заявки?
    */
   const hasAnyApplications = computed(() => {
-    return !!authStore.currentUser?.partner_applications?.length;
+    const apps = authStore.currentUser?.partner_applications;
+    return Array.isArray(apps) && apps.length > 0;
   });
 
   /**
-   * Возвращает количество заявок партнёра
-   * @returns {number}
+   * Количество заявок
    */
   const applicationsCount = computed(() => {
-    return authStore.currentUser?.partner_applications?.length || 0;
+    const apps = authStore.currentUser?.partner_applications;
+    return Array.isArray(apps) ? apps.length : 0;
   });
 
   /**
-   * Возвращает все заявки партнёра
-   * @returns {Array}
+   * Все заявки пользователя
    */
   const partnerApplications = computed(() => {
     return authStore.currentUser?.partner_applications || [];
   });
 
   /**
-   * Возвращает все заявки, за которые пользователь отвечает
-   * @returns {Array}
+   * Заявки, за которые пользователь отвечает (если есть)
    */
   const responsibleApplications = computed(() => {
     return authStore.currentUser?.responsible_applications || [];
   });
 
   /**
-   * Проверяет, есть ли у пользователя заявки с определённым статусом
-   * @param {number} statusId - ID статуса
-   * @returns {boolean}
+   * Есть ли заявки с определённым статусом?
    */
   const hasApplicationsWithStatus = (statusId) => {
-    if (!authStore.currentUser?.partner_applications?.length) return false;
+    const apps = authStore.currentUser?.partner_applications;
+    if (!Array.isArray(apps)) return false;
 
-    return authStore.currentUser.partner_applications.some(app => 
-      app.status_id === statusId
-    );
+    return apps.some(app => app.status_id === statusId);
   };
 
   /**
-   * Проверяет, есть ли у пользователя активные заявки (например, со статусом 0 или 1)
-   * @returns {boolean}
+   * Есть ли активные заявки (статус 0 или 1)?
    */
   const hasActiveApplications = computed(() => {
-    if (!authStore.currentUser?.partner_applications?.length) return false;
+    const apps = authStore.currentUser?.partner_applications;
+    if (!Array.isArray(apps)) return false;
 
-    return authStore.currentUser.partner_applications.some(app => 
-      [0, 1].includes(app.status_id)
-    );
+    return apps.some(app => [0, 1].includes(app.status_id));
   });
 
+  // === Возвращаем всё необходимое ===
   return {
-    // Методы
+    // Функции
+    loadApplications, // ✅ Чтобы можно было обновить вручную
     hasApplication,
     getApplication,
     hasApplicationsWithStatus,
-    
+
     // Вычисляемые свойства
     hasAnyApplications,
     applicationsCount,
     partnerApplications,
     responsibleApplications,
     hasActiveApplications,
+
+    // Опционально: если хочешь использовать локальный массив
+    applications,
   };
 }

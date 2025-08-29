@@ -135,6 +135,9 @@
   "partners": {
     "affiliation": "Представляю компанию, бренд, сообщество",
     "order": "Заказать",
+    "onvalidate": "На проверке...",
+    "ondevelopment": "В разработке...",
+    "onvalidate_descr": "Не более двух рабочих дней",
     "apply": "Подать заявку",
     "cooperation_types": {
       "cooperation_types": "Виды сотрудничества",

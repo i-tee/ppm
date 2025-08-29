@@ -16,17 +16,29 @@
                   <p>{{ $t('partners.cooperation_types.' + type.name + '.' + type.description) }}</p>
                 </div>
                 <div class="va-card-actions mt-4 flex justify-between">
-                  <VaButton :disabled="!type.active" color="primary" class="w-40" @click="openDialog(type)">
-                    {{ $t('partners.apply') }}
-                  </VaButton>
-                </div>
-                <div>
-                  <p>Тесты</p>
-                  <div>
-                    {{ type.id }}
+
+                  <div v-if="hasApplication(0, type.id) || hasApplication(1, type.id)" class="row">
+                    <div class="col">
+                      <VaButton color="secondary" disabled class="w-40" @click="VaAlert('xXx')">
+                        {{ $t('partners.onvalidate') }}
+                      </VaButton>
+                    </div>
+                    <div class="col flex flex-col justify-center p-2">
+                      <p class="text-xs text-gray-500 mt-1 text-center">{{ $t('partners.onvalidate_descr') }}</p>
+                    </div>
                   </div>
-                  <p v-if="hasApplication(0, type.id) || hasApplication(1, type.id)">Заявка подана</p>
-                  <p v-else>Заявка не подана</p>
+
+                  <div v-else class="row">
+                    <div class="col">
+                      <VaButton :disabled="!type.active" color="primary" class="w-40" @click="openDialog(type)">
+                        {{ $t('partners.apply') }}
+                      </VaButton>
+                    </div>
+                    <div v-if="!type.active" class="col flex flex-col justify-center p-2">
+                      <p class="text-xs text-gray-500 mt-1 text-center">{{ $t('partners.ondevelopment') }}</p>
+                    </div>
+                  </div>
+
                 </div>
               </VaCard>
             </div>
@@ -133,20 +145,21 @@ import { useToast } from 'vuestic-ui';
 
 // Подключаем composable
 const {
-  hasAnyApplications,
-  applicationsCount,
-  partnerApplications,
-  responsibleApplications,
-  hasActiveApplications,
+  // hasAnyApplications,
+  // applicationsCount,
+  // partnerApplications,
+  // responsibleApplications,
+  // hasActiveApplications,
   hasApplication,
-  getApplication,
-  hasApplicationsWithStatus
+  // getApplication,
+  loadApplications,
+  // hasApplicationsWithStatus
 } = usePartnerApplications();
 
-console.log('hasAnyApplications:', hasAnyApplications.value);
-console.log('applicationsCount:', applicationsCount.value);
-console.log('partnerApplications:', partnerApplications.value);
-console.log('hasActiveApplications:', hasActiveApplications.value);
+// console.log('hasAnyApplications:', hasAnyApplications.value);
+// console.log('applicationsCount:', applicationsCount.value);
+// console.log('partnerApplications:', partnerApplications.value);
+// console.log('hasActiveApplications:', hasActiveApplications.value);
 
 const { t } = useI18n();
 const toast = useToast();
@@ -263,7 +276,13 @@ async function validateAndSubmit() {
     });
     toast.init({ message: t('success.application_submitted'), color: 'success' });
     showDialog.value = false;
+
+    // Перезагружаем данные
+    await authStore.fetchUser();
+    await loadApplications(); // ← Обновляем заявки
+    await loadData();         // ← Обновляем типы сотрудничества
     resetForm();
+
   } catch (e) {
     console.error('Ошибка:', e.response?.data);
     toast.init({
@@ -275,7 +294,7 @@ async function validateAndSubmit() {
   }
 }
 
-onMounted(async () => {
+async function loadData() {
   try {
     const response = await axios.get('/api/ps', {
       headers: { Authorization: `Bearer ${authStore.token}` },
@@ -284,6 +303,10 @@ onMounted(async () => {
   } catch (err) {
     error.value = err.response ? err.response.data : err.message;
   }
+}
+
+onMounted(() => {
+  loadData();
 });
 
 </script>
