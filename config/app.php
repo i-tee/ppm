@@ -2,6 +2,8 @@
 
 return [
 
+    'admin_error_email' => env('ADMIN_ERROR_EMAIL', 'it@avicenna.com.ru'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name
