@@ -1,7 +1,6 @@
 <template>
   <div>
-    <p class="va-h4 my-4">{{ $t('partners.cooperation_types.cooperation_types') }}</p>
-
+    <p class="va-h4 my-4">{{ $t('dashboard.types') }}</p>
     <div>
       <div v-if="apiData">
         <div>
@@ -30,7 +29,7 @@
 
                   <div v-else-if="hasApplication(2, type.id)" class="row">
                     <div class="col">
-                      <VaButton color="success" class="w-40" @click="iAlert($t('partners.actived_alert'))">
+                      <VaButton :to="{ name: type.route }" color="success" class="w-40" @click="iAlert($t('partners.actived_alert'))">
                         {{ $t('partners.actived') }}
                       </VaButton>
                     </div>

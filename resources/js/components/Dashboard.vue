@@ -79,7 +79,7 @@ export default defineComponent({
       }
       isLoading.value = false;
 
-      console.log('Dashboard mounted, current user:', currentUser.value);
+      //console.log('Dashboard mounted, current user:', currentUser.value);
 
     });
 

@@ -1,11 +1,11 @@
 <template>
 
-  <va-sidebar-item :to="{ name: 'Overview' }" :active="$route.name === 'Overview'">
+  <!-- <va-sidebar-item :to="{ name: 'Overview' }" :active="$route.name === 'Overview'">
     <va-sidebar-item-content>
       <va-icon name="dashboard" />
       <va-sidebar-item-title>{{ $t('_dashboard') }}</va-sidebar-item-title>
     </va-sidebar-item-content>
-  </va-sidebar-item>
+  </va-sidebar-item> -->
 
   <va-sidebar-item :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive">
     <va-sidebar-item-content>
@@ -53,9 +53,9 @@
   <hr>
 
   <div v-for="type in apiData?.cooperation_types" :key="type.id">
-    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: 'Overview' }">
+    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }">
       <va-sidebar-item-content>
-        <va-icon name="work" />
+        <!-- <va-icon name="work" /> -->
         <va-sidebar-item-title>
           {{ $t('partners.cooperation_types.' + type.name + '.title') }}
         </va-sidebar-item-title>

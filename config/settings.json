@@ -3,24 +3,29 @@
 		{
 			"id": 1,
 			"name": "influencer",
+			"route": "Influencer",
 			"description": "influencer_desc",
 			"active": false
 		},
 		{
 			"id": 2,
 			"name": "agent",
+			"route": "Agent",
 			"description": "agent_desc",
+			"contract_url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
 			"active": true
 		},
 		{
 			"id": 3,
 			"name": "wholesale",
+			"route": "Wholesale",
 			"description": "wholesale_desc",
-			"active": true
+			"active": false
 		},
 		{
 			"id": 4,
 			"name": "distributor",
+			"route": "Distributor",
 			"description": "distributor_desc",
 			"active": false
 		}
@@ -68,6 +73,29 @@
 			"id": 3,
 			"name": "manager",
 			"description": "Manager has limited access to specific system features.",
+			"active": true
+		}
+	],
+	"documents": [
+		{
+			"id": 1,
+			"name": "pruvacy_policy",
+			"description": "pruvacy_policy_desc",
+			"url": "https://avicenna.com.ru/DOCS/ppm/p.pdf",
+			"active": true
+		},
+		{
+			"id": 2,
+			"name": "сontract",
+			"description": "сontract_desc",
+			"url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
+			"active": true
+		},
+		{
+			"id": 3,
+			"name": "offer",
+			"description": "offer_desc",
+			"url": "https://avicenna.com.ru/DOCS/ppm/do.pdf",
 			"active": true
 		}
 	]

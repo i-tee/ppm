@@ -5,6 +5,10 @@ import Dashboard from './components/Dashboard.vue';
 import Overview from './components/dashboard/Overview.vue';
 import Promocodes from './components/dashboard/Promocodes.vue';
 import Dev from './components/dashboard/Dev.vue';
+import Influencer from './components/dashboard/Influencer.vue';
+import Agent from './components/dashboard/Agent.vue';
+import Wholesale from './components/dashboard/Wholesale.vue';
+import Distributor from './components/dashboard/Distributor.vue';
 import PartnerApplications from './components/dashboard/PartnerApplications.vue';
 import Types from './components/dashboard/Types.vue';
 import ReferralLinks from './components/dashboard/ReferralLinks.vue';
@@ -53,6 +57,26 @@ const routes = [
         component: Promocodes,
       },
       {
+        path: 'influencer',
+        name: 'Influencer',
+        component: Influencer,
+      },
+            {
+        path: 'agent',
+        name: 'Agent',
+        component: Agent,
+      },
+            {
+        path: 'wholesale',
+        name: 'Wholesale',
+        component: Wholesale,
+      },
+            {
+        path: 'distributor',
+        name: 'Distributor',
+        component: Distributor,
+      },
+            {
         path: 'dev',
         name: 'Dev',
         component: Dev,
