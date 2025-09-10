@@ -148,5 +148,6 @@ class SocialAuthController extends Controller
 
         // Перенаправляем на страницу приветствия
         return redirect()->to('/welcome?token=' . urlencode($token) . '&email=' . urlencode($socialUser['email']) . '&email_verified=1');
+        
     }
 }

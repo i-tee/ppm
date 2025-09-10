@@ -1,7 +1,7 @@
 <template>
   <div>
-    <p class="va-h4 my-4">{{ $t('dashboard.types') }}</p>
-    <div>
+    <p class="va-h4 my-1">{{ $t('dashboard.types') }}</p>
+    <div class="my-3">
       <div v-if="apiData">
         <div>
           <div v-if="apiData.cooperation_types && apiData.cooperation_types.length"

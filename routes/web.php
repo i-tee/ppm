@@ -13,6 +13,7 @@ Route::post('/auth/social/authenticate', [SocialAuthController::class, 'authenti
 Route::get('/auth', function () {
     if (session()->has('social_user')) {
         return view('auth');
+        //return redirect('/dashboard/account');
     }
     return redirect('/')->with('error', 'no data for user');
 });

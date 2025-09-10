@@ -4,7 +4,7 @@
   <div v-if="user && !user.email_verified_at" class="mb-6">
 
     <div class="row">
-      <VaAlert color="warning" icon="warning">
+      <VaAlert class="w-full" color="warning" icon="warning">
         <div>
           <span>
             {{ $t('vuestic.profile.email_not_verified') }}!

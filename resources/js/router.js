@@ -144,7 +144,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (authStore.isAuthenticated) {
     if (to.name === 'welcome' || to.name === 'register') {
-      return next({ name: 'dashboard' });
+      return next({ name: 'Account' });
     }
     if (to.name === 'reset-password' && !to.query.token) {
       return next({ name: 'not-found' });

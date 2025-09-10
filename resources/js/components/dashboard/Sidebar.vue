@@ -1,11 +1,11 @@
 <template>
 
-  <!-- <va-sidebar-item :to="{ name: 'Overview' }" :active="$route.name === 'Overview'">
+  <va-sidebar-item :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'">
     <va-sidebar-item-content>
       <va-icon name="dashboard" />
       <va-sidebar-item-title>{{ $t('_dashboard') }}</va-sidebar-item-title>
     </va-sidebar-item-content>
-  </va-sidebar-item> -->
+  </va-sidebar-item>
 
   <va-sidebar-item :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive">
     <va-sidebar-item-content>
