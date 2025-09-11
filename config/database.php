@@ -62,6 +62,21 @@ return [
             ]) : [],
         ],
 
+        'mysql_joomla' => [
+            'driver' => 'mysql',
+            'host' => env('DB_JOOMLA_HOST', 'db.tee.su'),
+            'port' => env('DB_JOOMLA_PORT', '3306'),
+            'database' => env('DB_JOOMLA_DATABASE', 'itee-db'),
+            'username' => env('DB_JOOMLA_USERNAME', 'itee-db'),
+            'password' => env('DB_JOOMLA_PASSWORD', 'itee-db'),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => 'jm_', // Укажите префикс таблиц Joomla, если он отличается от стандартного (например, 'jos_')
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
@@ -147,7 +162,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
