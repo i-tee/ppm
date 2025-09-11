@@ -4,14 +4,32 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\JoomlaCoupon;
+use Illuminate\Support\Facades\Auth;
 
 class DevController extends Controller
+
 {
+
+    protected function getUserEmail()
+    {
+        // Получаем текущего аутентифицированного пользователя
+        $user = Auth::user();
+
+        if ($user) {
+            // Выводим email пользователя
+            $email = $user->email;
+            return $email;
+        }
+
+        return false;
+    }
+
     public function index(Request $request)
     {
         try {
 
-            $t = DB::connection('mysql_joomla')->table('avicenna_quiz_steps')->get();
+            $t = DB::connection('mysql_joomla')->table('avicenna_user_coupons')->get();
 
             return response()->json($t);
 
@@ -32,6 +50,27 @@ class DevController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function index2(Request $request)
+    {
+
+        //return $this->getUserEmail();
+
+        try {
+
+            $activeUser = JoomlaCoupon::getUserCoupons();
+
+            return response()->json($activeUser);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка подключения к БД Joomla',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
     }
 
     public function dev(Request $request)

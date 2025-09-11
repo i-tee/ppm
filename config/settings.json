@@ -13,7 +13,10 @@
 			"route": "Agent",
 			"description": "agent_desc",
 			"contract_url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
-			"active": true
+			"active": true,
+			"min_payout": 500,
+			"max_discount": 30,
+			"bonus_koef": 1.1
 		},
 		{
 			"id": 3,

@@ -6,11 +6,11 @@ use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\PartnersSettingController;
 use App\Http\Controllers\PartnerApplicationController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserCouponController;
 use App\Http\Controllers\DevController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
-
 
 //Route::get('/mail', [MailController::class, 'sendWelcomeEmail']);
 
@@ -24,6 +24,10 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/dev', [DevController::class, 'index']);
+    Route::post('/dev2', [DevController::class, 'index2']);
+
+    Route::get('/user/coupons', [UserCouponController::class, 'index']);
+    Route::post('/user/check-promocode', [UserCouponController::class, 'check']);
 
     Route::put('/user/change-password', [AuthController::class, 'changePassword']);
 
