@@ -1,17 +1,24 @@
 <template>
   <div>
-    <!-- Текстовое поле -->
-    <VaInput v-model="formBonusData.name" :label="$t('coupons.name')" :placeholder="$t('coupons.name_placeholder')"
-      class="mb-4" ref="promoInputBonus" />
+
+    <p class="my-2">{{ $t('coupons.name_placeholder') }}</p>
+
+    <VaInput v-model="formBonusData.name" :placeholder="$t('coupons.name_placeholder')"
+      class="w-full rounded-md custom-block-discount-box" @input="handleInput"
+      input-class="p-4 !text-lg !font-bold text-center id-i11 custom-input-coupon" />
+
+    <p class="my-4">{{ $t('coupons.bonusDescr') }}</p>
 
     <!-- Прогресс-бар -->
     <VaSlider v-model="formBonusData.value" :min="0" :max="100" :step="1" track-label-visible
       :track-label="`${formBonusData.value}%`" />
+
   </div>
 </template>
 
 <script setup>
 import { reactive, watch } from 'vue'
+import { transliterate } from '@/utils/transliterate'
 
 const props = defineProps({
   modelBonusValue: { type: Object, default: () => ({}) },
@@ -19,6 +26,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelBonusValue'])
+
+const handleInput = (event) => {
+  formBonusData.name = transliterate(event.target.value)
+}
 
 // Данные формы
 const formBonusData = reactive({

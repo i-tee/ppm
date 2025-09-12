@@ -21,8 +21,8 @@
         <DiscountPercentageCode :apiData="apiData" v-model:modelDiscountValue="discountObject"
           v-if="activeTab === 'discountForm'" />
 
-        <BonusRedemptionCode :apiData="apiData" v-else-if="activeTab === 'bonusForm'"
-          v-model:modelBonusValue="bonusObject" />
+        <BonusRedemptionCode :apiData="apiData" v-model:modelBonusValue="bonusObject"
+          v-else-if="activeTab === 'bonusForm'" />
 
         <!-- <CheckCode
           :apiData="apiData"
@@ -56,7 +56,7 @@ import { useToast } from 'vuestic-ui';
 
 const discountObject = ref({ name: '', value: 15 })
 const bonusObject = ref({ name: '', value: 0 })
-const error = ref(null) // ⬅️ Объяви error
+const error = ref(null)
 const authStore = useAuthStore()
 const apiData = ref(null)
 const couponModal = ref(false)
@@ -102,7 +102,7 @@ function createCoupon() {
 
 function isValidPromoCode(code) {
   // Проверка на минимальную длину
-  if (typeof code !== 'string' || code.length < 6) {
+  if (typeof code !== 'string' || code.length < 6 || code.length > 36) {
     return false;
   }
 
@@ -117,6 +117,6 @@ function isValidPromoCode(code) {
 
 <style scoped>
 .tab-content {
-  min-height: 200px;
+  min-height: 400px;
 }
 </style>

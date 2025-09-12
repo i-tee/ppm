@@ -29,8 +29,9 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import UserCoupons from './Agent/UserCoupons.vue'
-import CreateCoupon from './Agent/CreatCoupon.vue'
+import UserCoupons from './Agent/UserCoupons.vue' // А тут всё в одном компоненте, надо будет выпилить его
+import CouponsList from './Agent/CouponsList.vue' // Тут с библиотекой отдельной, надо это постараться юзать
+import CreateCoupon from './Agent/CreateCoupon.vue'
 
 const authStore = useAuthStore()
 

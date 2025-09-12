@@ -340,6 +340,9 @@ export default {
         });
         setTimeout(() => (success.value = false), 3000);
       }
+
+      location.reload(); // временно, чтобы подтянуть изменения в шапку
+
     };
 
     const handleLogout = async () => {
