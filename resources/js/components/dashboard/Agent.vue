@@ -11,7 +11,7 @@
 
             <hr class="my-4" />
 
-            <CreateCoupon class="my-4" />
+            <CreateCoupon />
 
         </div>
         <div v-else-if="loading">

@@ -1,4 +1,5 @@
 <template>
+
   <div class="create-coupon">
     <va-button @click="couponModal = true">{{ $t('coupons.create') }}</va-button>
   </div>
@@ -9,26 +10,30 @@
 
       <!-- Табы -->
       <VaTabs v-model="activeTab" grow>
-        <VaTab name="form">{{ $t('coupons.form') }}</VaTab>
-        <VaTab name="info">{{ $t('coupons.info') }}</VaTab>
-        <VaTab name="preview">{{ $t('coupons.preview') }}</VaTab>
+        <VaTab name="discountForm">{{ $t('coupons.discountForm') }}</VaTab>
+        <VaTab name="bonusForm">{{ $t('coupons.bonusForm') }}</VaTab>
+        <!-- <VaTab name="checkCode">{{ $t('coupons.checkCode') }}</VaTab> -->
       </VaTabs>
 
       <!-- Содержимое табов -->
       <div class="tab-content mt-4">
-        <DiscountPercentageCode 
-          v-if="activeTab === 'form'" 
-          v-model="formData"
+
+        <DiscountPercentageCode
+          :apiData="apiData"
+          v-model:modelDiscountValue="discountObject"
+          v-if="activeTab === 'discountForm'"
         />
-        
-        <BonusRedemptionCode 
-          v-else-if="activeTab === 'info'" 
+
+        <BonusRedemptionCode
+          :apiData="apiData"
+          v-else-if="activeTab === 'bonusForm'"
+          v-model:modelBonusValue="bonusObject"
         />
-        
-        <CheckCode 
-          v-else-if="activeTab === 'preview'" 
-          :coupon-data="formData"
-        />
+
+        <!-- <CheckCode
+          :apiData="apiData"
+          v-else-if="activeTab === 'checkCode'"
+        /> -->
       </div>
     </template>
 
@@ -43,30 +48,43 @@
       </div>
     </template>
   </VaModal>
+
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import axios from 'axios'
 import DiscountPercentageCode from './DiscountPercentageCode.vue'
 import BonusRedemptionCode from './BonusRedemptionCode.vue'
 import CheckCode from './CheckCode.vue'
 
+const discountObject = ref({ name: '', value: 15 })
+const bonusObject = ref({ name: '', value: 0 })
+const error = ref(null) // ⬅️ Объяви error
+const authStore = useAuthStore()
+const apiData = ref(null)
 const couponModal = ref(false)
-const activeTab = ref('form')
+const activeTab = ref('discountForm')
 
-// Данные формы
-const formData = reactive({
-  name: '',
-  code: '',
-  type: 'percent',
-  value: ''
+// Загрузка данных API
+onMounted(async () => {
+  try {
+    const response = await axios.get('/api/ps', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    apiData.value = response.data
+  } catch (err) {
+    error.value = err.response?.data || err.message
+    console.error('Ошибка загрузки:', error.value)
+  }
 })
 
 // Создание купона
 function createCoupon() {
-  console.log('Создание купона:', formData)
+  console.log('Создание купона:')
   // Здесь будет логика создания купона
-  couponModal.value = false
+  //couponModal.value = false
 }
 </script>
 
