@@ -1,22 +1,12 @@
 <template>
   <div>
     <!-- Текстовое поле -->
-    <VaInput
-      v-model="formBonusData.name"
-      :label="$t('coupons.name')"
-      :placeholder="$t('coupons.name_placeholder')"
-      class="mb-4"
-    />
+    <VaInput v-model="formBonusData.name" :label="$t('coupons.name')" :placeholder="$t('coupons.name_placeholder')"
+      class="mb-4" ref="promoInputBonus" />
 
     <!-- Прогресс-бар -->
-    <VaSlider
-      v-model="formBonusData.value"
-      :min="0"
-      :max="100"
-      :step="1"
-      track-label-visible
-      :track-label="`${formBonusData.value}%`"
-    />
+    <VaSlider v-model="formBonusData.value" :min="0" :max="100" :step="1" track-label-visible
+      :track-label="`${formBonusData.value}%`" />
   </div>
 </template>
 

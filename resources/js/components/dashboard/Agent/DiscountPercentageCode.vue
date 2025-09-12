@@ -2,12 +2,10 @@
 
   <div>
 
-    <VaInput 
-      v-model="formDiscountData.name" 
-      :placeholder="$t('coupons.name_placeholder')"
-      class="w-full rounded-md"
-      input-class="p-4 !text-lg !font-bold text-center"
-    />
+    <p class="my-2">{{ $t('coupons.name_placeholder') }}</p>
+
+    <VaInput v-model="formDiscountData.name" :placeholder="$t('coupons.name_placeholder')" class="w-full rounded-md custom-block-discount-box"
+      input-class="p-4 !text-lg !font-bold text-center id-i11 custom-input-coupon" input-id="i11" />
 
     <p class="my-4">{{ $t('coupons.discountDescr') }}</p>
 
@@ -76,3 +74,70 @@ watch(
   { deep: true }
 )
 </script>
+
+<style>
+
+.custom-block-discount-box {
+  border-width: 2px !important;
+  z-index: 0;
+}
+
+/* Для псевдоэлемента ::after */
+.custom-block-discount-box::after {
+  border-width: 2px !important;
+}
+
+/* Для состояния фокуса */
+.custom-block-discount-box:focus,
+.custom-block-discount-box:focus-within,
+.custom-block-discount-box:active {
+  border-width: 2px !important;
+  border-color: var(--va-primary, #154ec1);
+  box-shadow: 0 0 0 2px var(--va-primary, #154ec1);
+  outline: none;
+  z-index: 1;
+}
+
+/* Для VaInput внутреннего input при фокусе */
+.custom-block-discount-box input:focus {
+  border-width: 2px !important;
+  box-shadow: 0 0 0 2px var(--va-primary, #154ec1);
+  border-color: var(--va-primary, #154ec1);
+  outline: none;
+  z-index: 1;
+}
+
+.custom-input-coupon {
+  text-transform: uppercase;
+}
+
+.custom-input-coupon {
+  text-transform: uppercase;
+  font-weight: normal;
+  /* Базовый вес шрифта для input */
+}
+
+/* Стили для placeholder */
+.custom-input-coupon::placeholder {
+  font-weight: 100;
+  /* Тонкий шрифт */
+  opacity: 0.7;
+  /* Необязательное свойство для прозрачности */
+}
+
+/* Для Chrome, Safari, Opera */
+.custom-input-coupon::-webkit-input-placeholder {
+  font-weight: 100;
+}
+
+/* Для Firefox */
+.custom-input-coupon::-moz-placeholder {
+  font-weight: 100;
+  opacity: 1;
+}
+
+/* Для Edge и IE */
+.custom-input-coupon:-ms-input-placeholder {
+  font-weight: 100;
+}
+</style>

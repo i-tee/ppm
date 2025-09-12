@@ -18,17 +18,11 @@
       <!-- Содержимое табов -->
       <div class="tab-content mt-4">
 
-        <DiscountPercentageCode
-          :apiData="apiData"
-          v-model:modelDiscountValue="discountObject"
-          v-if="activeTab === 'discountForm'"
-        />
+        <DiscountPercentageCode :apiData="apiData" v-model:modelDiscountValue="discountObject"
+          v-if="activeTab === 'discountForm'" />
 
-        <BonusRedemptionCode
-          :apiData="apiData"
-          v-else-if="activeTab === 'bonusForm'"
-          v-model:modelBonusValue="bonusObject"
-        />
+        <BonusRedemptionCode :apiData="apiData" v-else-if="activeTab === 'bonusForm'"
+          v-model:modelBonusValue="bonusObject" />
 
         <!-- <CheckCode
           :apiData="apiData"
@@ -57,7 +51,8 @@ import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
 import DiscountPercentageCode from './DiscountPercentageCode.vue'
 import BonusRedemptionCode from './BonusRedemptionCode.vue'
-import CheckCode from './CheckCode.vue'
+import { useToast } from 'vuestic-ui';
+// import CheckCode from './CheckCode.vue'
 
 const discountObject = ref({ name: '', value: 15 })
 const bonusObject = ref({ name: '', value: 0 })
@@ -66,6 +61,9 @@ const authStore = useAuthStore()
 const apiData = ref(null)
 const couponModal = ref(false)
 const activeTab = ref('discountForm')
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+const toast = useToast();
 
 // Загрузка данных API
 onMounted(async () => {
@@ -80,12 +78,41 @@ onMounted(async () => {
   }
 })
 
-// Создание купона
 function createCoupon() {
-  console.log('Создание купона:')
-  // Здесь будет логика создания купона
-  //couponModal.value = false
+  let creatCouponData = {}
+
+  if (activeTab.value === 'discountForm') {
+    creatCouponData = { ...discountObject.value, type: 0 }
+  } else if (activeTab.value === 'bonusForm') {
+    creatCouponData = { ...bonusObject.value, type: 1 }
+  }
+
+  if (!creatCouponData.name || !isValidPromoCode(creatCouponData.name)) {
+    toast.init({
+      message: t('errors.coupon_noValid'),
+      color: 'warning',
+    });
+    document.getElementsByClassName("id-i11")[0].focus()
+    return
+  }
+
+  console.log('Тип купона:', creatCouponData)
+  // couponModal.value = false
 }
+
+function isValidPromoCode(code) {
+  // Проверка на минимальную длину
+  if (typeof code !== 'string' || code.length < 6) {
+    return false;
+  }
+
+  // Регулярное выражение для проверки допустимых символов
+  const regex = /^[A-Za-zА-Яа-яЁё0-9_-]+$/;
+
+  // Возвращаем true только если прошли обе проверки
+  return regex.test(code);
+}
+
 </script>
 
 <style scoped>
