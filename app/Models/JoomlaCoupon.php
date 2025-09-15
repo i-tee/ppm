@@ -442,7 +442,7 @@ class JoomlaCoupon extends Model
 
     public static function joomlaUser()
     {
-         try {
+        try {
             // Получаем пользователя в Joomla по email текущего пользователя Laravel
             $userEmail = Auth::user()->email;
 
@@ -454,6 +454,36 @@ class JoomlaCoupon extends Model
             return $joomlaUser;
         } catch (\Exception $e) {
             return null;
+        }
+    }
+
+    public static function getCouponTypeById($couponId)
+    {
+        try {
+            // Получаем купон по ID
+            $coupon = DB::connection('mysql_joomla')
+                ->table('jshopping_coupons')
+                ->where('coupon_id', $couponId)
+                ->first();
+
+            // Если купон не найден, возвращаем ошибку
+            if (!$coupon) {
+                return [
+                    'success' => false,
+                    'message' => 'errors.coupon_not_found',
+                    'error' => 'Coupon not found'
+                ];
+            }
+
+            // Возвращаем тип купона
+            return $coupon->coupon_type;
+            
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'errors.get_coupon_type_failed',
+                'error' => $e->getMessage()
+            ];
         }
     }
 
@@ -801,5 +831,4 @@ class JoomlaCoupon extends Model
             return false;
         }
     }
-
 }

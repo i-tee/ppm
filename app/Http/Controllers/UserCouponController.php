@@ -35,7 +35,7 @@ class UserCouponController extends Controller
         }
     }
 
-    public function orders(Request $request)
+    public function data(Request $request)
     {
 
         $user = $request->user();
@@ -59,9 +59,16 @@ class UserCouponController extends Controller
 
         $payments = JoomlaCoupon::getPpPayments($joomlaUser->id); // Получаем все платежи
 
+        $coupon_types = [];
+        foreach ($raw['coupons'] as $coupon) {
+
+            $coupon_types[$coupon->coupon_id] = $coupon->coupon_type;
+        }
+
         foreach ($orders as $order) {
 
-            // coupon_id
+            $order->coupon_type = $coupon_types[$order->coupon_id]; //$order->coupon_id
+            // Очень плохая реализации через запросы в БД из перебора - исправить
 
         }
 
@@ -69,6 +76,7 @@ class UserCouponController extends Controller
         return response()->json([
             'user' => $user,
             'joomlaUser' => $joomlaUser,
+            'coupon_types' => $coupon_types,
             'coupons' => $ids,
             'coupons_full' => $raw['coupons'],
             'payments' => $payments,

@@ -1,4 +1,3 @@
-<!-- resources/js/components/dashboard/CouponsList.vue -->
 <template>
   <div>
     <div v-if="loading" class="mt-4">
@@ -24,33 +23,65 @@
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToast } from 'vuestic-ui';
-import { getUserCoupons } from '@/api/coupons';
+import { getUserCoupons, getBusinessData } from '@/api/coupons';
 
 const { t } = useI18n();
 const toast = useToast();
 
+const bData = ref([]);
 const coupons = ref([]);
 const loading = ref(false);
 const error = ref(null);
+
+const loadBusinessData = async () => {
+  try {
+    const response = await getBusinessData();
+
+    if (response.success) {
+      bData.value = response;
+      // Логирование данных
+      console.log('Business Data:', response);
+    } else {
+      toast.init({
+        color: 'danger',
+        message: 'HZ'
+      });
+    }
+  } catch (e) {
+    console.error('Error loading business data:', e);
+    toast.init({
+      message: 'Error loading business data',
+      color: 'danger',
+    });
+  }
+};
 
 const loadCoupons = async () => {
   loading.value = true;
   error.value = null;
 
-  const response = await getUserCoupons();
+  try {
+    const response = await getUserCoupons();
 
-  if (response.success) {
-    coupons.value = response.coupons;
-    if (response.count === 0) {
+    if (response.success) {
+      coupons.value = response.coupons;
+      if (response.count === 0) {
+        toast.init({
+          message: t('coupons.no_coupons'),
+          color: 'warning',
+        });
+      }
+    } else {
+      error.value = response.error || t('errors.load_failed');
       toast.init({
-        message: t('coupons.no_coupons'),
-        color: 'warning',
+        message: error.value,
+        color: 'danger',
       });
     }
-  } else {
-    error.value = response.error || t('errors.load_failed');
+  } catch (e) {
+    console.error('Error loading coupons:', e);
     toast.init({
-      message: error.value,
+      message: 'Error loading coupons',
       color: 'danger',
     });
   }
@@ -58,14 +89,15 @@ const loadCoupons = async () => {
   loading.value = false;
 };
 
-onMounted(loadCoupons);
-
-onMounted(
-  () => {
-    console.log('CouponsList mounted :: ', coupons);
+onMounted(async () => {
+  try {
+    await Promise.all([loadCoupons(), loadBusinessData()]);
+  } catch (e) {
+    console.error('Error loading data:', e);
+    toast.init({
+      message: 'Error loading data',
+      color: 'danger',
+    });
   }
-);
-
-
-
+});
 </script>

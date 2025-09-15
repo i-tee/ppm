@@ -29,11 +29,11 @@ export async function getUserCoupons() {
 }
 
 // Функция для получения списка заказов с использованием промокодов пользователя
-export async function getUserOrders() {
+export async function getBusinessData() {
   const authStore = useAuthStore();
 
   try {
-    const response = await axios.get('/api/user/orders', {
+    const response = await axios.get('/api/user/business-data', {
       headers: {
         Authorization: `Bearer ${authStore.token}`,
         'Accept': 'application/json',
@@ -42,8 +42,7 @@ export async function getUserOrders() {
 
     return {
       success: true,
-      orders: response.data.orders || [],
-      count: response.data.count || 0,
+      data: response.data || []
     };
   } catch (error) {
     return {
