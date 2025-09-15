@@ -9,9 +9,19 @@
                 </a>
             </p>
 
-            <hr class="my-4" />
+            <VaCard class="my-4 pa-4">
+                <div>
+                    <h2 class="va-h4">{{ $t('coupons.title') }}</h2>
+                </div>
 
-            <CreateCoupon />
+                <div class="my-2">
+                    <CouponsList />
+                </div>
+
+                <div class="text-end">
+                    <CreateCoupon />
+                </div>
+            </VaCard>
 
         </div>
         <div v-else-if="loading">
@@ -29,7 +39,6 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import UserCoupons from './Agent/UserCoupons.vue' // А тут всё в одном компоненте, надо будет выпилить его
 import CouponsList from './Agent/CouponsList.vue' // Тут с библиотекой отдельной, надо это постараться юзать
 import CreateCoupon from './Agent/CreateCoupon.vue'
 

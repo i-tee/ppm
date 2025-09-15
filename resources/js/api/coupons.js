@@ -27,3 +27,29 @@ export async function getUserCoupons() {
     };
   }
 }
+
+// Функция для получения списка заказов с использованием промокодов пользователя
+export async function getUserOrders() {
+  const authStore = useAuthStore();
+
+  try {
+    const response = await axios.get('/api/user/orders', {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    return {
+      success: true,
+      orders: response.data.orders || [],
+      count: response.data.count || 0,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || error.message,
+    };
+  }
+}
+

@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user/coupons', [UserCouponController::class, 'index']);
     Route::post('/user/check-promocode', [UserCouponController::class, 'check']);
+    Route::get('/user/orders', [UserCouponController::class, 'orders']);
 
     Route::put('/user/change-password', [AuthController::class, 'changePassword']);
 

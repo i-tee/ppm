@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class JoomlaCoupon extends Model
 {
@@ -46,31 +48,31 @@ class JoomlaCoupon extends Model
         'coupon_code',
         'coupon_value',
         'tax_id',
-        'used', // 0 - не использован, 1 - использован
-        'for_user_id', // ID пользователя Joomla, для которого купон
+        'used',
+        'for_user_id',
         'coupon_start_date',
         'coupon_expire_date',
-        'finished_after_used', // 0 - нет, 1 - да (завершить после использования)
-        'coupon_publish', // 0 - не опубликован, 1 - опубликован
-        'not_for_old_price', // 0 - нет, 1 - да
-        'not_for_different_prices', // 0 - нет, 1 - да
-        'min_amount', // Минимальная сумма заказа
-        'for_users_id', // Строка с ID пользователей, для которых купон (например, "1,2,3")
-        'for_user_groups_id', // Строка с ID групп пользователей
-        'for_products_id', // Строка с ID продуктов
-        'for_categories_id', // Строка с ID категорий
-        'for_manufacturers_id', // Строка с ID производителей
-        'for_vendors_id', // Строка с ID поставщиков
-        'not_for_users_id', // Строка с ID пользователей, для которых купон НЕ действует
-        'not_for_user_groups_id', // Строка с ID групп, для которых купон НЕ действует
-        'not_for_products_id', // Строка с ID продуктов, для которых купон НЕ действует
-        'not_for_categories_id', // Строка с ID категорий, для которых купон НЕ действует
-        'not_for_manufacturers_id', // Строка с ID производителей, для которых купон НЕ действует
-        'not_for_vendors_id', // Строка с ID поставщиков, для которых купон НЕ действует
-        'coupon_start_time', // Время начала действия (например, "00:00:00")
-        'coupon_end_time', // Время окончания действия (например, "23:59:59")
-        'for_labels_id', // Строка с ID меток
-        'not_for_labels_id', // Строка с ID меток, для которых купон НЕ действует
+        'finished_after_used',
+        'coupon_publish',
+        'not_for_old_price',
+        'not_for_different_prices',
+        'min_amount',
+        'for_users_id',
+        'for_user_groups_id',
+        'for_products_id',
+        'for_categories_id',
+        'for_manufacturers_id',
+        'for_vendors_id',
+        'not_for_users_id',
+        'not_for_user_groups_id',
+        'not_for_products_id',
+        'not_for_categories_id',
+        'not_for_manufacturers_id',
+        'not_for_vendors_id',
+        'coupon_start_time',
+        'coupon_end_time',
+        'for_labels_id',
+        'not_for_labels_id',
     ];
 
     /**
@@ -83,10 +85,9 @@ class JoomlaCoupon extends Model
 
     /**
      * Преобразование строковых списков ID в массивы и обратно
-     * Это нужно для полей типа "1,2,3"
      */
 
-    // --- Accessors (при получении из БД) ---
+    // --- Accessors ---
     public function getForUsersIdAttribute($value)
     {
         return $value ? explode(',', $value) : [];
@@ -157,7 +158,7 @@ class JoomlaCoupon extends Model
         return $value ? explode(',', $value) : [];
     }
 
-    // --- Mutators (при записи в БД) ---
+    // --- Mutators ---
     public function setForUsersIdAttribute($value)
     {
         $this->attributes['for_users_id'] = is_array($value) ? implode(',', $value) : $value;
@@ -228,11 +229,8 @@ class JoomlaCoupon extends Model
         $this->attributes['not_for_labels_id'] = is_array($value) ? implode(',', $value) : $value;
     }
 
-    // --- Скоупы для удобного поиска ---
+    // --- Скоупы ---
 
-    /**
-     * Скоуп для получения активных купонов
-     */
     public function scopeActive($query)
     {
         return $query->where('coupon_publish', 1)
@@ -247,17 +245,11 @@ class JoomlaCoupon extends Model
             ->where('used', 0);
     }
 
-    /**
-     * Скоуп для получения купонов по коду
-     */
     public function scopeByCode($query, $code)
     {
         return $query->where('coupon_code', $code);
     }
 
-    /**
-     * Скоуп для получения купонов, применимых ко всем пользователям
-     */
     public function scopeForAllUsers($query)
     {
         return $query->where('for_user_id', 0)
@@ -266,27 +258,20 @@ class JoomlaCoupon extends Model
 
     // --- Вспомогательные методы ---
 
-    /**
-     * Проверить, действителен ли купон
-     */
     public function isValid()
     {
-        // Проверка публикации
         if ($this->coupon_publish != 1) {
             return false;
         }
 
-        // Проверка даты начала
         if ($this->coupon_start_date && $this->coupon_start_date->isFuture()) {
             return false;
         }
 
-        // Проверка даты окончания
         if ($this->coupon_expire_date && $this->coupon_expire_date->isPast()) {
             return false;
         }
 
-        // Проверка использования
         if ($this->used == 1 && $this->finished_after_used == 1) {
             return false;
         }
@@ -294,28 +279,20 @@ class JoomlaCoupon extends Model
         return true;
     }
 
-    /**
-     * Проверить, применим ли купон к конкретному пользователю Joomla
-     * @param int $userId ID пользователя в Joomla
-     */
     public function isApplicableToUser($userId)
     {
-        // Если купон для конкретного пользователя
         if ($this->for_user_id && $this->for_user_id == $userId) {
             return true;
         }
 
-        // Если купон для списка пользователей
         if (!empty($this->for_users_id) && in_array($userId, $this->for_users_id)) {
             return true;
         }
 
-        // Если купон исключает конкретных пользователей
         if (!empty($this->not_for_users_id) && in_array($userId, $this->not_for_users_id)) {
             return false;
         }
 
-        // Если купон для всех
         if ($this->for_user_id == 0 && empty($this->for_users_id)) {
             return true;
         }
@@ -323,9 +300,6 @@ class JoomlaCoupon extends Model
         return false;
     }
 
-    /**
-     * Отметить купон как использованный
-     */
     public function markAsUsed()
     {
         if ($this->finished_after_used == 1) {
@@ -339,44 +313,201 @@ class JoomlaCoupon extends Model
         return Auth::user()->email;
     }
 
-    public static function getUserCoupons()
+    /**
+     * Создает нового пользователя в таблице Joomla users
+     *
+     * @param string $email
+     * @param string $name
+     * @return object|null
+     */
+    public static function createJoomlaUser($email, $name)
     {
-
         try {
-            // Получаем email текущего пользователя Laravel
+            // Логируем входные данные
+            Log::info("Attempting to create Joomla user", [
+                'email' => $email,
+                'name' => $name,
+            ]);
+
+            // Проверяем, существует ли пользователь с таким email
+            $existingUserByEmail = DB::connection('mysql_joomla')
+                ->table('users') // Префикс 'jm_' из config, итого 'jm_users'
+                ->where('email', $email)
+                ->first();
+
+            if ($existingUserByEmail) {
+                Log::info("User with email {$email} already exists in Joomla", [
+                    'user_id' => $existingUserByEmail->id,
+                ]);
+                return $existingUserByEmail;
+            }
+
+            // Генерируем случайный пароль
+            $randomPassword = Str::random(12);
+            $hashedPassword = bcrypt($randomPassword);
+
+            // Генерируем уникальный username
+            $usernameBase = explode('@', $email)[0];
+            $username = $usernameBase . '_avi_' . Str::random(4);
+
+            // Проверяем уникальность username
+            $existingUserByUsername = DB::connection('mysql_joomla')
+                ->table('users')
+                ->where('username', $username)
+                ->first();
+            if ($existingUserByUsername) {
+                $username .= '_' . Str::random(2);
+                // Дополнительная проверка
+                $existingUserByUsername = DB::connection('mysql_joomla')
+                    ->table('users')
+                    ->where('username', $username)
+                    ->first();
+                if ($existingUserByUsername) {
+                    $username = $usernameBase . '_avi_' . Str::random(6);
+                }
+            }
+
+            // Подготовка данных: обязательные поля + lastvisitDate и lastResetTime для обхода NOT NULL
+            $userData = [
+                'name' => $name ?: 'User',
+                'username' => $username,
+                'email' => $email,
+                'password' => $hashedPassword,
+                'block' => 0,
+                'sendEmail' => 1,
+                'registerDate' => now()->toDateTimeString(),
+                'lastvisitDate' => now()->toDateTimeString(),
+                'lastResetTime' => now()->toDateTimeString(),
+                'activation' => '',
+                'params' => '{"activate":0}',
+            ];
+
+            // Логируем данные перед вставкой
+            Log::info("Prepared user data for insertion", $userData);
+
+            // Создаем пользователя
+            $newUserId = DB::connection('mysql_joomla')
+                ->table('users')
+                ->insertGetId($userData);
+
+            Log::info("Created new Joomla user", [
+                'user_id' => $newUserId,
+                'email' => $email,
+                'username' => $username,
+            ]);
+
+            // Возвращаем созданного пользователя
+            return DB::connection('mysql_joomla')
+                ->table('users')
+                ->where('id', $newUserId)
+                ->first();
+        } catch (\Exception $e) {
+            Log::error("Failed to create Joomla user", [
+                'email' => $email,
+                'name' => $name,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Создает запись в avicenna_user_coupons для пользователя
+     *
+     * @param int $userId
+     * @return bool
+     */
+    public static function ensureUserCouponRecord($userId)
+    {
+        try {
+            $userCouponRecord = DB::connection('mysql_joomla')
+                ->table('avicenna_user_coupons')
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$userCouponRecord) {
+                DB::connection('mysql_joomla')
+                    ->table('avicenna_user_coupons')
+                    ->insert([
+                        'user_id' => $userId,
+                        'coupons' => '',
+                    ]);
+            }
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public static function joomlaUser()
+    {
+         try {
+            // Получаем пользователя в Joomla по email текущего пользователя Laravel
             $userEmail = Auth::user()->email;
 
-            // Ищем пользователя в Joomla по email
+            // Ищем пользователя в Joomla
+            $joomlaUser = DB::connection('mysql_joomla')
+                ->table('users')
+                ->where('email', $userEmail)
+                ->first();
+            return $joomlaUser;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Получает купоны пользователя
+     *
+     * @return array
+     */
+    public static function getUserCoupons()
+    {
+        try {
+            // Получаем email и имя текущего пользователя Laravel
+            $userEmail = Auth::user()->email;
+            $userName = Auth::user()->name ?? 'User';
+
+            // Ищем пользователя в Joomla
             $joomlaUser = DB::connection('mysql_joomla')
                 ->table('users')
                 ->where('email', $userEmail)
                 ->first();
 
+            // Если пользователь не найден, создаем его
             if (!$joomlaUser) {
-                return [
-                    'success' => false,
-                    'message' => 'Пользователь не найден в Joomla'
-                ];
+                $joomlaUser = self::createJoomlaUser($userEmail, $userName);
+                if (!$joomlaUser) {
+                    return [
+                        'success' => false,
+                        'message' => 'errors.user_creation_failed',
+                        'error' => 'Failed to create Joomla user'
+                    ];
+                }
             }
 
-            // Получаем запись из avicenna_user_coupons
+            // Получаем запись купонов (если нет - null)
             $userCouponRecord = DB::connection('mysql_joomla')
                 ->table('avicenna_user_coupons')
                 ->where('user_id', $joomlaUser->id)
                 ->first();
 
+            // Если записи нет, возвращаем пустой список купонов
             if (!$userCouponRecord) {
                 return [
-                    'success' => false,
-                    'message' => 'Запись купонов не найдена'
+                    'success' => true,
+                    'joomla_user_id' => $joomlaUser->id,
+                    'coupons' => collect(),
+                    'coupons_count' => 0
                 ];
             }
 
             // Разбираем строку coupons в массив ID
             $couponIds = array_map('intval', explode(',', $userCouponRecord->coupons));
-            $couponIds = array_filter($couponIds, fn($id) => $id > 0); // Убираем пустые значения
+            $couponIds = array_filter($couponIds, fn($id) => $id > 0);
 
-            // Получаем сами купоны из jm_jshopping_coupons
+            // Получаем купоны
             $coupons = DB::connection('mysql_joomla')
                 ->table('jshopping_coupons')
                 ->whereIn('coupon_id', $couponIds)
@@ -391,9 +522,284 @@ class JoomlaCoupon extends Model
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Ошибка при получении купонов',
+                'message' => 'errors.get_coupons_failed',
                 'error' => $e->getMessage()
             ];
         }
     }
+
+    /**
+     * Получает купоны пользователя из таблицы avicenna_user_coupons по ID Joomla пользователя.
+     * Возвращает массив записей с купонами или пустой массив, если ничего не найдено.
+     *
+     * @param int $userId ID пользователя в Joomla
+     * @return array Массив купонов (каждый - ассоциативный массив с данными из таблицы)
+     */
+    public static function getPpCoupons($userId)
+    {
+        try {
+            $userId = (int) $userId; // Защита от SQL-инъекции
+
+            $coupons = DB::connection('mysql_joomla')
+                ->table('avicenna_user_coupons')
+                ->where('user_id', $userId)
+                ->get()
+                ->toArray(); // Конвертируем в обычный массив для совместимости
+
+            return $coupons;
+        } catch (\Exception $e) {
+            Log::error("Failed to get PP coupons", [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Проверяет существование купона по коду в таблице jshopping_coupons.
+     * Возвращает ID купона, если найден, или false/null, если не найден.
+     *
+     * @param string $couponCode Код купона для проверки
+     * @return int|false ID купона или false
+     */
+    public static function checkCoupons($couponCode)
+    {
+        try {
+            $couponCode = trim($couponCode); // Очистка и защита
+
+            if (empty($couponCode)) {
+                return false;
+            }
+
+            $couponId = DB::connection('mysql_joomla')
+                ->table('jshopping_coupons')
+                ->where('coupon_code', $couponCode)
+                ->value('coupon_id');
+
+            return $couponId ?: false;
+        } catch (\Exception $e) {
+            Log::error("Failed to check coupons", [
+                'coupon_code' => $couponCode,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Получает код (имя) купона по его ID из таблицы jshopping_coupons.
+     * Возвращает код купона или пустую строку, если не найден.
+     *
+     * @param int $couponId ID купона
+     * @return string Код купона
+     */
+    public static function getCouponName($couponId)
+    {
+        try {
+            $couponId = (int) $couponId; // Защита от SQL-инъекции
+
+            if ($couponId <= 0) {
+                return '';
+            }
+
+            $couponCode = DB::connection('mysql_joomla')
+                ->table('jshopping_coupons')
+                ->where('coupon_id', $couponId)
+                ->value('coupon_code');
+
+            return $couponCode ?: '';
+        } catch (\Exception $e) {
+            Log::error("Failed to get coupon name", [
+                'coupon_id' => $couponId,
+                'error' => $e->getMessage(),
+            ]);
+            return '';
+        }
+    }
+
+    /**
+     * Проверяет наличие старого баланса промокода для пользователя.
+     * Возвращает массив с 'be' (true/false) и 'summ' (сумма, если >0).
+     *
+     * @param int $userId ID пользователя в Joomla
+     * @return array ['be' => bool, 'summ' => int|null]
+     */
+    public static function oldPromocodBalance($userId)
+    {
+        try {
+            $userId = (int) $userId; // Защита от SQL-инъекции
+
+            if ($userId <= 0) {
+                return ['be' => false];
+            }
+
+            $oldBalance = DB::connection('mysql_joomla')
+                ->table('avicenna_user_coupons')
+                ->where('user_id', $userId)
+                ->value('old_balance');
+
+            $oldBalance = (int) $oldBalance;
+
+            return [
+                'be' => $oldBalance > 0,
+                'summ' => $oldBalance > 0 ? $oldBalance : null
+            ];
+        } catch (\Exception $e) {
+            Log::error("Failed to get old promocod balance", [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            return ['be' => false];
+        }
+    }
+
+    /**
+     * Получает заказы, связанные с купоном, с определёнными статусами (7 или 6).
+     * Возвращает массив заказов или пустой массив.
+     *
+     * @param int $couponId ID купона
+     * @return array Массив заказов
+     */
+    public static function getPpOrders($couponId)
+    {
+        try {
+            $couponId = (int) $couponId; // Защита от SQL-инъекции
+
+            if ($couponId <= 0) {
+                return [];
+            }
+
+            $orders = DB::connection('mysql_joomla')
+                ->table('jshopping_orders')
+                ->where('coupon_id', $couponId)
+                ->whereIn('order_status', [6, 7])
+                ->get()
+                ->toArray(); // Конвертируем в обычный массив
+
+            return $orders;
+        } catch (\Exception $e) {
+            Log::error("Failed to get PP orders", [
+                'coupon_id' => $couponId,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Получает платежи из таблицы avicenna_pp_payments.
+     * Если $joomlaUserId указан, фильтрует по пользователю; иначе возвращает все.
+     *
+     * @param int|null $userId ID пользователя (опционально)
+     * @return array Массив платежей
+     */
+    public static function getPpPayments($joomlaUserId = null)
+    {
+        try {
+            $query = DB::connection('mysql_joomla')
+                ->table('avicenna_pp_payments');
+
+            if ($joomlaUserId !== null) {
+                $joomlaUserId = (int) $joomlaUserId; // Защита от SQL-инъекции
+                if ($joomlaUserId > 0) {
+                    $query->where('user_id', $joomlaUserId);
+                }
+            }
+
+            $payments = $query->get()
+                ->toArray(); // Конвертируем в обычный массив
+
+            return $payments;
+        } catch (\Exception $e) {
+            Log::error("Failed to get PP payments", [
+                'user_id' => $joomlaUserId,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Создаёт новый купон в jshopping_coupons и связывает его с пользователем в avicenna_user_coupons.
+     * Возвращает true при успехе, false при ошибке.
+     *
+     * @param string $couponCode Код купона
+     * @param int $procent Значение купона (процент)
+     * @param int $userId ID пользователя в Joomla
+     * @return bool Успех операции
+     */
+    public static function creatCoupons($couponCode, $procent, $userId)
+    {
+        try {
+            $couponCode = trim($couponCode);
+            $procent = (int) $procent;
+            $userId = (int) $userId;
+
+            if (empty($couponCode) || $procent <= 0 || $userId <= 0) {
+                Log::warning("Invalid parameters for creating coupons", [
+                    'coupon_code' => $couponCode,
+                    'procent' => $procent,
+                    'user_id' => $userId,
+                ]);
+                return false;
+            }
+
+            // Вставка в jshopping_coupons
+            $couponData = [
+                'coupon_type' => 0,
+                'coupon_code' => $couponCode,
+                'coupon_value' => $procent,
+                'coupon_publish' => 1,
+                'not_for_old_price' => 1,
+                'not_for_different_prices' => 1,
+                'not_for_categories_id' => '5,7',
+                'coupon_end_time' => 23, // Время окончания (часы? Из оригинала)
+            ];
+
+            $newCouponId = DB::connection('mysql_joomla')
+                ->table('jshopping_coupons')
+                ->insertGetId($couponData);
+
+            if (!$newCouponId) {
+                Log::error("Failed to insert coupon", [
+                    'coupon_code' => $couponCode,
+                ]);
+                return false;
+            }
+
+            // Вставка в avicenna_user_coupons
+            $userCouponData = [
+                'user_id' => $userId,
+                'coupons' => (string) $newCouponId, // Как строка ID
+            ];
+
+            $result = DB::connection('mysql_joomla')
+                ->table('avicenna_user_coupons')
+                ->insert($userCouponData);
+
+            if ($result) {
+                Log::info("Created coupon and linked to user", [
+                    'coupon_id' => $newCouponId,
+                    'user_id' => $userId,
+                ]);
+                return true;
+            } else {
+                Log::error("Failed to link coupon to user", [
+                    'coupon_id' => $newCouponId,
+                    'user_id' => $userId,
+                ]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to create coupons", [
+                'coupon_code' => $couponCode,
+                'procent' => $procent,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
 }

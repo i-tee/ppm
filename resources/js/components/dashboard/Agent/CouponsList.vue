@@ -1,11 +1,8 @@
 <!-- resources/js/components/dashboard/CouponsList.vue -->
 <template>
   <div>
-    <h3 class="va-h3">{{ $t('coupons.title') }}</h3>
-    <va-button @click="loadCoupons">{{ $t('coupons.load') }}</va-button>
-    
     <div v-if="loading" class="mt-4">
-      <va-spinner />
+      ...
     </div>
     <div v-else-if="error" class="mt-4 text-danger">
       {{ error }}
@@ -62,4 +59,13 @@ const loadCoupons = async () => {
 };
 
 onMounted(loadCoupons);
+
+onMounted(
+  () => {
+    console.log('CouponsList mounted :: ', coupons);
+  }
+);
+
+
+
 </script>

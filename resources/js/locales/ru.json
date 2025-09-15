@@ -295,6 +295,8 @@
     "any_status": "any_status"
   },
   "coupons": {
+    "title": "Промокоды",
+    "no_coupons": "У вас пока нет ни одного промокода",
     "create_button": "Создать промокод",
     "discountMax": "Суммарная скидка на заказ",
     "discountClient": "Скидка на сайте",
