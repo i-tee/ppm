@@ -1,86 +1,137 @@
 <template>
-    <div class="agent-layout">
-        <!-- Существующий контент Agent.vue -->
-        <div v-if="apiData">
-            <h1 class="va-h4 my-1">{{ $t('partners.cooperation_types.agent.title') }}</h1>
-            <p>{{ $t('user_agreement.description') }}
-                <a target="_blank" :href="selectedCooperationType.contract_url">
-                    {{ $t('user_agreement.link_name') }}
-                </a>
-            </p>
+  <!-- Основной контейнер компонента с отступами -->
+  <div class="agent-layout">
+    <!-- Показываем контент, если данные загружены (apiData не null) -->
+    <div v-if="apiData">
+      <!-- Заголовок с локализацией для типа сотрудничества "агент" -->
+      <h1 class="va-h4 my-1">{{ $t('partners.cooperation_types.agent.title') }}</h1>
+      <!-- Описание пользовательского соглашения с ссылкой на контракт -->
+      <p>
+        {{ $t('user_agreement.description') }}
+        <a target="_blank" :href="selectedCooperationType.contract_url">
+          {{ $t('user_agreement.link_name') }}
+        </a>
+      </p>
 
-            <VaCard class="my-4 pa-4">
-                <div>
-                    <h2 class="va-h4">{{ $t('coupons.title') }}</h2>
-                </div>
-
-                <div class="my-2">
-                    <CouponsList />
-                </div>
-
-                <div class="text-end">
-                    <CreateCoupon @coupon-created="fetchData" />
-                </div>
-            </VaCard>
+      <!-- Карточка Vuestic UI для отображения списка купонов -->
+      <VaCard class="my-4 pa-4">
+        <div>
+          <!-- Заголовок для списка купонов -->
+          <h2 class="va-h4">{{ $t('coupons.title') }}</h2>
         </div>
-        <div v-else-if="loading">
-            <VaAlert color="warning">{{ $t('loading_data') }}</VaAlert>
+
+        <!-- Компонент списка купонов -->
+        <div class="my-2">
+          <CouponsList :apiData="apiData" :bData="bData" />
         </div>
-        <div v-else-if="error">{{ error }}</div>
+
+        <!-- Кнопка для создания нового купона, вызывает fetchAllData при создании -->
+        <div class="text-end my-2">
+          <CreateCoupon @coupon-created="fetchAllData" />
+        </div>
+      </VaCard>
     </div>
+    <!-- Показываем предупреждение, если данные загружаются -->
+    <div v-else-if="loading">
+      <VaAlert color="warning">{{ $t('loading_data') }}</VaAlert>
+    </div>
+    <!-- Показываем ошибку, если загрузка не удалась -->
+    <div v-else-if="error">{{ error }}</div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
-import { useToast } from 'vuestic-ui'
-import CouponsList from './Agent/CouponsList.vue'
-import CreateCoupon from './Agent/CreateCoupon.vue'
+// Импорты: подключаем необходимые зависимости
+import { ref, onMounted, computed } from 'vue' // Основные функции Vue 3
+import axios from 'axios' // Библиотека для HTTP-запросов
+import { useAuthStore } from '@/stores/auth' // Хранилище Pinia для авторизации
+import { useToast } from 'vuestic-ui' // Уведомления Vuestic UI
+import CouponsList from './Agent/CouponsList.vue' // Компонент списка купонов
+import CreateCoupon from './Agent/CreateCoupon.vue' // Компонент создания купона
+import { getBusinessData } from '@/api/coupons' // Функция для загрузки бизнес-данных
 
-const authStore = useAuthStore()
-const { init: initToast } = useToast()
+// Реактивные переменные: данные, которые Vue отслеживает для автоматического обновления UI
+const apiData = ref(null) // Данные с API /api/ps (например, типы сотрудничества)
+const bData = ref(null) // Бизнес-данные, загружаемые через getBusinessData (объект, а не массив)
+const loading = ref(true) // Состояние загрузки (true, пока данные не загружены)
+const error = ref(null) // Хранит сообщение об ошибке, если загрузка не удалась
 
-// Определяем реактивные переменные
-const apiData = ref(null)
-const loading = ref(true)
-const error = ref(null)
+// Хранилище авторизации и уведомления
+const authStore = useAuthStore() // Получаем токен авторизации из Pinia
+const { init: initToast } = useToast() // Инициализация уведомлений Vuestic UI
 
-// Вычисляем свойство для элемента с id = 2
+// Вычисляемые свойства: реактивные вычисления на основе данных
 const selectedCooperationType = computed(() => {
-    if (!apiData.value?.cooperation_types) return null
-    return apiData.value.cooperation_types.find(type => type.id === 2)
+  // Ищем объект с id = 2 в массиве cooperation_types
+  if (!apiData.value?.cooperation_types) return null
+  return apiData.value.cooperation_types.find(type => type.id === 2)
 })
 
-// Функция для загрузки данных
-const fetchData = async () => {
-    try {
-        loading.value = true
-        error.value = null
-        const response = await axios.get('/api/ps', {
-            headers: {
-                Authorization: `Bearer ${authStore.token}`,
-                'Accept': 'application/json'
-            },
-        })
-        apiData.value = response.data
-    } catch (err) {
-        error.value = err.response?.data?.message || err.message || $t('errors.data_loading')
-        initToast({
-            message: error.value,
-            color: 'danger'
-        })
-    } finally {
-        loading.value = false
-    }
+// Функции загрузки данных
+const fetchApiData = async () => {
+  try {
+    // Выполняем GET-запрос к /api/ps с токеном авторизации
+    const response = await axios.get('/api/ps', {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`, // Токен для аутентификации
+        'Accept': 'application/json' // Указываем, что ожидаем JSON
+      },
+    })
+    // Сохраняем полученные данные в реактивную переменную
+    apiData.value = response.data
+  } catch (err) {
+    // При ошибке выбрасываем исключение с локализованным сообщением
+    throw new Error(err.response?.data?.message || err.message || $t('errors.data_loading'))
+  }
 }
 
-// Вызов функции при монтировании
-onMounted(fetchData)
+const loadBusinessData = async () => {
+  try {
+    // Вызываем функцию getBusinessData из @/api/coupons
+    const response = await getBusinessData()
+    // Проверяем успешность ответа
+    if (response.success) {
+      // Сохраняем данные в реактивную переменную bData
+      bData.value = response
+      //console.log('Business Data:', response) // Логируем для отладки
+    } else {
+      // Если ответ не успешен, выбрасываем ошибку
+      throw new Error($t('errors.business_data_loading'))
+    }
+  } catch (err) {
+    // Перехватываем и выбрасываем ошибку с локализованным сообщением
+    throw new Error(err.message || $t('errors.business_data_loading'))
+  }
+}
+
+const fetchAllData = async () => {
+  try {
+    // Устанавливаем состояние загрузки
+    loading.value = true
+    error.value = null
+    // Выполняем оба запроса параллельно с помощью Promise.all
+    await Promise.all([fetchApiData(), loadBusinessData()])
+  } catch (err) {
+    // Сохраняем сообщение об ошибке и показываем уведомление
+    error.value = err.message
+    initToast({
+      message: err.message,
+      color: 'danger'
+    })
+    console.error('Ошибка загрузки данных:', err)
+  } finally {
+    // Сбрасываем состояние загрузки
+    loading.value = false
+  }
+}
+
+// Хук монтирования: вызывается один раз, когда компонент добавляется в DOM
+onMounted(fetchAllData)
 </script>
 
 <style scoped>
+/* Стили для контейнера компонента */
 .agent-layout {
-    padding: 20px;
+  padding: 20px;
 }
 </style>

@@ -1,154 +1,184 @@
 <template>
-
+  <!-- Основной контейнер для кнопки создания купона -->
   <div class="create-coupon">
+    <!-- Кнопка Vuestic UI для открытия модального окна -->
     <va-button @click="couponModal = true">{{ $t('coupons.create') }}</va-button>
   </div>
 
-  <VaModal v-model="couponModal" size="small" close-button :hide-default-actions="true">
+  <!-- Модальное окно Vuestic UI для создания купона -->
+  <VaModal
+    v-model="couponModal"
+    size="small"
+    close-button
+    :hide-default-actions="true"
+  >
+    <!-- Содержимое модального окна -->
     <template #default>
+      <!-- Заголовок модального окна с локализацией -->
       <h3 class="va-h3 text-center mb-0">{{ $t('coupons.create') }}</h3>
 
-      <!-- Табы -->
+      <!-- Табы для выбора типа купона (скидка или бонус) -->
       <VaTabs v-model="activeTab" grow>
         <VaTab name="discountForm">{{ $t('coupons.discountForm') }}</VaTab>
         <VaTab name="bonusForm">{{ $t('coupons.bonusForm') }}</VaTab>
+        <!-- Закомментированная вкладка для проверки кода -->
         <!-- <VaTab name="checkCode">{{ $t('coupons.checkCode') }}</VaTab> -->
       </VaTabs>
 
-      <!-- Содержимое табов -->
+      <!-- Содержимое выбранной вкладки -->
       <div class="tab-content mt-4">
-
-        <DiscountPercentageCode :apiData="apiData" v-model:modelDiscountValue="discountObject"
-          v-if="activeTab === 'discountForm'" />
-
-        <BonusRedemptionCode :apiData="apiData" v-model:modelBonusValue="bonusObject"
-          v-else-if="activeTab === 'bonusForm'" />
-
-        <!-- <CheckCode
+        <!-- Компонент для формы скидочного купона -->
+        <DiscountPercentageCode
           :apiData="apiData"
-          v-else-if="activeTab === 'checkCode'"
-        /> -->
+          v-model:modelDiscountValue="discountObject"
+          v-if="activeTab === 'discountForm'"
+        />
+        <!-- Компонент для формы бонусного купона -->
+        <BonusRedemptionCode
+          :apiData="apiData"
+          v-model:modelBonusValue="bonusObject"
+          v-else-if="activeTab === 'bonusForm'"
+        />
+        <!-- Закомментированный компонент для проверки кода -->
+        <!-- <CheckCode :apiData="apiData" v-else-if="activeTab === 'checkCode'" /> -->
       </div>
     </template>
 
+    <!-- Нижняя часть модального окна (кнопки) -->
     <template #footer>
       <div class="flex justify-end space-x-2">
+        <!-- Кнопка отмены -->
         <VaButton preset="secondary" @click="couponModal = false">
           {{ $t('modal.cancel') }}
         </VaButton>
+        <!-- Кнопка создания купона -->
         <VaButton @click="createCoupon">
           {{ $t('coupons.create_button') }}
         </VaButton>
       </div>
     </template>
   </VaModal>
-
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import axios from 'axios'
-import DiscountPercentageCode from './DiscountPercentageCode.vue'
-import BonusRedemptionCode from './BonusRedemptionCode.vue'
-import { useToast } from 'vuestic-ui';
-import { useI18n } from 'vue-i18n';
-// import CheckCode from './CheckCode.vue'
+// Импорты: подключаем зависимости Vue и проекта
+import { ref, onMounted } from 'vue' // ref для реактивности, onMounted для хука жизненного цикла
+import { useI18n } from 'vue-i18n' // Для локализации текстов
+import { useToast } from 'vuestic-ui' // Для уведомлений Vuestic UI
+import { useAuthStore } from '@/stores/auth' // Хранилище Pinia для авторизации
+import axios from 'axios' // Библиотека для HTTP-запросов
+import DiscountPercentageCode from './DiscountPercentageCode.vue' // Компонент формы скидочного купона
+import BonusRedemptionCode from './BonusRedemptionCode.vue' // Компонент формы бонусного купона
+// import CheckCode from './CheckCode.vue' // Закомментированный компонент проверки кода
 
-const emit = defineEmits(['couponCreated'])
+// Определение пользовательского события
+const emit = defineEmits(['couponCreated']) // Объявляем событие couponCreated для родительского компонента
 
-const discountObject = ref({ name: '', value: 15 })
-const bonusObject = ref({ name: '', value: 0 })
-const error = ref(null)
-const authStore = useAuthStore()
-const apiData = ref(null)
-const couponModal = ref(false)
-const activeTab = ref('discountForm')
+// Инициализация локализации и уведомлений
+const { t } = useI18n() // Функция t для получения переведённых строк
+const { init: initToast } = useToast() // Инициализация уведомлений Vuestic UI
+const authStore = useAuthStore() // Хранилище Pinia для доступа к токену авторизации
 
-const { t } = useI18n();
-const toast = useToast();
+// Реактивные переменные: данные, отслеживаемые Vue для обновления интерфейса
+const apiData = ref(null) // Данные с API /api/ps для дочерних компонентов
+const discountObject = ref({ name: '', value: 15 }) // Данные формы скидочного купона
+const bonusObject = ref({ name: '', value: 0 }) // Данные формы бонусного купона
+const error = ref(null) // Сообщение об ошибке, если запрос не удался
+const couponModal = ref(false) // Состояние видимости модального окна
+const activeTab = ref('discountForm') // Текущая активная вкладка (по умолчанию скидка)
 
-// Загрузка данных API
+// Загрузка данных API при монтировании
 onMounted(async () => {
   try {
+    // Выполняем GET-запрос к /api/ps для получения данных
     const response = await axios.get('/api/ps', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
+      headers: {
+        Authorization: `Bearer ${authStore.token}`, // Токен для аутентификации
+        'Accept': 'application/json' // Ожидаем JSON в ответе
+      },
     })
+    // Сохраняем данные в реактивную переменную
     apiData.value = response.data
   } catch (err) {
-    error.value = err.response?.data || err.message
-    console.error('Ошибка загрузки:', error.value)
+    // Сохраняем ошибку и логируем её
+    error.value = err.response?.data?.message || err.message || t('errors.data_loading')
+    console.error('Ошибка загрузки данных:', error.value)
   }
 })
 
+// Функция создания купона
 async function createCoupon() {
+  // Создаём объект данных купона в зависимости от активной вкладки
   let creatCouponData = {}
-
   if (activeTab.value === 'discountForm') {
-    creatCouponData = { ...discountObject.value, type: 0 }
+    creatCouponData = { ...discountObject.value, type: 0 } // Скидочный купон (type: 0)
   } else if (activeTab.value === 'bonusForm') {
-    creatCouponData = { ...bonusObject.value, type: 1 }
+    creatCouponData = { ...bonusObject.value, type: 1 } // Бонусный купон (type: 1)
   }
 
+  // Проверяем валидность кода купона
   if (!creatCouponData.name || !isValidPromoCode(creatCouponData.name)) {
-    toast.init({
+    initToast({
       message: t('errors.coupon_noValid'),
-      color: 'warning',
-    });
-    document.getElementsByClassName("id-i11")[0].focus()
+      color: 'warning'
+    })
+    // Фокусируемся на поле ввода с классом id-i11 (предположительно, поле кода купона)
+    document.getElementsByClassName('id-i11')[0]?.focus()
     return
   }
 
-  console.log('Тип купона:', creatCouponData)
-
   try {
+    // Выполняем POST-запрос для создания купона
     const response = await axios.post('/api/coupons', creatCouponData, {
-      headers: { 
-        Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
+      headers: {
+        Authorization: `Bearer ${authStore.token}`, // Токен авторизации
+        'Content-Type': 'application/json', // Указываем тип данных
+        'Accept': 'application/json' // Ожидаем JSON в ответе
+      }
     })
-    
-    toast.init({
+
+    // Показываем уведомление об успехе
+    initToast({
       message: t('coupons.create_success'),
-      color: 'success',
-    });
-    
+      color: 'success'
+    })
+
+    // Отправляем событие couponCreated родительскому компоненту
     emit('couponCreated', response.data)
+
+    // Сбрасываем состояние формы и закрываем модальное окно
     couponModal.value = false
     discountObject.value = { name: '', value: 15 }
     bonusObject.value = { name: '', value: 0 }
     activeTab.value = 'discountForm'
-
-    alert('couponCreated')
-
   } catch (err) {
+    // Обрабатываем ошибку и показываем уведомление
     const errorMessage = err.response?.data?.message || t('errors.coupon_creation')
-    toast.init({
+    initToast({
       message: errorMessage,
-      color: 'danger',
-    });
+      color: 'danger'
+    })
     console.error('Ошибка создания купона:', err)
   }
 }
 
+// Функция проверки валидности кода купона
 function isValidPromoCode(code) {
-  // Проверка на минимальную длину
+  // Проверяем, что код — строка и длина от 6 до 36 символов
   if (typeof code !== 'string' || code.length < 6 || code.length > 36) {
-    return false;
+    return false
   }
 
-  // Регулярное выражение для проверки допустимых символов
-  const regex = /^[A-Za-zА-Яа-яЁё0-9_-]+$/;
+  // Регулярное выражение для допустимых символов (буквы, цифры, _, -)
+  const regex = /^[A-Za-zА-Яа-яЁё0-9_-]+$/
 
-  // Возвращаем true только если прошли обе проверки
-  return regex.test(code);
+  // Возвращаем true, если код соответствует требованиям
+  return regex.test(code)
 }
-
 </script>
 
 <style scoped>
+/* Стили для содержимого вкладок */
 .tab-content {
   min-height: 400px;
 }
