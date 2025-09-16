@@ -21,8 +21,6 @@
       <VaTabs v-model="activeTab" grow>
         <VaTab name="discountForm">{{ $t('coupons.discountForm') }}</VaTab>
         <VaTab name="bonusForm">{{ $t('coupons.bonusForm') }}</VaTab>
-        <!-- Закомментированная вкладка для проверки кода -->
-        <!-- <VaTab name="checkCode">{{ $t('coupons.checkCode') }}</VaTab> -->
       </VaTabs>
 
       <!-- Содержимое выбранной вкладки -->
@@ -30,17 +28,17 @@
         <!-- Компонент для формы скидочного купона -->
         <DiscountPercentageCode
           :apiData="apiData"
+          :bData="bData"
           v-model:modelDiscountValue="discountObject"
           v-if="activeTab === 'discountForm'"
         />
         <!-- Компонент для формы бонусного купона -->
         <BonusRedemptionCode
           :apiData="apiData"
+          :bData="bData"
           v-model:modelBonusValue="bonusObject"
           v-else-if="activeTab === 'bonusForm'"
         />
-        <!-- Закомментированный компонент для проверки кода -->
-        <!-- <CheckCode :apiData="apiData" v-else-if="activeTab === 'checkCode'" /> -->
       </div>
     </template>
 
@@ -62,14 +60,13 @@
 
 <script setup>
 // Импорты: подключаем зависимости Vue и проекта
-import { ref, onMounted } from 'vue' // ref для реактивности, onMounted для хука жизненного цикла
+import { ref, watch } from 'vue' // ref для реактивности, watch для отслеживания изменений
 import { useI18n } from 'vue-i18n' // Для локализации текстов
 import { useToast } from 'vuestic-ui' // Для уведомлений Vuestic UI
 import { useAuthStore } from '@/stores/auth' // Хранилище Pinia для авторизации
 import axios from 'axios' // Библиотека для HTTP-запросов
 import DiscountPercentageCode from './DiscountPercentageCode.vue' // Компонент формы скидочного купона
 import BonusRedemptionCode from './BonusRedemptionCode.vue' // Компонент формы бонусного купона
-// import CheckCode from './CheckCode.vue' // Закомментированный компонент проверки кода
 
 // Определение пользовательского события
 const emit = defineEmits(['couponCreated']) // Объявляем событие couponCreated для родительского компонента
@@ -80,30 +77,26 @@ const { init: initToast } = useToast() // Инициализация уведо�
 const authStore = useAuthStore() // Хранилище Pinia для доступа к токену авторизации
 
 // Реактивные переменные: данные, отслеживаемые Vue для обновления интерфейса
-const apiData = ref(null) // Данные с API /api/ps для дочерних компонентов
 const discountObject = ref({ name: '', value: 15 }) // Данные формы скидочного купона
 const bonusObject = ref({ name: '', value: 0 }) // Данные формы бонусного купона
-const error = ref(null) // Сообщение об ошибке, если запрос не удался
 const couponModal = ref(false) // Состояние видимости модального окна
 const activeTab = ref('discountForm') // Текущая активная вкладка (по умолчанию скидка)
 
-// Загрузка данных API при монтировании
-onMounted(async () => {
-  try {
-    // Выполняем GET-запрос к /api/ps для получения данных
-    const response = await axios.get('/api/ps', {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`, // Токен для аутентификации
-        'Accept': 'application/json' // Ожидаем JSON в ответе
-      },
-    })
-    // Сохраняем данные в реактивную переменную
-    apiData.value = response.data
-  } catch (err) {
-    // Сохраняем ошибку и логируем её
-    error.value = err.response?.data?.message || err.message || t('errors.data_loading')
-    console.error('Ошибка загрузки данных:', error.value)
+// Объявляем и получаем пропсы
+const { apiData, bData } = defineProps({
+  apiData: {
+    type: Object, // Тип пропса — объект или null
+    default: null // Значение по умолчанию
+  },
+  bData: {
+    type: Object, // Тип пропса — объект или null
+    default: null // Значение по умолчанию
   }
+})
+
+// Отслеживаем изменения apiData для отладки
+watch(() => apiData, (newValue) => {
+  console.log('CreateCoupon apiData:', newValue)
 })
 
 // Функция создания купона
@@ -115,6 +108,10 @@ async function createCoupon() {
   } else if (activeTab.value === 'bonusForm') {
     creatCouponData = { ...bonusObject.value, type: 1 } // Бонусный купон (type: 1)
   }
+
+  creatCouponData.joomlaUser = bData.data.joomlaUser.id;
+
+  console.log('createCouponData:', creatCouponData);
 
   // Проверяем валидность кода купона
   if (!creatCouponData.name || !isValidPromoCode(creatCouponData.name)) {
@@ -170,7 +167,7 @@ function isValidPromoCode(code) {
   }
 
   // Регулярное выражение для допустимых символов (буквы, цифры, _, -)
-  const regex = /^[A-Za-zА-Яа-яЁё0-9_-]+$/
+  const regex = /^[A-Za-zА-Яа-яЁё0-9_-]+$/;
 
   // Возвращаем true, если код соответствует требованиям
   return regex.test(code)
