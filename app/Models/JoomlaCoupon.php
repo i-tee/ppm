@@ -41,6 +41,19 @@ class JoomlaCoupon extends Model
     public $timestamps = false;
 
     /**
+     * Игнорируемые товарные группы
+     * 5 - Наборы
+     * 7 - Сертификаты
+     * 8 - Уцененные товары
+     */
+    public $ignore_groups = '8,5,7'; 
+
+    /**
+     * Процент % кешбека Агенту промокода
+     */
+    public $cashback = '10'; // Надо брать из фала настроек глобальных
+
+    /**
      * Атрибуты, которые можно массово заполнять
      */
     protected $fillable = [
@@ -755,36 +768,51 @@ class JoomlaCoupon extends Model
      * Возвращает true при успехе, false при ошибке.
      *
      * @param string $couponCode Код купона
-     * @param int $procent Значение купона (процент)
+     * @param int $amount Значение купона (процент или фикс-сумма)
      * @param int $userId ID пользователя в Joomla
+     * @param int $coupon_type тип купона: 0 - процентный или 1 - значение, сумма в валюте
      * @return bool Успех операции
      */
-    public static function creatCoupons($couponCode, $procent, $userId)
+    public static function creatCoupons($couponCode, $amount, $userId, $coupon_type = 0)
     {
         try {
             $couponCode = trim($couponCode);
-            $procent = (int) $procent;
+            $amount = (int) $amount;
             $userId = (int) $userId;
+            $coupon_type = (int) $coupon_type;
 
-            if (empty($couponCode) || $procent <= 0 || $userId <= 0) {
+            if (empty($couponCode) || $amount <= 0 || $userId <= 0) {
                 Log::warning("Invalid parameters for creating coupons", [
                     'coupon_code' => $couponCode,
-                    'procent' => $procent,
+                    'amount' => $amount,
                     'user_id' => $userId,
                 ]);
                 return false;
             }
 
+            if(($coupon_type == 0 and $amount >= 100) || $amount < 0 ){
+
+                Log::warning("Invalid parameters [amount, coupon_type] for creating coupons", [
+                    'coupon_code' => $couponCode,
+                    'amount' => $amount,
+                    'user_id' => $userId,
+                    'coupon_type' => $coupon_type
+                ]);
+                return false;
+
+            }
+
             // Вставка в jshopping_coupons
             $couponData = [
-                'coupon_type' => 0,
+                'coupon_type' => $coupon_type,
                 'coupon_code' => $couponCode,
-                'coupon_value' => $procent,
+                'coupon_value' => $amount,
                 'coupon_publish' => 1,
                 'not_for_old_price' => 1,
                 'not_for_different_prices' => 1,
-                'not_for_categories_id' => '5,7',
+                'not_for_categories_id' => self::$ignore_groups,
                 'coupon_end_time' => 23, // Время окончания (часы? Из оригинала)
+                'cashback' => self::$cashback
             ];
 
             $newCouponId = DB::connection('mysql_joomla')
@@ -824,7 +852,7 @@ class JoomlaCoupon extends Model
         } catch (\Exception $e) {
             Log::error("Failed to create coupons", [
                 'coupon_code' => $couponCode,
-                'procent' => $procent,
+                'amount' => $amount,
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);

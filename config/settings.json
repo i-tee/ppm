@@ -16,7 +16,8 @@
 			"active": true,
 			"min_payout": 500,
 			"max_discount": 30,
-			"bonus_koef": 1.1
+			"old_std_discount": 20,
+			"bonus_koef": 1.2
 		},
 		{
 			"id": 3,

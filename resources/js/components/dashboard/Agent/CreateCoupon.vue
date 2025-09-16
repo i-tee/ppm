@@ -52,7 +52,10 @@ import axios from 'axios'
 import DiscountPercentageCode from './DiscountPercentageCode.vue'
 import BonusRedemptionCode from './BonusRedemptionCode.vue'
 import { useToast } from 'vuestic-ui';
+import { useI18n } from 'vue-i18n';
 // import CheckCode from './CheckCode.vue'
+
+const emit = defineEmits(['couponCreated'])
 
 const discountObject = ref({ name: '', value: 15 })
 const bonusObject = ref({ name: '', value: 0 })
@@ -61,7 +64,7 @@ const authStore = useAuthStore()
 const apiData = ref(null)
 const couponModal = ref(false)
 const activeTab = ref('discountForm')
-import { useI18n } from 'vue-i18n';
+
 const { t } = useI18n();
 const toast = useToast();
 
@@ -78,7 +81,7 @@ onMounted(async () => {
   }
 })
 
-function createCoupon() {
+async function createCoupon() {
   let creatCouponData = {}
 
   if (activeTab.value === 'discountForm') {
@@ -97,7 +100,37 @@ function createCoupon() {
   }
 
   console.log('Тип купона:', creatCouponData)
-  // couponModal.value = false
+
+  try {
+    const response = await axios.post('/api/coupons', creatCouponData, {
+      headers: { 
+        Authorization: `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+    })
+    
+    toast.init({
+      message: t('coupons.create_success'),
+      color: 'success',
+    });
+    
+    emit('couponCreated', response.data)
+    couponModal.value = false
+    discountObject.value = { name: '', value: 15 }
+    bonusObject.value = { name: '', value: 0 }
+    activeTab.value = 'discountForm'
+
+    alert('couponCreated')
+
+  } catch (err) {
+    const errorMessage = err.response?.data?.message || t('errors.coupon_creation')
+    toast.init({
+      message: errorMessage,
+      color: 'danger',
+    });
+    console.error('Ошибка создания купона:', err)
+  }
 }
 
 function isValidPromoCode(code) {

@@ -19,20 +19,14 @@
                 </div>
 
                 <div class="text-end">
-                    <CreateCoupon />
+                    <CreateCoupon @coupon-created="fetchData" />
                 </div>
-
             </VaCard>
-
         </div>
         <div v-else-if="loading">
             <VaAlert color="warning">{{ $t('loading_data') }}</VaAlert>
         </div>
         <div v-else-if="error">{{ error }}</div>
-
-        <!-- Новый компонент со списком промокодов -->
-        <!-- <UserCoupons class="mt-6" /> -->
-
     </div>
 </template>
 
@@ -40,10 +34,12 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import CouponsList from './Agent/CouponsList.vue' // Тут с библиотекой отдельной, надо это постараться юзать
+import { useToast } from 'vuestic-ui'
+import CouponsList from './Agent/CouponsList.vue'
 import CreateCoupon from './Agent/CreateCoupon.vue'
 
 const authStore = useAuthStore()
+const { init: initToast } = useToast()
 
 // Определяем реактивные переменные
 const apiData = ref(null)
@@ -56,7 +52,8 @@ const selectedCooperationType = computed(() => {
     return apiData.value.cooperation_types.find(type => type.id === 2)
 })
 
-onMounted(async () => {
+// Функция для загрузки данных
+const fetchData = async () => {
     try {
         loading.value = true
         error.value = null
@@ -68,12 +65,18 @@ onMounted(async () => {
         })
         apiData.value = response.data
     } catch (err) {
-        error.value = err.response?.data?.message || err.message || 'Ошибка загрузки данных'
-        console.error('Ошибка загрузки:', error.value)
+        error.value = err.response?.data?.message || err.message || $t('errors.data_loading')
+        initToast({
+            message: error.value,
+            color: 'danger'
+        })
     } finally {
         loading.value = false
     }
-})
+}
+
+// Вызов функции при монтировании
+onMounted(fetchData)
 </script>
 
 <style scoped>
