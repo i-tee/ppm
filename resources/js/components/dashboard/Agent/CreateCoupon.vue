@@ -69,7 +69,7 @@ import DiscountPercentageCode from './DiscountPercentageCode.vue' // Компо�
 import BonusRedemptionCode from './BonusRedemptionCode.vue' // Компонент формы бонусного купона
 
 // Определение пользовательского события
-const emit = defineEmits(['couponCreated']) // Объявляем событие couponCreated для родительского компонента
+const emit = defineEmits(['coupon-created']) // Объявляем событие couponCreated для родительского компонента
 
 // Инициализация локализации и уведомлений
 const { t } = useI18n() // Функция t для получения переведённых строк
@@ -125,8 +125,8 @@ async function createCoupon() {
   }
 
   try {
-    // Выполняем POST-запрос для создания купона
-    const response = await axios.post('/api/coupons', creatCouponData, {
+    // Выполняем POST-запрос для создания купона (абсолютный путь с ведущим слешем)
+    const response = await axios.post('/api/user/coupon/create', creatCouponData, {
       headers: {
         Authorization: `Bearer ${authStore.token}`, // Токен авторизации
         'Content-Type': 'application/json', // Указываем тип данных
@@ -140,22 +140,24 @@ async function createCoupon() {
       color: 'success'
     })
 
-    // Отправляем событие couponCreated родительскому компоненту
-    emit('couponCreated', response.data)
-
     // Сбрасываем состояние формы и закрываем модальное окно
     couponModal.value = false
     discountObject.value = { name: '', value: 15 }
     bonusObject.value = { name: '', value: 0 }
     activeTab.value = 'discountForm'
+
+    // Отправляем событие couponCreated родительскому компоненту
+    emit('coupon-created', response.data)
+
   } catch (err) {
-    // Обрабатываем ошибку и показываем уведомление
+    // Обрабатываем ошибку и показываем уведомление (с fallback на локализацию)
     const errorMessage = err.response?.data?.message || t('errors.coupon_creation')
     initToast({
-      message: errorMessage,
+      message: t(errorMessage),
       color: 'danger'
     })
-    console.error('Ошибка создания купона:', err)
+    // console.error('Ошибка создания купона:', err)
+    // console.log('Полный ответ сервера:', err.response) // Для отладки: полный объект ошибки
   }
 }
 

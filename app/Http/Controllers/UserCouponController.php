@@ -5,7 +5,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use App\Models\JoomlaCoupon; // Твоя модель для работы с Joomla
+use Illuminate\Support\Facades\Log;
 
 class UserCouponController extends Controller
 {
@@ -82,5 +84,50 @@ class UserCouponController extends Controller
             'payments' => $payments,
             'orders' => $orders
         ]);
+    }
+
+    public function create(Request $request)
+    {
+        // Получаем все данные из запроса
+        $data = $request->all();
+
+        // Валидация входных данных
+        $validator = Validator::make($data, [
+            'name' => 'required|string|min:6|max:36|regex:/^[A-Za-zА-Яа-яЁё0-9_-]+$/',
+            'value' => 'required|integer|min:0',
+            'type' => 'required|in:0,1',
+            'joomlaUser' => 'required|integer' // joomlaUser — это ID пользователя в Joomla
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => __('errors.validation_failed'),
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Попытка создания купона
+            $result = JoomlaCoupon::createCoupon(
+                $data['name'],
+                $data['value'],
+                $data['joomlaUser'],
+                $data['type']
+            );
+
+            if ($result['success']) {
+                return response()->json([
+                    'message' => __('coupons.create_success')
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => __('errors.' . $result['error'])
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => __('errors.unexpected_error')
+            ], 500);
+        }
     }
 }

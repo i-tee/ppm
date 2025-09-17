@@ -22,12 +22,12 @@
 
         <!-- Компонент списка купонов -->
         <div class="my-2">
-          <CouponsList :apiData="apiData" :bData="bData" />
+          <CouponsList :apiData="apiData" :bData="bData" :refresh="refreshKey"/>
         </div>
 
         <!-- Кнопка для создания нового купона, вызывает fetchAllData при создании -->
         <div class="text-end my-2">
-          <CreateCoupon :apiData="apiData" :bData="bData" @coupon-created="fetchAllData" />
+          <CreateCoupon :apiData="apiData" :bData="bData" @coupon-created="handleCouponCreated" />
         </div>
       </VaCard>
     </div>
@@ -55,6 +55,7 @@ const apiData = ref(null) // Данные с API /api/ps (например, ти
 const bData = ref(null) // Бизнес-данные, загружаемые через getBusinessData (объект)
 const loading = ref(true) // Состояние загрузки (true, пока данные не загружены)
 const error = ref(null) // Хранит сообщение об ошибке, если загрузка не удалась
+const refreshKey = ref(0) // Добавляем реактивную переменную для принудительного обновления CouponsList
 
 // Хранилище авторизации и уведомления
 const authStore = useAuthStore() // Получаем токен авторизации из Pinia
@@ -66,6 +67,16 @@ const selectedCooperationType = computed(() => {
   if (!apiData.value?.cooperation_types) return null
   return apiData.value.cooperation_types.find(type => type.id === 2)
 })
+
+
+// Добавляем обработчик для события coupon-created
+function handleCouponCreated(response) {
+  console.log('Событие coupon-created сработало:', response);
+  fetchAllData();
+  fetchApiData();
+  loadBusinessData();
+  refreshKey.value++; // Принудительно обновляем CouponsList (watch сработает)
+}
 
 // Функции загрузки данных
 const fetchApiData = async () => {

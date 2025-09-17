@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\Partners;
+use Carbon\Carbon;
 
 class JoomlaCoupon extends Model
 {
@@ -46,12 +48,7 @@ class JoomlaCoupon extends Model
      * 7 - Сертификаты
      * 8 - Уцененные товары
      */
-    public $ignore_groups = '8,5,7'; 
-
-    /**
-     * Процент % кешбека Агенту промокода
-     */
-    public $cashback = '10'; // Надо брать из фала настроек глобальных
+    public static $ignore_groups = '8,5,7';
 
     /**
      * Атрибуты, которые можно массово заполнять
@@ -490,7 +487,6 @@ class JoomlaCoupon extends Model
 
             // Возвращаем тип купона
             return $coupon->coupon_type;
-            
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -765,98 +761,158 @@ class JoomlaCoupon extends Model
 
     /**
      * Создаёт новый купон в jshopping_coupons и связывает его с пользователем в avicenna_user_coupons.
-     * Возвращает true при успехе, false при ошибке.
+     * Возвращает массив с результатом операции и текстом ошибки (если есть).
      *
      * @param string $couponCode Код купона
      * @param int $amount Значение купона (процент или фикс-сумма)
      * @param int $userId ID пользователя в Joomla
-     * @param int $coupon_type тип купона: 0 - процентный или 1 - значение, сумма в валюте
-     * @return bool Успех операции
+     * @param int $coupon_type Тип купона: 0 - процентный или 1 - сумма
+     * @return array ['success' => bool, 'error' => string|null] Успех операции и текст ошибки
      */
-    public static function creatCoupons($couponCode, $amount, $userId, $coupon_type = 0)
+    public static function createCoupon($couponCode, $amount, $userId, $coupon_type = 0)
     {
+        $couponCode = trim($couponCode);
+        $amount = (int) $amount;
+        $userId = (int) $userId;
+        $coupon_type = (int) $coupon_type;
+
+        $cooperation_type_agent = Partners::getSettings("cooperation_types")[1];
+        $max_discount = (int) $cooperation_type_agent['max_discount'];
+        $old_std_discount = (int) $cooperation_type_agent['old_std_discount'];
+        $bonus_koef = $cooperation_type_agent['bonus_koef'];
+        $cashback_percent = (int) ceil($max_discount - $amount);
+        $finished_after_used = 0; // Промокод завершается после использования 0 - нет / 1 - да
+
+        Log::info('tee: $maxDiscount', [$max_discount]);
+        Log::info('tee: $cashback_percent', [$cashback_percent]);
+        Log::info('tee: $bonus_koef', [$bonus_koef]);
+        Log::info('tee: $old_std_discount', [$old_std_discount]);
+
+        if (empty($couponCode) || $amount < 0 || $userId <= 0) {
+            return ['success' => false, 'error' => 'coupon_invalid_params'];
+        }
+
+        // Проверка на существование купона с таким кодом
+        if (DB::connection('mysql_joomla')->table('jshopping_coupons')->where('coupon_code', $couponCode)->exists()) {
+            return ['success' => false, 'error' => 'coupon_code_exists'];
+        }
+
+        if (($coupon_type == 0 && $amount >= 100) || $amount < 0) {
+            return ['success' => false, 'error' => 'coupon_invalid_amount_type'];
+        }
+
+        if (($coupon_type == 0 && $amount > $max_discount) || $amount < 0) {
+            return ['success' => false, 'error' => 'coupon_invalid_amount_type'];
+        }
+
+        if ($coupon_type == 1) {
+
+            $cashback_percent = 0;
+            $finished_after_used = 1;
+
+            if ($amount <= 0) {
+
+                return ['success' => false, 'error' => 'coupon_amount_null'];
+            }
+
+            if ($amount > 100000) {
+
+                return ['success' => false, 'error' => 'coupon_amount_better_max'];
+            }
+        }
+
+        // Формируем данные для вставки в jm_jshopping_coupons, включая все поля
+        $couponData = [
+            'coupon_type' => $coupon_type, // 0 - процент, 1 - сумма
+            'coupon_code' => $couponCode, // Код купона
+            'coupon_value' => number_format($amount, 2, '.', ''), // Форматируем как DECIMAL(12,2)
+            'tax_id' => 0, // Обязательное поле, дефолт 0
+            'used' => 0, // Количество использований
+            'for_user_id' => 0, // ID пользователя джумла, на которого действует купон (0 - на всех)
+            'coupon_start_date' => Carbon::now()->toDateString(), // Валидная дата, например, '2025-09-17'
+            'coupon_expire_date' => Carbon::now()->addYears(10)->toDateString(), // Через 10 лет, например, '2035-09-17'
+            'finished_after_used' => $finished_after_used,
+            'coupon_publish' => 1, // Опубликовано
+            'not_for_old_price' => 1, // Не для старых цен
+            'not_for_different_prices' => 1, // Не для разных цен
+            'min_amount' => '0.00', // DECIMAL, как в дампе
+            'for_users_id' => '0', // Типичное значение
+            'for_user_groups_id' => '0', // Типичное значение
+            'for_products_id' => '0', // Типичное значение
+            'for_categories_id' => '0', // Типичное значение
+            'for_manufacturers_id' => '0', // Типичное значение
+            'for_vendors_id' => '0', // Типичное значение
+            'not_for_users_id' => '0', // Типичное значение
+            'not_for_user_groups_id' => '0', // Типичное значение
+            'not_for_products_id' => '0', // Типичное значение
+            'not_for_categories_id' => self::$ignore_groups, // Игнорируемые категории
+            'not_for_manufacturers_id' => '0', // Типичное значение
+            'not_for_vendors_id' => '0', // Типичное значение
+            'coupon_start_time' => 0, // Как в дампе
+            'coupon_end_time' => 23, // Как в дампе
+            'for_labels_id' => '0', // Типичное значение
+            'not_for_labels_id' => '0', // Типичное значение
+            'cashback' => $cashback_percent, // Обязательное поле, дефолт 0
+        ];
+
         try {
-            $couponCode = trim($couponCode);
-            $amount = (int) $amount;
-            $userId = (int) $userId;
-            $coupon_type = (int) $coupon_type;
-
-            if (empty($couponCode) || $amount <= 0 || $userId <= 0) {
-                Log::warning("Invalid parameters for creating coupons", [
-                    'coupon_code' => $couponCode,
-                    'amount' => $amount,
-                    'user_id' => $userId,
-                ]);
-                return false;
-            }
-
-            if(($coupon_type == 0 and $amount >= 100) || $amount < 0 ){
-
-                Log::warning("Invalid parameters [amount, coupon_type] for creating coupons", [
-                    'coupon_code' => $couponCode,
-                    'amount' => $amount,
-                    'user_id' => $userId,
-                    'coupon_type' => $coupon_type
-                ]);
-                return false;
-
-            }
-
-            // Вставка в jshopping_coupons
-            $couponData = [
-                'coupon_type' => $coupon_type,
-                'coupon_code' => $couponCode,
-                'coupon_value' => $amount,
-                'coupon_publish' => 1,
-                'not_for_old_price' => 1,
-                'not_for_different_prices' => 1,
-                'not_for_categories_id' => self::$ignore_groups,
-                'coupon_end_time' => 23, // Время окончания (часы? Из оригинала)
-                'cashback' => self::$cashback
-            ];
-
+            // Вставка купона в jshopping_coupons
             $newCouponId = DB::connection('mysql_joomla')
                 ->table('jshopping_coupons')
-                ->insertGetId($couponData);
+                ->insertGetId($couponData); // Получаем ID созданного купона
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => 'coupon_insert_failed'];
+        }
 
-            if (!$newCouponId) {
-                Log::error("Failed to insert coupon", [
-                    'coupon_code' => $couponCode,
-                ]);
-                return false;
-            }
+        if (!$newCouponId) {
+            return ['success' => false, 'error' => 'coupon_insert_failed'];
+        }
 
-            // Вставка в avicenna_user_coupons
-            $userCouponData = [
-                'user_id' => $userId,
-                'coupons' => (string) $newCouponId, // Как строка ID
-            ];
-
-            $result = DB::connection('mysql_joomla')
+        // Связь с пользователем в jm_avicenna_user_coupons
+        try {
+            // Проверяем, существует ли запись для пользователя
+            $existingRecord = DB::connection('mysql_joomla')
                 ->table('avicenna_user_coupons')
-                ->insert($userCouponData);
+                ->where('user_id', $userId)
+                ->first();
+
+            if ($existingRecord) {
+                // Запись существует — добавляем ID купона к существующим (через запятую)
+                $currentCoupons = $existingRecord->coupons;
+                $newCouponIdStr = (string) $newCouponId;
+
+                // Проверяем, не добавлен ли уже этот ID
+                if (strpos($currentCoupons, $newCouponIdStr) === false) {
+                    $updatedCoupons = $currentCoupons ? $currentCoupons . ',' . $newCouponIdStr : $newCouponIdStr;
+                } else {
+                    $updatedCoupons = $currentCoupons; // Уже существует, не добавляем
+                }
+
+                // Обновляем запись (не трогаем old_balance)
+                $result = DB::connection('mysql_joomla')
+                    ->table('avicenna_user_coupons')
+                    ->where('user_id', $userId)
+                    ->update(['coupons' => $updatedCoupons]);
+            } else {
+                // Запись не существует — создаём новую с old_balance = 0
+                $userCouponData = [
+                    'user_id' => $userId,
+                    'coupons' => (string) $newCouponId, // ID купона как строка
+                    'old_balance' => 0, // Дефолт для новой записи
+                ];
+
+                $result = DB::connection('mysql_joomla')
+                    ->table('avicenna_user_coupons')
+                    ->insert($userCouponData);
+            }
 
             if ($result) {
-                Log::info("Created coupon and linked to user", [
-                    'coupon_id' => $newCouponId,
-                    'user_id' => $userId,
-                ]);
-                return true;
+                return ['success' => true, 'error' => null];
             } else {
-                Log::error("Failed to link coupon to user", [
-                    'coupon_id' => $newCouponId,
-                    'user_id' => $userId,
-                ]);
-                return false;
+                return ['success' => false, 'error' => 'coupon_user_link_failed TRY'];
             }
         } catch (\Exception $e) {
-            Log::error("Failed to create coupons", [
-                'coupon_code' => $couponCode,
-                'amount' => $amount,
-                'user_id' => $userId,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
+            return ['success' => false, 'error' => 'coupon_user_link_failed CASH'];
         }
     }
 }

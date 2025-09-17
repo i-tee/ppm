@@ -3,7 +3,7 @@
   <div>
     <!-- Показываем индикатор загрузки, если loading = true -->
     <div v-if="loading" class="mt-4">
-      <VaAlert color="warning">{{ $t('loading_data') }}</VaAlert>
+      <VaAlert color="secondary">{{ $t('loading_data') }}</VaAlert>
     </div>
     <!-- Показываем ошибку, если она есть -->
     <div v-else-if="error" class="mt-4 text-danger">
@@ -15,7 +15,7 @@
         <!-- Перебираем массив coupons, отображая каждый купон -->
         <va-list-item v-for="coupon in coupons" :key="coupon.coupon_id">
           <!-- Показываем код купона и его значение (процент или бонусы) -->
-          {{ coupon.coupon_code }} ({{ coupon.coupon_value }} {{ coupon.coupon_type === 0 ? '%' : $t('coupons.bonuses')
+          {{ coupon.coupon_code }} ({{ coupon.coupon_value }} {{ coupon.coupon_type === 0 ? '%' : $t('coupons.currency')
           }})
         </va-list-item>
       </va-list>
@@ -39,7 +39,7 @@ const { t } = useI18n() // Функция t для получения перев
 const { init: initToast } = useToast() // Инициализация уведомлений
 
 // Объявляем и получаем пропсы
-const { apiData, bData } = defineProps({
+const { apiData, bData, refresh } = defineProps({
   apiData: {
     type: Object, // Тип пропса — объект или null
     default: null // Значение по умолчанию
@@ -47,6 +47,10 @@ const { apiData, bData } = defineProps({
   bData: {
     type: Object, // Тип пропса — объект или null
     default: null // Значение по умолчанию
+  },
+  refresh: {
+    type: Number, // Пропс для принудительного обновления
+    default: 0
   }
 })
 
@@ -66,6 +70,12 @@ watch(
     console.log('bData:', newValue.data)
   }
 )
+
+// Отслеживаем изменения refresh для перезагрузки купонов
+watch(() => refresh, () => {
+  console.log('Refresh triggered, reloading coupons')
+  loadAllData()
+})
 
 // Функция загрузки купонов
 const loadCoupons = async () => {
