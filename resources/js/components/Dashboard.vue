@@ -95,7 +95,6 @@ export default defineComponent({
 
 <style scoped>
 .dashboard-layout {
-  display: flex;
   min-height: 100vh;
 }
 

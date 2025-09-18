@@ -2,8 +2,8 @@
   <!-- Основной контейнер компонента -->
   <div>
     <!-- Показываем индикатор загрузки, если loading = true -->
-    <div v-if="loading" class="mt-4">
-      <VaAlert color="secondary">{{ $t('loading_data') }}</VaAlert>
+    <div v-if="loading" class="mt-4 pb-4">
+      <VaSkeleton variant="text" :lines="3" />
     </div>
     <!-- Показываем ошибку, если она есть -->
     <div v-else-if="error" class="mt-4 text-danger">
