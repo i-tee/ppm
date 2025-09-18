@@ -23,7 +23,7 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::get('/dev', [UserCouponController::class, 'credits']);
+    Route::get('/dev', [UserCouponController::class, 'oldBalance']);
     Route::get('/dev2', [UserCouponController::class, 'withdrawals']);
     Route::get('/dev3', [UserCouponController::class, 'data']);
 

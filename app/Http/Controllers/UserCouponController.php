@@ -44,6 +44,9 @@ class UserCouponController extends Controller
         $user = $request->user();
         $joomlaUser = JoomlaCoupon::joomlaUser();
 
+        $balance = 0;
+        $oldPromocodBalance = JoomlaCoupon::oldPromocodBalance($joomlaUser->id);
+
         // 1. Получаем данные (то, что вы уже точно вызываете)
         $raw = JoomlaCoupon::getUserCoupons();   // может быть Collection, может быть массив
 
@@ -60,7 +63,7 @@ class UserCouponController extends Controller
             $orders += JoomlaCoupon::getPpOrders($id);
         }
 
-        $payments = JoomlaCoupon::getPpPayments($joomlaUser->id); // Получаем все платежи
+        // $payments = JoomlaCoupon::getPpPayments($joomlaUser->id); // Получаем все платежи
 
         $coupon_types = [];
         foreach ($raw['coupons'] as $coupon) {
@@ -75,17 +78,28 @@ class UserCouponController extends Controller
 
         }
 
+        $credits = JoomlaCoupon::credits();
+        $withdrawals = JoomlaCoupon::withdrawals();
+
+        $balance = ceil($credits['total_accruals'] - $withdrawals['debit']);
+        if($oldPromocodBalance['be']){
+            $balance += $oldPromocodBalance['summ'];
+        }
+
+
         // 3. Отдаём JSON
         return response()->json([
             'user' => $user,
+            'balance' => $balance,
             'joomlaUser' => $joomlaUser,
-            'credits' => JoomlaCoupon::credits(),
-            'withdrawals' => JoomlaCoupon::withdrawals(),
+            'oldPromocodBalance' => $oldPromocodBalance,
+            'credits' => $credits,
+            'withdrawals' => $withdrawals,
             'coupon_types' => $coupon_types,
             'coupons' => $ids,
             'coupons_full' => $raw['coupons'],
-            'payments' => $payments,
-            'orders' => $orders
+            // 'payments' => $payments,
+            //'orders' => $orders
         ]);
 
         //$withdrawals = JoomlaCoupon::withdrawals();
@@ -154,6 +168,16 @@ class UserCouponController extends Controller
         return response()->json([
             'total_accruals' => $credits['total_accruals'], // Округляем до 2 знаков
             'orders_count' => $credits['orders_count'], // Счётчик заказов
+        ], 200);
+    }
+
+    public static function oldBalance()
+    {
+        $joomlaUser = JoomlaCoupon::joomlaUser();
+        $oldBalance = JoomlaCoupon::oldPromocodBalance($joomlaUser->id);
+
+        return response()->json([
+            'oldBalance' => $oldBalance
         ], 200);
     }
 }

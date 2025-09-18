@@ -3,7 +3,7 @@
   <div>
     <!-- Показываем индикатор загрузки, если loading = true -->
     <div v-if="loading" class="mt-4 pb-4">
-      <VaSkeleton variant="text" :lines="3" />
+      <VaSkeleton variant="text" :lines="bData.data?.coupons.length ?? 3" />
     </div>
     <!-- Показываем ошибку, если она есть -->
     <div v-else-if="error" class="mt-4 text-danger">
@@ -62,6 +62,7 @@ const error = ref(null) // Сообщение об ошибке, если зап
 // Выводим apiData и bData в консоль при монтировании
 onMounted(() => {
   console.log('apiData:', apiData)
+  console.log('bData:', bData)
 })
 
 // Отслеживаем изменения bData и выводим в консоль

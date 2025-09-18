@@ -72,6 +72,7 @@
   },
   "vuestic": {
     "sliderValue": "Значение",
+    "loading": "загрузка...",
     "close": "Закрыть",
     "sortColumnBy": "Сортировать по",
     "goToSpecificPage": "Перейти на страницу",

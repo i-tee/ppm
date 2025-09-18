@@ -961,6 +961,7 @@ class JoomlaCoupon extends Model
 
         return [
             'debit' => $debit,
+            'withdrawals_count' => count($withdrawals), // Счётчик заказов
             'withdrawals' => $withdrawals
         ];
     }
@@ -994,6 +995,7 @@ class JoomlaCoupon extends Model
         return [
             'total_accruals' => round($totalAccruals, 2), // Округляем до 2 знаков
             'orders_count' => count($orders), // Счётчик заказов
+            'orders' => $orders
         ];
     }
 }
