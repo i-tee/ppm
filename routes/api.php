@@ -23,8 +23,9 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::post('/dev', [DevController::class, 'index']);
-    Route::post('/dev2', [DevController::class, 'index2']);
+    Route::get('/dev', [UserCouponController::class, 'credits']);
+    Route::get('/dev2', [UserCouponController::class, 'withdrawals']);
+    Route::get('/dev3', [UserCouponController::class, 'data']);
 
     Route::get('/user/coupons', [UserCouponController::class, 'index']);
     Route::post('/user/check-promocode', [UserCouponController::class, 'check']);

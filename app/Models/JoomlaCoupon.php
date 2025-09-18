@@ -915,4 +915,85 @@ class JoomlaCoupon extends Model
             return ['success' => false, 'error' => 'coupon_user_link_failed CASH'];
         }
     }
+
+    public static function orders()
+    {
+        $user = Auth::user();
+        $joomlaUser = JoomlaCoupon::joomlaUser();
+
+        // 1. Получаем данные (то, что вы уже точно вызываете)
+        $raw = JoomlaCoupon::getUserCoupons();   // может быть Collection, может быть массив
+
+        // 2. Превращаем в коллекцию и берём только coupon_id
+        $userCoupons = collect($raw['coupons'] ?? $raw)  // если вернулся массив вида ['coupons'=>[...]]
+            ->pluck('coupon_id')
+            ->values();
+
+        $coupon_types = [];
+        foreach ($raw['coupons'] as $coupon) {
+
+            $coupon_types[$coupon->coupon_id] = $coupon->coupon_type;
+        }
+
+        $test = [];
+        $orders = [];
+
+        foreach ($userCoupons as $index => $coupon_id) {
+
+            $orders += self::getPpOrders($coupon_id);
+        }
+
+        return response()->json([
+            'orders' => $orders
+        ], 200);
+    }
+
+    public static function withdrawals()
+    {
+
+        $withdrawals = self::getPpPayments(self::joomlaUser()->id);
+
+        $debit = 0;
+
+        foreach ($withdrawals as $withdrawal) {
+            $debit += $withdrawal->summ;
+        }
+
+        return [
+            'debit' => $debit,
+            'withdrawals' => $withdrawals
+        ];
+    }
+
+    public static function credits()
+    {
+
+        // Получаем заказы через метод orders()
+        $ordersResponse = self::orders();
+        $orders = $ordersResponse->getData()->orders;
+
+        // Рассчитываем сумму начислений
+        $totalAccruals = 0.0;
+        foreach ($orders as $order) {
+            $cashback = (float) $order->cashback;
+            if ($cashback > 0) {
+                $totalAccruals += $cashback;
+            } elseif ($cashback == 0) {
+                $discount = (float) $order->order_discount;
+                $subtotal = (float) $order->order_subtotal;
+                if ($subtotal > 0) {
+                    $discountPercent = $discount / $subtotal;
+                    if (abs($discountPercent - 0.1) <= 0.01) { // ±1% от 10%
+                        $totalAccruals += $discount;
+                    }
+                }
+            }
+            // Если cashback < 0 — пропускаем
+        }
+
+        return [
+            'total_accruals' => round($totalAccruals, 2), // Округляем до 2 знаков
+            'orders_count' => count($orders), // Счётчик заказов
+        ];
+    }
 }

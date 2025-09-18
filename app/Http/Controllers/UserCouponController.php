@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\JoomlaCoupon; // Твоя модель для работы с Joomla
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class UserCouponController extends Controller
 {
@@ -78,12 +79,16 @@ class UserCouponController extends Controller
         return response()->json([
             'user' => $user,
             'joomlaUser' => $joomlaUser,
+            'credits' => JoomlaCoupon::credits(),
+            'withdrawals' => JoomlaCoupon::withdrawals(),
             'coupon_types' => $coupon_types,
             'coupons' => $ids,
             'coupons_full' => $raw['coupons'],
             'payments' => $payments,
             'orders' => $orders
         ]);
+
+        //$withdrawals = JoomlaCoupon::withdrawals();
     }
 
     public function create(Request $request)
@@ -129,5 +134,26 @@ class UserCouponController extends Controller
                 'message' => __('errors.unexpected_error')
             ], 500);
         }
+    }
+
+    public static function withdrawals()
+    {
+
+        $withdrawals = JoomlaCoupon::withdrawals();
+
+        return response()->json([
+            'debit' => $withdrawals['debit'],
+            'withdrawals' => $withdrawals['withdrawals']
+        ], 200);
+    }
+
+    public static function credits()
+    {
+        $credits = JoomlaCoupon::credits();
+
+        return response()->json([
+            'total_accruals' => $credits['total_accruals'], // Округляем до 2 знаков
+            'orders_count' => $credits['orders_count'], // Счётчик заказов
+        ], 200);
     }
 }
