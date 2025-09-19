@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dev', [UserCouponController::class, 'oldBalance']);
     Route::get('/dev2', [UserCouponController::class, 'withdrawals']);
     Route::get('/dev3', [UserCouponController::class, 'data']);
+    Route::get('/dev4', [UserCouponController::class, 'index']);
 
     Route::get('/user/coupons', [UserCouponController::class, 'index']);
     Route::post('/user/check-promocode', [UserCouponController::class, 'check']);

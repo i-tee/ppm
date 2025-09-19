@@ -16,7 +16,7 @@
       <hr>
 
       <!-- Проверяем наличие bData.data.credits.total_accruals -->
-      <h3>{{ bData.data?.credits?.total_accruals ?? $t('common.no_data') }}</h3>
+      <h3>{{ bData.data?.balance ?? $t('common.no_data') }}</h3>
 
       <hr>
 

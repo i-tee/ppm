@@ -918,8 +918,6 @@ class JoomlaCoupon extends Model
 
     public static function orders()
     {
-        $user = Auth::user();
-        $joomlaUser = JoomlaCoupon::joomlaUser();
 
         // 1. Получаем данные (то, что вы уже точно вызываете)
         $raw = JoomlaCoupon::getUserCoupons();   // может быть Collection, может быть массив
@@ -929,18 +927,9 @@ class JoomlaCoupon extends Model
             ->pluck('coupon_id')
             ->values();
 
-        $coupon_types = [];
-        foreach ($raw['coupons'] as $coupon) {
-
-            $coupon_types[$coupon->coupon_id] = $coupon->coupon_type;
-        }
-
-        $test = [];
-        $orders = [];
-
-        foreach ($userCoupons as $index => $coupon_id) {
-
-            $orders += self::getPpOrders($coupon_id);
+        $orders = collect([]);
+        foreach ($userCoupons as $coupon_id) {
+            $orders = $orders->merge(self::getPpOrders($coupon_id));
         }
 
         return response()->json([
@@ -968,12 +957,11 @@ class JoomlaCoupon extends Model
 
     public static function credits()
     {
-
         // Получаем заказы через метод orders()
         $ordersResponse = self::orders();
         $orders = $ordersResponse->getData()->orders;
 
-        // Рассчитываем сумму начислений
+        // Рассчитываем сумму начислений и обновляем cashback
         $totalAccruals = 0.0;
         foreach ($orders as $order) {
             $cashback = (float) $order->cashback;
@@ -986,6 +974,7 @@ class JoomlaCoupon extends Model
                     $discountPercent = $discount / $subtotal;
                     if (abs($discountPercent - 0.1) <= 0.01) { // ±1% от 10%
                         $totalAccruals += $discount;
+                        $order->cashback = $discount; // Переносим order_discount в cashback
                     }
                 }
             }

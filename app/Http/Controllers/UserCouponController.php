@@ -55,13 +55,11 @@ class UserCouponController extends Controller
             ->pluck('coupon_id')
             ->values();                       // сброс ключей
 
-        $orders = []; // Здесь мы будем хранить заказы
-
+        $orders = collect([]);
         foreach ($ids as $id) {
-            // Тут можно делать что-то с каждым id, если нужно
-            // Например, логировать или проверять что-то
-            $orders += JoomlaCoupon::getPpOrders($id);
+            $orders = $orders->merge(JoomlaCoupon::getPpOrders($id));
         }
+        $orders = $orders->values()->toArray(); // Сбрасываем ключи и преобразуем в массив
 
         // $payments = JoomlaCoupon::getPpPayments($joomlaUser->id); // Получаем все платежи
 
@@ -82,7 +80,7 @@ class UserCouponController extends Controller
         $withdrawals = JoomlaCoupon::withdrawals();
 
         $balance = ceil($credits['total_accruals'] - $withdrawals['debit']);
-        if($oldPromocodBalance['be']){
+        if ($oldPromocodBalance['be']) {
             $balance += $oldPromocodBalance['summ'];
         }
 

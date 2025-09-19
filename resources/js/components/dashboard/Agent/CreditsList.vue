@@ -13,11 +13,13 @@
     <!-- Показываем таблицу заказов, если они есть -->
     <div v-else-if="orders.length" class="mt-4">
       <VaDataTable
-        :items="orders"
+        ref="tableRef"
+        :key="`table-${orders.length}-${currentPage}`"
+        :items="pagedOrders"
         :columns="columns"
         :hoverable="true"
-        :per-page="10"
         :sortable="true"
+        :no-data-html="t('credits.no_orders')"
         class="va-table--modern"
       >
         <!-- Кастомный слот для имени -->
@@ -29,8 +31,8 @@
           {{ rowData.city || t('common.unknown') }}
         </template>
         <!-- Кастомный слот для суммы заказа -->
-        <template #cell(order_total)="{ rowData }">
-          {{ formatNumber(rowData.order_total) }} ₽
+        <template #cell(order_subtotal)="{ rowData }">
+          {{ formatNumber(rowData.order_subtotal) }} ₽
         </template>
         <!-- Кастомный слот для кешбека -->
         <template #cell(cashback)="{ rowData }">
@@ -39,6 +41,18 @@
         <!-- Кастомный слот для даты -->
         <template #cell(order_date)="{ rowData }">
           {{ formatDate(rowData.order_date) }}
+        </template>
+        <!-- Слот для футера с пагинацией -->
+        <template #footer>
+          <div class="flex justify-end items-center mt-4">
+            <!-- Только пагинация -->
+            <VaPagination
+              v-model="currentPage"
+              :pages="totalPages"
+              :visible-pages="5"
+              color="primary"
+            />
+          </div>
         </template>
       </VaDataTable>
     </div>
@@ -53,7 +67,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vuestic-ui'
-import { VaDataTable, VaSkeleton } from 'vuestic-ui'
+import { VaDataTable, VaSkeleton, VaPagination } from 'vuestic-ui'
 
 // Инициализация локализации и уведомлений
 const { t } = useI18n()
@@ -79,12 +93,25 @@ const props = defineProps({
 const orders = ref([])
 const loading = ref(false)
 const error = ref(null)
+const perPage = ref(200) // Фиксированное количество строк на странице
+const currentPage = ref(1) // Текущая страница
+const tableRef = ref(null) // Ref для таблицы, чтобы управлять скроллом
+
+// Вычисляемый массив с пагинцией
+const pagedOrders = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value
+  const end = start + perPage.value
+  return orders.value.slice(start, end)
+})
+
+// Общее количество страниц
+const totalPages = computed(() => Math.ceil(orders.value.length / perPage.value))
 
 // Определение колонок для таблицы
 const columns = computed(() => [
   { key: 'name', label: t('credits.columns.name'), sortable: true },
   { key: 'city', label: t('credits.columns.city'), sortable: true },
-  { key: 'order_total', label: t('credits.columns.total'), sortable: true },
+  { key: 'order_subtotal', label: t('credits.columns.total'), sortable: true },
   { key: 'cashback', label: t('credits.columns.cashback'), sortable: true },
   { key: 'order_date', label: t('credits.columns.date'), sortable: true },
 ])
@@ -100,12 +127,19 @@ const formatNumber = (value) => {
   return Number(value).toLocaleString('ru-RU')
 }
 
+// Сохранение позиции скролла при смене страницы
+const maintainScrollPosition = () => {
+  if (tableRef.value) {
+    tableRef.value.$el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }
+}
+
 // Загрузка данных
 const loadData = () => {
   try {
     loading.value = true
     const ordersData = props.bData?.data?.credits?.orders || []
-    console.log('CreditsList orders:', ordersData)
+    console.log('CreditsList orders:', ordersData.length, 'items loaded')
     if (!ordersData.length) {
       console.warn('No orders found in bData.data.credits.orders')
       initToast({
@@ -114,6 +148,8 @@ const loadData = () => {
       })
     }
     orders.value = ordersData
+    // Сброс пагинации после загрузки
+    currentPage.value = 1
   } catch (err) {
     error.value = t('errors.data_loading')
     initToast({
@@ -124,6 +160,12 @@ const loadData = () => {
     loading.value = false
   }
 }
+
+// Отслеживание изменения currentPage
+watch(currentPage, (newVal, oldVal) => {
+  console.log('currentPage changed:', newVal, 'from', oldVal)
+  maintainScrollPosition() // Сохраняем позицию скролла
+})
 
 // Хук монтирования
 onMounted(loadData)
