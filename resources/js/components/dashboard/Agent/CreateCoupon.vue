@@ -114,7 +114,7 @@ async function createCoupon() {
   console.log('createCouponData:', creatCouponData);
 
   // Проверяем валидность кода купона
-  if (!creatCouponData.name || !isValidPromoCode(creatCouponData.name)) {
+  if (!creatCouponData.name || !isValidPromoCode(creatCouponData.name) || true) {
     initToast({
       message: t('errors.coupon_noValid'),
       color: 'warning'

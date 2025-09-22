@@ -968,15 +968,8 @@ class JoomlaCoupon extends Model
             if ($cashback > 0) {
                 $totalAccruals += $cashback;
             } elseif ($cashback == 0) {
-                $discount = (float) $order->order_discount;
-                $subtotal = (float) $order->order_subtotal;
-                if ($subtotal > 0) {
-                    $discountPercent = $discount / $subtotal;
-                    if (abs($discountPercent - 0.1) <= 0.01) { // ±1% от 10%
-                        $totalAccruals += $discount;
-                        $order->cashback = $discount; // Переносим order_discount в cashback
-                    }
-                }
+                $order->cashback = (float) $order->order_discount;
+                $totalAccruals += $order->cashback;
             }
             // Если cashback < 0 — пропускаем
         }
