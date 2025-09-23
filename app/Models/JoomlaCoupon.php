@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\TrueBonusCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -802,6 +803,7 @@ class JoomlaCoupon extends Model
 
         if ($coupon_type == 1) {
 
+            $cost = $amount;
             $amount = ceil($amount * Partners::getSettings("cooperation_types")[1]['bonus_koef']);
 
             $cashback_percent = 0;
@@ -901,6 +903,37 @@ class JoomlaCoupon extends Model
                 $result = DB::connection('mysql_joomla')
                     ->table('avicenna_user_coupons')
                     ->insert($userCouponData);
+            }
+
+            // Если купон успешно создан и тип == 1, создаем запись в TrueBonusCode
+            if ($coupon_type == 1) {
+                // Получаем Laravel user_id (предполагаем, что пользователь авторизован)
+                $laravelUserId = Auth::user()->id ?? null;
+                if ($laravelUserId) {
+                    $trueBonusData = [
+                        'user_id' => $laravelUserId,            // ID пользователя в Laravel
+                        'joomla_user_id' => $userId,            // ID пользователя в Joomla
+                        'bonus_code_id' => $newCouponId,        // ID купона из Joomla (bonus_code_id)
+                        'bonus_code_value' => $amount,      // Значение промокода (coupon_code)
+                        'bonus_code_cost' => $cost,           // Стоимость (coupon_value)
+                    ];
+
+                    // Вызываем специальный метод из TrueBonusCode
+                    $trueBonusCreated = TrueBonusCode::createFromJoomlaCoupon($trueBonusData);
+
+                    if (!$trueBonusCreated) {
+                        // Если ошибка, можно откатить или просто залогировать (здесь не откатываем, чтобы не ломать Joomla-часть)
+                        Log::error('Failed to create TrueBonusCode from JoomlaCoupon', [
+                            'joomla_coupon_id' => $newCouponId,
+                            'data' => $trueBonusData,
+                        ]);
+                        // Не прерываем успех Joomla-части, но можно добавить в return дополнительный ключ, если нужно
+                    }
+                } else {
+                    Log::warning('No authenticated Laravel user for TrueBonusCode creation', [
+                        'joomla_user_id' => $userId,
+                    ]);
+                }
             }
 
             if ($result) {
