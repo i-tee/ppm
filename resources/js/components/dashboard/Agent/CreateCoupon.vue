@@ -96,7 +96,7 @@ const { apiData, bData } = defineProps({
 
 // Отслеживаем изменения apiData для отладки
 watch(() => apiData, (newValue) => {
-  console.log('CreateCoupon apiData:', newValue)
+  //console.log('CreateCoupon apiData:', newValue)
 })
 
 // Функция создания купона
@@ -111,10 +111,10 @@ async function createCoupon() {
 
   creatCouponData.joomlaUser = bData.data.joomlaUser.id;
 
-  console.log('createCouponData:', creatCouponData);
+  //console.log('createCouponData:', creatCouponData);
 
   // Проверяем валидность кода купона
-  if (!creatCouponData.name || !isValidPromoCode(creatCouponData.name) || true) {
+  if (!creatCouponData.name || !isValidPromoCode(creatCouponData.name)) {
     initToast({
       message: t('errors.coupon_noValid'),
       color: 'warning'

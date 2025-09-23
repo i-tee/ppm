@@ -783,11 +783,6 @@ class JoomlaCoupon extends Model
         $cashback_percent = (int) ceil($max_discount - $amount);
         $finished_after_used = 0; // Промокод завершается после использования 0 - нет / 1 - да
 
-        Log::info('tee: $maxDiscount', [$max_discount]);
-        Log::info('tee: $cashback_percent', [$cashback_percent]);
-        Log::info('tee: $bonus_koef', [$bonus_koef]);
-        Log::info('tee: $old_std_discount', [$old_std_discount]);
-
         if (empty($couponCode) || $amount < 0 || $userId <= 0) {
             return ['success' => false, 'error' => 'coupon_invalid_params'];
         }
@@ -806,6 +801,8 @@ class JoomlaCoupon extends Model
         }
 
         if ($coupon_type == 1) {
+
+            $amount = ceil($amount * Partners::getSettings("cooperation_types")[1]['bonus_koef']);
 
             $cashback_percent = 0;
             $finished_after_used = 1;

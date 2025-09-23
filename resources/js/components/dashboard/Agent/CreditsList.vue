@@ -1,4 +1,9 @@
 <template>
+  <div v-if="bData.data?.oldPromocodBalance?.be" class="bg-grey-200 rounded-md">
+    <p>{{ t('coupons.oldbalance') }}</p>
+    <p class="text-gray-400 text-light-sm">{{ t('coupons.oldbalance_descr') }}</p>
+    <p>{{  bData.data?.oldPromocodBalance?.summ }}</p>
+  </div>
   <div>
     <!-- Заголовок компонента -->
     <p class="va-h1">{{ t('credits.title') }}</p>
