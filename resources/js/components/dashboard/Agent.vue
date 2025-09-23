@@ -4,7 +4,8 @@
     <!-- Показываем контент, если данные загружены (apiData и bData не null) -->
     <div v-if="apiData && bData">
       <!-- Заголовок с локализацией для типа сотрудничества "агент" -->
-      <h1 class="va-h4 my-1">{{ $t('partners.cooperation_types.agent.title') }}</h1>
+      <h1 class="va-h4 my-1">{{ $t('partners.cooperation_types.agent.title') }} | {{ formatPrice(bData.data?.balance) ??
+        $t('common.no_data') }}</h1>
       <!-- Описание пользовательского соглашения с ссылкой на контракт -->
       <p>
         {{ $t('user_agreement.description') }}
@@ -12,13 +13,6 @@
           {{ $t('user_agreement.link_name') }}
         </a>
       </p>
-
-      <hr>
-
-      <!-- Проверяем наличие bData.data.credits.total_accruals -->
-      <h3>{{ bData.data?.balance ?? $t('common.no_data') }}</h3>
-
-      <hr>
 
       <VaTabs v-model="activeTab" grow>
         <VaTab name="coupons">{{ $t('coupons.coupons') }}</VaTab>
@@ -53,7 +47,7 @@
     <div v-else-if="loading">
 
       <div class="w-full">
-        
+
         <VaSkeleton variant="squared" width="100%" height="6rem" />
       </div>
     </div>
@@ -72,6 +66,9 @@ import CreateCoupon from './Agent/CreateCoupon.vue'
 import CreditsList from './Agent/CreditsList.vue'
 import DebitsList from './Agent/DebitsList.vue'
 import { getBusinessData } from '@/api/coupons'
+import { useBase } from '@/composables/useBase';
+
+const { formatPrice } = useBase();
 
 // Реактивные переменные
 const apiData = ref(null)

@@ -3,6 +3,7 @@
 @import 'vuestic-ui/styles/typography.css'; /* Опционально, для типографики Vuestic */
 @import 'vuestic-ui/styles/grid.css'; /* Сетка Vuestic, уже была в app.js */
 @import './va-input-coupon.css'; /* Кастомные стили для VaInput при создании купона */
+@import './avi-custom.css'; /* Кастомные стили для all */
 
 /* Подключение Tailwind CSS */
 @tailwind base;

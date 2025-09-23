@@ -1,12 +1,11 @@
 <template>
-  <div v-if="bData.data?.oldPromocodBalance?.be" class="bg-grey-200 rounded-md">
-    <p>{{ t('coupons.oldbalance') }}</p>
+
+  <div v-if="bData.data?.oldPromocodBalance?.be" class="rounded-md p-4 avi-bg-sb">
+    <p>{{ t('coupons.oldbalance') }} {{ formatPrice(bData.data?.oldPromocodBalance?.summ) }}</p>
     <p class="text-gray-400 text-light-sm">{{ t('coupons.oldbalance_descr') }}</p>
-    <p>{{  bData.data?.oldPromocodBalance?.summ }}</p>
   </div>
+
   <div>
-    <!-- Заголовок компонента -->
-    <p class="va-h1">{{ t('credits.title') }}</p>
     <!-- Показываем индикатор загрузки, если loading = true -->
     <div v-if="loading" class="mt-4 pb-4">
       <VaSkeleton variant="table" :rows="5" />
@@ -17,28 +16,8 @@
     </div>
     <!-- Показываем таблицу заказов, если они есть -->
     <div v-else-if="orders.length" class="mt-4">
-      <VaDataTable
-        ref="tableRef"
-        :key="`table-${orders.length}-${currentPage}`"
-        :items="pagedOrders"
-        :columns="columns"
-        :hoverable="true"
-        :sortable="true"
-        :no-data-html="t('credits.no_orders')"
-        class="va-table--modern"
-      >
-        <!-- Кастомный слот для имени -->
-        <template #cell(name)="{ rowData }">
-          {{ rowData.f_name }} {{ rowData.l_name }}
-        </template>
-        <!-- Кастомный слот для города -->
-        <template #cell(city)="{ rowData }">
-          {{ rowData.city || t('common.unknown') }}
-        </template>
-        <!-- Кастомный слот для суммы заказа -->
-        <template #cell(order_subtotal)="{ rowData }">
-          {{ formatNumber(rowData.order_subtotal) }} ₽
-        </template>
+      <VaDataTable ref="tableRef" :key="`table-${orders.length}-${currentPage}`" :items="pagedOrders" :columns="columns"
+        :hoverable="true" :sortable="true" :no-data-html="t('coupons.credits-no_orders')" class="va-table--modern">
         <!-- Кастомный слот для кешбека -->
         <template #cell(cashback)="{ rowData }">
           {{ formatNumber(rowData.cashback || 0) }} ₽
@@ -51,19 +30,14 @@
         <template #footer>
           <div class="flex justify-end items-center mt-4">
             <!-- Только пагинация -->
-            <VaPagination
-              v-model="currentPage"
-              :pages="totalPages"
-              :visible-pages="5"
-              color="primary"
-            />
+            <VaPagination v-model="currentPage" :pages="totalPages" :visible-pages="5" color="primary" />
           </div>
         </template>
       </VaDataTable>
     </div>
     <!-- Показываем сообщение, если заказов нет -->
     <div v-else class="mt-4">
-      {{ t('credits.no_orders') }}
+      {{ t('coupons.credits-no_orders') }}
     </div>
   </div>
 </template>
@@ -72,7 +46,10 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vuestic-ui'
+import { useBase } from '@/composables/useBase';
 import { VaDataTable, VaSkeleton, VaPagination } from 'vuestic-ui'
+
+const { formatPrice } = useBase();
 
 // Инициализация локализации и уведомлений
 const { t } = useI18n()
@@ -98,7 +75,7 @@ const props = defineProps({
 const orders = ref([])
 const loading = ref(false)
 const error = ref(null)
-const perPage = ref(200) // Фиксированное количество строк на странице
+const perPage = ref(10) // Фиксированное количество строк на странице
 const currentPage = ref(1) // Текущая страница
 const tableRef = ref(null) // Ref для таблицы, чтобы управлять скроллом
 
@@ -114,11 +91,8 @@ const totalPages = computed(() => Math.ceil(orders.value.length / perPage.value)
 
 // Определение колонок для таблицы
 const columns = computed(() => [
-  { key: 'name', label: t('credits.columns.name'), sortable: true },
-  { key: 'city', label: t('credits.columns.city'), sortable: true },
-  { key: 'order_subtotal', label: t('credits.columns.total'), sortable: true },
-  { key: 'cashback', label: t('credits.columns.cashback'), sortable: true },
-  { key: 'order_date', label: t('credits.columns.date'), sortable: true },
+  { key: 'cashback', label: t('coupons.credit'), sortable: true },
+  { key: 'order_date', label: t('date.date'), sortable: true },
 ])
 
 // Функция форматирования даты
@@ -148,7 +122,7 @@ const loadData = () => {
     if (!ordersData.length) {
       console.warn('No orders found in bData.data.credits.orders')
       initToast({
-        message: t('credits.no_orders'),
+        message: t('coupons.credits-no_orders'),
         color: 'warning',
       })
     }
