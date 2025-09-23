@@ -65,15 +65,12 @@ class UserCouponController extends Controller
 
         $coupon_types = [];
         foreach ($raw['coupons'] as $coupon) {
-
             $coupon_types[$coupon->coupon_id] = $coupon->coupon_type;
         }
 
         foreach ($orders as $order) {
-
             $order->coupon_type = $coupon_types[$order->coupon_id]; //$order->coupon_id
             // Очень плохая реализации через запросы в БД из перебора - исправить
-
         }
 
         $credits = JoomlaCoupon::credits();
@@ -83,7 +80,6 @@ class UserCouponController extends Controller
         if ($oldPromocodBalance['be']) {
             $balance += $oldPromocodBalance['summ'];
         }
-
 
         // 3. Отдаём JSON
         return response()->json([

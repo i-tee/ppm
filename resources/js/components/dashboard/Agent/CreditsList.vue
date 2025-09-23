@@ -16,11 +16,13 @@
     </div>
     <!-- Показываем таблицу заказов, если они есть -->
     <div v-else-if="orders.length" class="mt-4">
+
       <VaDataTable ref="tableRef" :key="`table-${orders.length}-${currentPage}`" :items="pagedOrders" :columns="columns"
-        :hoverable="true" :sortable="true" :no-data-html="t('coupons.credits-no_orders')" class="va-table--modern">
+        :hoverable="true" :sortable="true" :no-data-html="t('coupons.credits-no_orders')"
+        class="cursor-pointer va-table--modern" @row:click="({ item }) => openModal(item)">
         <!-- Кастомный слот для кешбека -->
         <template #cell(cashback)="{ rowData }">
-          {{ formatNumber(rowData.cashback || 0) }} ₽
+          {{ formatPrice(rowData.cashback) }}
         </template>
         <!-- Кастомный слот для даты -->
         <template #cell(order_date)="{ rowData }">
@@ -34,26 +36,44 @@
           </div>
         </template>
       </VaDataTable>
+
     </div>
     <!-- Показываем сообщение, если заказов нет -->
     <div v-else class="mt-4">
       {{ t('coupons.credits-no_orders') }}
     </div>
   </div>
+
+  <!-- Модалка -->
+  <VaModal v-model="showModal" title="Детали заказа" hide-default-actions max-width="700px">
+    <OrderDetailsModal :bData = "bData" :order="selectedOrder" @close="showModal = false" />
+  </VaModal>
+
 </template>
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vuestic-ui'
-import { useBase } from '@/composables/useBase';
+import { useBase } from '@/composables/useBase'
+import OrderDetailsModal from './CreditsList/OrderDetailsModal.vue'
 import { VaDataTable, VaSkeleton, VaPagination } from 'vuestic-ui'
 
-const { formatPrice } = useBase();
+const { formatPrice, formatDate } = useBase();
+
+const showModal = ref(false)
+const selectedOrder = ref(null)
+
+const openModal = order => {
+  selectedOrder.value = order
+  showModal.value = true
+}
 
 // Инициализация локализации и уведомлений
 const { t } = useI18n()
 const { init: initToast } = useToast()
+
+// console.log('Кликнули по заказу:', order)
 
 // Объявляем и получаем пропсы
 const props = defineProps({
@@ -94,17 +114,6 @@ const columns = computed(() => [
   { key: 'cashback', label: t('coupons.credit'), sortable: true },
   { key: 'order_date', label: t('date.date'), sortable: true },
 ])
-
-// Функция форматирования даты
-const formatDate = (dateString) => {
-  if (!dateString) return t('common.unknown')
-  return new Date(dateString).toLocaleDateString('ru-RU')
-}
-
-// Функция форматирования числа
-const formatNumber = (value) => {
-  return Number(value).toLocaleString('ru-RU')
-}
 
 // Сохранение позиции скролла при смене страницы
 const maintainScrollPosition = () => {
