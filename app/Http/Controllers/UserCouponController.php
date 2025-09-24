@@ -6,7 +6,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Models\JoomlaCoupon; // Твоя модель для работы с Joomla
+use App\Models\JoomlaCoupon; // модель для работы с Joomla
+use App\Models\TrueBonusCode;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
@@ -81,6 +82,14 @@ class UserCouponController extends Controller
             $balance += $oldPromocodBalance['summ'];
         }
 
+        $trueBonusCode =[];
+        $trueBonusCode['trueBonusCodes'] = TrueBonusCode::where('user_id', $user->id)->orderBy('created_at') ->get();
+        $trueBonusCode['totalBonusCodesCost'] = $trueBonusCode['trueBonusCodes']->sum('bonus_code_cost');
+
+        if(isset($trueBonusCode['totalBonusCodesCost']) and $trueBonusCode['totalBonusCodesCost'] > 0) {
+            $balance -= $trueBonusCode['totalBonusCodesCost'];
+        }
+
         // 3. Отдаём JSON
         return response()->json([
             'user' => $user,
@@ -92,8 +101,9 @@ class UserCouponController extends Controller
             'coupon_types' => $coupon_types,
             'coupons' => $ids,
             'coupons_full' => $raw['coupons'],
+            'trueBonusCode' => $trueBonusCode,
             // 'payments' => $payments,
-            //'orders' => $orders
+            // 'orders' => $orders
         ]);
 
         //$withdrawals = JoomlaCoupon::withdrawals();
