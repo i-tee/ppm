@@ -44,6 +44,7 @@ class UserCouponController extends Controller
 
         $user = $request->user();
         $joomlaUser = JoomlaCoupon::joomlaUser();
+        $expenseSummary = 0;
 
         $balance = 0;
         $oldPromocodBalance = JoomlaCoupon::oldPromocodBalance($joomlaUser->id);
@@ -77,23 +78,27 @@ class UserCouponController extends Controller
         $credits = JoomlaCoupon::credits();
         $withdrawals = JoomlaCoupon::withdrawals();
 
+        $expenseSummary += $withdrawals['debit'];
+
         $balance = ceil($credits['total_accruals'] - $withdrawals['debit']);
         if ($oldPromocodBalance['be']) {
             $balance += $oldPromocodBalance['summ'];
         }
 
-        $trueBonusCode =[];
-        $trueBonusCode['trueBonusCodes'] = TrueBonusCode::where('user_id', $user->id)->orderBy('created_at') ->get();
+        $trueBonusCode = [];
+        $trueBonusCode['trueBonusCodes'] = TrueBonusCode::where('user_id', $user->id)->orderBy('created_at')->get();
         $trueBonusCode['totalBonusCodesCost'] = $trueBonusCode['trueBonusCodes']->sum('bonus_code_cost');
 
-        if(isset($trueBonusCode['totalBonusCodesCost']) and $trueBonusCode['totalBonusCodesCost'] > 0) {
+        if (isset($trueBonusCode['totalBonusCodesCost']) and $trueBonusCode['totalBonusCodesCost'] > 0) {
             $balance -= $trueBonusCode['totalBonusCodesCost'];
+            $expenseSummary += $trueBonusCode['totalBonusCodesCost'];
         }
 
         // 3. Отдаём JSON
         return response()->json([
             'user' => $user,
             'balance' => $balance,
+            'expenseSummary' => $expenseSummary,
             'joomlaUser' => $joomlaUser,
             'oldPromocodBalance' => $oldPromocodBalance,
             'credits' => $credits,

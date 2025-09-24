@@ -1,38 +1,42 @@
 <template>
 
-  <VaTabs v-model="activeTab" grow>
-    <VaTab name="WithdrawalsTable">{{ $t('coupons.tWithdrawalsTable') }}</VaTab>
-    <VaTab name="TrueBonusCodesTable">{{ $t('coupons.tTrueBonusCodesTable') }}</VaTab>
-    <VaTab name="Olders">{{ $t('coupons.tOlders') }}</VaTab>
-  </VaTabs>
+  <p class="va-h1">{{ t('coupons.debits') }}</p>
+  <p>{{ t('coupons.debits_descr') }}</p>
+  <p class="va-h5">{{ t('total') }}: <b>{{ formatPrice(bData.data?.expenseSummary) }}</b></p>
+
+  <div class="tabs-container">
+    <VaTabs v-model="activeTab" grow>
+      <VaTab name="WithdrawalsTable">{{ $t('coupons.tWithdrawalsTable') }}</VaTab>
+      <VaTab name="TrueBonusCodesTable">{{ $t('coupons.tTrueBonusCodesTable') }}</VaTab>
+      <VaTab v-if="bData.data?.withdrawals?.debit" name="Olders">{{ $t('coupons.tOlders') }}</VaTab>
+    </VaTabs>
+  </div>
 
   <!-- Содержимое выбранной вкладки -->
   <div class="tab-content mt-4">
     <div v-if="activeTab === 'WithdrawalsTable'">
-      <WithdrawalsTable :apiData="apiData" :bData="bData" :refresh="refreshKey" />
+      <WithdrawalsTable :apiData="apiData" :bData="bData" :refresh="refresh" />
     </div>
     <div v-else-if="activeTab === 'TrueBonusCodesTable'">
-      <TrueBonusCodesTable :apiData="apiData" :bData="bData" :refresh="refreshKey" />
+      <TrueBonusCodesTable :apiData="apiData" :bData="bData" :refresh="refresh" />
     </div>
     <div v-else-if="activeTab === 'Olders'">
-      <Olders :apiData="apiData" :bData="bData" :refresh="refreshKey" />
+      <Olders :apiData="apiData" :bData="bData" :refresh="refresh" />
     </div>
   </div>
-
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useToast } from 'vuestic-ui'
-
+import { ref } from 'vue'
 import WithdrawalsTable from './DebitsList/WithdrawalsTable.vue'
 import TrueBonusCodesTable from './DebitsList/TrueBonusCodesTable.vue'
 import Olders from './DebitsList/Olders.vue'
+import { useI18n } from 'vue-i18n'
+import { useBase } from '@/composables/useBase'
 
-const activeTab = ref('WithdrawalsTable')
+const { formatPrice } = useBase();
 const { t } = useI18n()
-const { init: initToast } = useToast()
+const activeTab = ref('WithdrawalsTable')
 
 // Объявляем и получаем пропсы
 const props = defineProps({
@@ -49,15 +53,14 @@ const props = defineProps({
     default: 0,
   },
 })
-
-// Загрузка данных
-const loadData = () => {
-
-}
-
-// Хук монтирования
-onMounted(loadData)
-
-// Отслеживание изменений в props.refresh для обновления данных
-watch(() => props.refresh, loadData)
 </script>
+
+<style scoped>
+/* Стили для контейнера табов */
+.tabs-container {
+  display: inline-block;
+  /* Контейнер занимает только ширину содержимого */
+  text-align: left;
+  /* Выравнивание табов по левому краю */
+}
+</style>

@@ -1,3 +1,14 @@
 .avi-bg-sb {
     background-color: #ecf0f1;
 }
+
+.avi-link:hover {
+    color: black;
+}
+.avi-link {
+    cursor: pointer;
+    border-bottom: solid 1px;
+}
+.master-color {
+    color: var(--va-primary, #154ec1)
+}

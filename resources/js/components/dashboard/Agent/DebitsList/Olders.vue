@@ -1,28 +1,35 @@
 <template>
   <div>
-    <p class="va-h1">{{ t('debits.title') }}</p>
-    <VaDataTable
-      ref="tableRef"
-      :key="`table-${withdrawals.length}-${currentPage}`"
-      :items="pagedWithdrawals"
-      :columns="columns"
-      :hoverable="true"
-      :loading="loading"
-      :no-data-html="t('debits.no_data')"
-      class="va-table--modern"
-    >
+    
+    <p class="va-h1">{{ t('coupons.tOlders') }}</p>
+    <p>{{ t('coupons.tOlders_descr') }}</p>
+    <p class="va-h5">{{ t('total') }}: <b>{{ formatPrice(bData.data?.withdrawals?.debit) }}</b></p>
+    <hr class="mt-4">
+
+    <VaDataTable ref="tableRef" :key="`table-${withdrawals.length}-${currentPage}`" :items="pagedWithdrawals"
+      :columns="columns" :hoverable="true" :loading="loading" :no-data-html="t('coupons.debits-no_data')"
+      class="cursor-pointer va-table--modern" @row:click="({ item }) => openModal(item)">
+      <!-- Кастомный слот для кешбека -->
+      <template #cell(summ)="{ rowData }">
+        {{ formatPrice(rowData.summ) }}
+      </template>
+      <!-- Кастомный слот для даты -->
+      <template #cell(date_exec)="{ rowData }">
+        {{ formatDate(rowData.date_exec) }}
+      </template>
       <template #footer>
         <div class="flex justify-end items-center mt-4">
-          <VaPagination
-            v-model="currentPage"
-            :pages="totalPages"
-            :visible-pages="5"
-            color="primary"
-          />
+          <VaPagination v-model="currentPage" :pages="totalPages" :visible-pages="5" color="primary" />
         </div>
       </template>
     </VaDataTable>
   </div>
+
+  <!-- Модалка -->
+  <VaModal v-model="showModal" title="Детали выплаты" hide-default-actions max-width="700px">
+    <OlderWithdrawalDetailsModal :bData="bData" :withdrawal="selectedWithdrawal" @close="showModal = false" />
+  </VaModal>
+
 </template>
 
 <script setup>
@@ -30,6 +37,18 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vuestic-ui'
 import { VaDataTable, VaPagination } from 'vuestic-ui'
+import { useBase } from '@/composables/useBase';
+import OlderWithdrawalDetailsModal from './OlderWithdrawalDetailsModal.vue';
+
+const { formatPrice, formatDate } = useBase();
+
+const showModal = ref(false)
+const selectedWithdrawal = ref(null)
+
+const openModal = order => {
+  selectedWithdrawal.value = order
+  showModal.value = true
+}
 
 // Инициализация локализации и уведомлений
 const { t } = useI18n()
@@ -71,25 +90,14 @@ const totalPages = computed(() => Math.ceil(withdrawals.value.length / perPage.v
 
 // Определение колонок для таблицы
 const columns = computed(() => [
-  { key: 'id', label: t('debits.columns.id'), sortable: true },
-  { key: 'recipient', label: t('debits.columns.recipient'), sortable: true },
-  { key: 'phone', label: t('debits.columns.phone'), sortable: true },
-  { key: 'date_exec', label: t('debits.columns.date_exec'), sortable: true },
-  { key: 'summ', label: t('debits.columns.summ'), sortable: true },
-  { key: 'comment', label: t('debits.columns.comment'), sortable: true },
-  { key: 'coupons', label: t('debits.columns.coupons'), sortable: true },
+  // { key: 'id', label: t('debits.columns.id'), sortable: true },
+  // { key: 'recipient', label: t('debits.columns.recipient'), sortable: true },
+  // { key: 'phone', label: t('debits.columns.phone'), sortable: true },
+  { key: 'summ', label: t('coupons.debits-columns-summ'), sortable: true },
+  { key: 'date_exec', label: t('coupons.debits-columns-date_exec'), sortable: true },
+  // { key: 'comment', label: t('debits.columns.comment'), sortable: true },
+  // { key: 'coupons', label: t('debits.columns.coupons'), sortable: true },
 ])
-
-// Функция форматирования даты
-const formatDate = (dateString) => {
-  if (!dateString) return t('common.unknown')
-  return new Date(dateString).toLocaleDateString('ru-RU')
-}
-
-// Функция форматирования числа
-const formatNumber = (value) => {
-  return Number(value).toLocaleString('ru-RU')
-}
 
 // Сохранение позиции скролла при смене страницы
 const maintainScrollPosition = () => {
@@ -103,11 +111,10 @@ const loadData = () => {
   try {
     loading.value = true
     const data = props.bData?.data?.withdrawals?.withdrawals || []
-    console.log('DebitsList withdrawals:', data.length, 'items loaded')
     if (!data.length) {
-      console.warn('No withdrawals found in bData.data.withdrawals.withdrawals')
+
       initToast({
-        message: t('debits.no_data'),
+        message: t('coupons.debits-no_data'),
         color: 'warning',
       })
     }
@@ -127,7 +134,6 @@ const loadData = () => {
 
 // Отслеживание изменения currentPage
 watch(currentPage, (newVal, oldVal) => {
-  console.log('currentPage changed:', newVal, 'from', oldVal)
   maintainScrollPosition() // Сохраняем позицию скролла
 })
 

@@ -17,6 +17,11 @@
     <!-- Показываем таблицу заказов, если они есть -->
     <div v-else-if="orders.length" class="mt-4">
 
+      <p class="va-h1">{{ t('coupons.credits') }}</p>
+      <p>{{ t('coupons.credits_descr') }}</p>
+      <p class="va-h5">{{ t('total') }}: <b>{{ formatPrice(bData.data?.credits?.total_accruals) }}</b></p>
+      <hr class="mt-4">
+
       <VaDataTable ref="tableRef" :key="`table-${orders.length}-${currentPage}`" :items="pagedOrders" :columns="columns"
         :hoverable="true" :sortable="true" :no-data-html="t('coupons.credits-no_orders')"
         class="cursor-pointer va-table--modern" @row:click="({ item }) => openModal(item)">
@@ -46,7 +51,7 @@
 
   <!-- Модалка -->
   <VaModal v-model="showModal" title="Детали заказа" hide-default-actions max-width="700px">
-    <OrderDetailsModal :bData = "bData" :order="selectedOrder" @close="showModal = false" />
+    <OrderDetailsModal :bData="bData" :order="selectedOrder" @close="showModal = false" />
   </VaModal>
 
 </template>

@@ -4,21 +4,23 @@
     <!-- Показываем контент, если данные загружены (apiData и bData не null) -->
     <div v-if="apiData && bData">
       <!-- Заголовок с локализацией для типа сотрудничества "агент" -->
-      <h1 class="va-h4 my-1">{{ $t('partners.cooperation_types.agent.title') }} | {{ formatPrice(bData.data?.balance) ??
-        $t('common.no_data') }}</h1>
+      <h1 class="va-h4 my-1">{{ bData.data?.user?.name }} | <span class="master-color">{{ formatPrice(bData.data?.balance) ?? $t('common.no_data') }}</span></h1>
       <!-- Описание пользовательского соглашения с ссылкой на контракт -->
-      <p>
-        {{ $t('user_agreement.description') }}
-        <a target="_blank" :href="selectedCooperationType?.contract_url">
-          {{ $t('user_agreement.link_name') }}
-        </a>
+      <p class="text-gray-400">
+        <i>{{ $t('user_agreement.description') }}
+          <a class="avi-link avi-link-out" target="_blank" :href="selectedCooperationType?.contract_url">
+            {{ $t('user_agreement.link_name') }}
+          </a></i>
       </p>
 
-      <VaTabs v-model="activeTab" grow>
-        <VaTab name="coupons">{{ $t('coupons.coupons') }}</VaTab>
-        <VaTab name="credits">{{ $t('coupons.credits') }}</VaTab>
-        <VaTab name="debits">{{ $t('coupons.debits') }}</VaTab>
-      </VaTabs>
+      <!-- Контейнер для табов, прижат к левому краю -->
+      <div class="tabs-container">
+        <VaTabs v-model="activeTab">
+          <VaTab name="coupons">{{ $t('coupons.coupons') }}</VaTab>
+          <VaTab name="credits">{{ $t('coupons.credits') }}</VaTab>
+          <VaTab name="debits">{{ $t('coupons.debits') }}</VaTab>
+        </VaTabs>
+      </div>
 
       <!-- Содержимое выбранной вкладки -->
       <div class="tab-content mt-4">
@@ -158,5 +160,10 @@ onMounted(fetchAllData)
 .agent-layout {
   padding: 20px;
   min-width: 100%;
+}
+/* Стили для контейнера табов */
+.tabs-container {
+  display: inline-block; /* Контейнер занимает только ширину содержимого */
+  text-align: left; /* Выравнивание табов по левому краю */
 }
 </style>
