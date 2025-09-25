@@ -1,98 +1,106 @@
 <template>
   <!-- Основной контейнер компонента -->
   <div>
+
     <!-- Показываем индикатор загрузки, если loading = true -->
-    <div v-if="loading" class="mt-4 pb-4">
-      <VaSkeleton variant="text" :lines="bData.data?.coupons.length ?? 3" />
+    <div v-if="loading" class="mt-4 pb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <VaSkeleton v-for="i in 3" :key="i" variant="rounded" height="200px" />
     </div>
+    
     <!-- Показываем ошибку, если она есть -->
     <div v-else-if="error" class="mt-4 text-danger">
       {{ error }}
     </div>
+
     <!-- Показываем список купонов, если они есть -->
     <div v-else-if="coupons.length" class="mt-4">
-      <va-list>
-        <!-- Перебираем массив coupons, отображая каждый купон -->
-        <va-list-item v-for="coupon in coupons" :key="coupon.coupon_id">
-          <!-- Показываем код купона и его значение (процент или бонусы) -->
-          {{ coupon.coupon_code }} ({{ coupon.coupon_value }} {{ coupon.coupon_type === 0 ? '%' : $t('coupons.currency')
-          }})
-        </va-list-item>
-      </va-list>
+      <!-- Раздел для процентных промокодов (тип 0) -->
+      <div v-if="percentageCoupons.length">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <CouponDiscount
+            v-for="coupon in percentageCoupons"
+            :key="coupon.coupon_id"
+            :coupon="coupon"
+            :bData="bData"
+          />
+        </div>
+      </div>
+
+      <!-- Раздел для бонусных промокодов (тип 1) -->
+      <div v-if="bonusCoupons.length" class="mt-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <CouponBonus
+            v-for="coupon in bonusCoupons"
+            :key="coupon.coupon_id"
+            :coupon="coupon"
+            :bData="bData"
+          />
+        </div>
+      </div>
     </div>
+
     <!-- Показываем сообщение, если купонов нет -->
     <div v-else class="mt-4">
       {{ $t('coupons.no_coupons') }}
     </div>
+
   </div>
 </template>
 
 <script setup>
-// Импорты: подключаем зависимости Vue и проекта
-import { ref, onMounted, watch } from 'vue' // ref для реактивности, onMounted для хука, watch для отслеживания изменений
-import { useI18n } from 'vue-i18n' // Для локализации текстов
-import { useToast } from 'vuestic-ui' // Для уведомлений Vuestic UI
-import { getUserCoupons } from '@/api/coupons' // Функция API для загрузки купонов
+import { ref, onMounted, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useToast } from 'vuestic-ui'
+import { getUserCoupons } from '@/api/coupons'
+import CouponDiscount from '@/components/parts/CouponDiscount.vue'
+import CouponBonus from '@/components/parts/CouponBonus.vue'
 
-// Инициализация локализации и уведомлений
-const { t } = useI18n() // Функция t для получения переведённых строк
-const { init: initToast } = useToast() // Инициализация уведомлений
+const { t } = useI18n()
+const { init: initToast } = useToast()
 
-// Объявляем и получаем пропсы
-const { apiData, bData, refresh } = defineProps({
+const props = defineProps({
   apiData: {
-    type: Object, // Тип пропса — объект или null
-    default: null // Значение по умолчанию
+    type: Object,
+    default: null
   },
   bData: {
-    type: Object, // Тип пропса — объект или null
-    default: null // Значение по умолчанию
+    type: Object,
+    default: null
   },
   refresh: {
-    type: Number, // Пропс для принудительного обновления
+    type: Number,
     default: 0
   }
 })
 
-// Реактивные переменные: данные, отслеживаемые Vue для обновления интерфейса
-const coupons = ref([]) // Массив купонов, загружаемых из API
-const loading = ref(false) // Состояние загрузки (true во время запроса)
-const error = ref(null) // Сообщение об ошибке, если запрос не удался
+const coupons = ref([])
+const loading = ref(false)
+const error = ref(null)
 
-// Выводим apiData и bData в консоль при монтировании
+const percentageCoupons = computed(() => coupons.value.filter(c => c.coupon_type === 0))
+const bonusCoupons = computed(() => coupons.value.filter(c => c.coupon_type === 1))
+
 onMounted(() => {
-  console.log('apiData:', apiData)
-  console.log('bData:', bData)
+  console.log('apiData:', props.apiData)
+  console.log('bData:', props.bData)
 })
 
-// Отслеживаем изменения bData и выводим в консоль
-watch(
-  () => bData, (newValue) => {
-    console.log('bData:', newValue.data)
-  }
-)
+watch(() => props.bData, (newValue) => {
+  console.log('bData:', newValue.data)
+})
 
-// Отслеживаем изменения refresh для перезагрузки купонов
-watch(() => refresh, () => {
+watch(() => props.refresh, () => {
   console.log('Refresh triggered, reloading coupons')
   loadAllData()
 })
 
-// Функция загрузки купонов
 const loadCoupons = async () => {
   try {
-    // Устанавливаем состояние загрузки
     loading.value = true
     error.value = null
-
-    // Выполняем запрос к API для получения купонов
     const response = await getUserCoupons()
-
-    // Проверяем успешность ответа
     if (response.success) {
-      // Сохраняем купоны в реактивную переменную
-      coupons.value = response.coupons
-      // Если купонов нет, показываем уведомление
+      coupons.value = response.coupons_full || response.coupons
       if (response.count === 0) {
         initToast({
           message: t('coupons.no_coupons'),
@@ -100,11 +108,9 @@ const loadCoupons = async () => {
         })
       }
     } else {
-      // Если ответ не успешен, выбрасываем ошибку
       throw new Error(response.error || t('errors.load_failed'))
     }
   } catch (err) {
-    // Сохраняем ошибку и показываем уведомление
     error.value = err.message
     initToast({
       message: err.message,
@@ -112,18 +118,14 @@ const loadCoupons = async () => {
     })
     console.error('Ошибка загрузки купонов:', err)
   } finally {
-    // Сбрасываем состояние загрузки
     loading.value = false
   }
 }
 
-// Основная функция для загрузки всех данных
 const loadAllData = async () => {
   try {
-    // Выполняем загрузку купонов
     await Promise.all([loadCoupons()])
   } catch (err) {
-    // Обрабатываем ошибки, если Promise.all не удался
     console.error('Ошибка загрузки данных:', err)
     initToast({
       message: t('errors.load_failed'),
@@ -132,6 +134,5 @@ const loadAllData = async () => {
   }
 }
 
-// Хук монтирования: вызывается, когда компонент добавляется в DOM
 onMounted(loadAllData)
 </script>

@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\JoomlaCoupon; // модель для работы с Joomla
+use App\Models\JoomlaOrder;
 use App\Models\TrueBonusCode;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -107,7 +108,7 @@ class UserCouponController extends Controller
             'coupons' => $ids,
             'coupons_full' => $raw['coupons'],
             'trueBonusCode' => $trueBonusCode,
-            // 'payments' => $payments,
+            'couponsSummary' => JoomlaCoupon::getUserPercentCouponsSummary()
             // 'orders' => $orders
         ]);
 
@@ -188,5 +189,11 @@ class UserCouponController extends Controller
         return response()->json([
             'oldBalance' => $oldBalance
         ], 200);
+    }
+
+    public static function getUserPercentCouponsSummary() {
+
+        return JoomlaCoupon::getUserPercentCouponsSummary();
+
     }
 }

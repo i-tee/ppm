@@ -1010,4 +1010,125 @@ class JoomlaCoupon extends Model
             'orders' => $orders
         ];
     }
+
+    /**
+     * Получает сводную информацию по всем процентным купонам (type=0) пользователя.
+     * Собирает данные по оплаченным заказам (status 6 или 7), рассчитывает кешбек,
+     * и агрегирует метрики для каждого купона.
+     *
+     * @param int|null $joomlaUserId ID пользователя в Joomla (если null, берёт текущего авторизованного)
+     * @return array Массив, где ключ - coupon_code, значение - ассоциативный массив с метриками
+     */
+    public static function getUserPercentCouponsSummary($joomlaUserId = null)
+    {
+        // Если не указан userId, берём текущего Joomla пользователя (из существующего метода)
+        if ($joomlaUserId === null) {
+            $joomlaUser = self::joomlaUser();
+            if (!$joomlaUser) {
+                return []; // Нет пользователя
+            }
+            $joomlaUserId = $joomlaUser->id;
+        }
+
+        // 1. Получаем все купоны пользователя из jm_avicenna_user_coupons
+        $userCouponRecord = DB::connection('mysql_joomla')
+            ->table('avicenna_user_coupons')
+            ->where('user_id', $joomlaUserId)
+            ->first();
+
+        if (!$userCouponRecord || empty($userCouponRecord->coupons)) {
+            return []; // Нет купонов
+        }
+
+        // Разбиваем строку coupons на массив ID
+        $couponIds = array_filter(explode(',', $userCouponRecord->coupons));
+
+        if (empty($couponIds)) {
+            return [];
+        }
+
+        // 2. Получаем детали купонов из jm_jshopping_coupons, только type=0 (процентные)
+        $coupons = DB::connection('mysql_joomla')
+            ->table('jshopping_coupons')
+            ->whereIn('coupon_id', $couponIds)
+            ->where('coupon_type', 0) // Только процентные
+            ->get()
+            ->keyBy('coupon_code'); // Ключ по coupon_code для удобства
+
+        if ($coupons->isEmpty()) {
+            return [];
+        }
+
+        // 3. Для каждого купона собираем сводку
+        $summary = [];
+
+        foreach ($coupons as $couponCode => $coupon) {
+            // Получаем заказы по купону (используем существующий метод getPpOrders)
+            $orders = self::getPpOrders($coupon->coupon_id);
+
+            // Фильтруем только оплаченные (status 6 или 7) и с валидным cashback
+            $filteredOrders = [];
+            $totalCashback = 0.0;
+            $totalDiscount = 0.0;
+            $totalOrderSum = 0.0;
+            $totalSubtotal = 0.0; // Сумма без скидок
+            $usageCount = 0;
+
+            foreach ($orders as $order) {
+                if (!in_array($order->order_status, [6, 7])) {
+                    continue; // Не оплаченный
+                }
+
+                $cashback = (float) $order->cashback;
+                $discount = (float) $order->order_discount;
+
+                if ($cashback < 0) {
+                    continue; // Пропускаем отрицательный cashback (бонусный промокод)
+                } elseif ($cashback == 0 && $discount > 0) {
+                    $cashback = $discount; // Если 0 и есть discount, то cashback = discount
+                } elseif ($cashback > 0) {
+                    // Используем указанный cashback
+                } else {
+                    continue; // Если cashback == 0 и discount <=0, пропускаем (бесполезный заказ)
+                }
+
+                // Агрегируем метрики
+                $totalCashback += $cashback;
+                $totalDiscount += $discount;
+                $totalOrderSum += (float) $order->order_total;
+                $totalSubtotal += (float) $order->order_subtotal;
+                $usageCount++;
+
+                // Сохраняем детали заказа для возможной детализации (опционально, но полезно)
+                $filteredOrders[] = [
+                    'order_id' => $order->order_id,
+                    'order_number' => $order->order_number,
+                    'order_total' => (float) $order->order_total,
+                    'order_discount' => $discount,
+                    'cashback' => $cashback,
+                    'order_date' => $order->order_date,
+                    'order_status' => $order->order_status,
+                    // Добавьте другие поля из заказа, если нужно (например, user_id, ip_address и т.д.)
+                ];
+            }
+
+            // Сводка по купону
+            $summary[$couponCode] = [
+                'coupon_id' => $coupon->coupon_id,
+                'coupon_value' => (float) $coupon->coupon_value, // Процент скидки
+                'coupon_expire_date' => $coupon->coupon_expire_date,
+                'usage_count' => $usageCount, // Количество применений (оплаченных заказов)
+                'total_cashback' => round($totalCashback, 2), // Суммарный кешбек агенту
+                'total_discount' => round($totalDiscount, 2), // Суммарная скидка покупателям
+                'total_order_sum' => round($totalOrderSum, 2), // Сумма сделанных заказов (order_total)
+                'total_subtotal' => round($totalSubtotal, 2), // Сумма без скидок (order_subtotal) - полезно для понимания маржи
+                'average_order_value' => $usageCount > 0 ? round($totalOrderSum / $usageCount, 2) : 0, // Средний чек
+                'average_discount' => $usageCount > 0 ? round($totalDiscount / $usageCount, 2) : 0, // Средняя скидка на заказ
+                'average_cashback' => $usageCount > 0 ? round($totalCashback / $usageCount, 2) : 0, // Средний кешбек на заказ
+                'orders' => $filteredOrders, // Детальный список заказов (для интерфейса, если нужно развернуть)
+            ];
+        }
+
+        return $summary;
+    }
 }

@@ -69,8 +69,10 @@ import CreditsList from './Agent/CreditsList.vue'
 import DebitsList from './Agent/DebitsList.vue'
 import { getBusinessData } from '@/api/coupons'
 import { useBase } from '@/composables/useBase';
+import { useI18n } from 'vue-i18n'
 
 const { formatPrice } = useBase();
+const { t } = useI18n()
 
 // Реактивные переменные
 const apiData = ref(null)
