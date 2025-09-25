@@ -14,6 +14,7 @@ module.exports = {
         info: 'var(--va-info)',
         danger: 'var(--va-danger)',
         warning: 'var(--va-warning)',
+        'x-color': 'rgba(21,78,193,0.2)',
       },
       fontFamily: {
         inter: ['Inter', 'sans-serif'], // Поддержка шрифта Inter в Tailwind

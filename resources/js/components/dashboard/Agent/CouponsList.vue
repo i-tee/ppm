@@ -22,6 +22,7 @@
             :key="coupon.coupon_id"
             :coupon="coupon"
             :bData="bData"
+            :apiData="apiData"
           />
         </div>
       </div>
@@ -34,6 +35,7 @@
             :key="coupon.coupon_id"
             :coupon="coupon"
             :bData="bData"
+            :apiData="apiData"
           />
         </div>
       </div>
@@ -81,8 +83,8 @@ const percentageCoupons = computed(() => coupons.value.filter(c => c.coupon_type
 const bonusCoupons = computed(() => coupons.value.filter(c => c.coupon_type === 1))
 
 onMounted(() => {
-  console.log('apiData:', props.apiData)
   console.log('bData:', props.bData)
+  console.log('apiData:', props.apiData)
 })
 
 watch(() => props.bData, (newValue) => {
