@@ -553,6 +553,14 @@ class JoomlaCoupon extends Model
                 ->whereIn('coupon_id', $couponIds)
                 ->get();
 
+            // Модифицируем купоны: если coupon_value = 10, coupon_type = 0 и cashback = 0, устанавливаем cashback = 10
+            $coupons = $coupons->map(function ($coupon) {
+                if ($coupon->coupon_value == 10 && $coupon->coupon_type == 0 && $coupon->cashback == 0) {
+                    $coupon->cashback = 10;
+                }
+                return $coupon;
+            });
+
             return [
                 'success' => true,
                 'joomla_user_id' => $joomlaUser->id,

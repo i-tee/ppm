@@ -98,12 +98,12 @@ const handleCouponCreated = async () => {
     refreshKey.value++ // Обновляем CouponsList
     await fetchAllData() // Перезагружаем данные
     initToast({
-      message: $t('coupons.created_success'),
+      message: t('coupons.created_success'),
       color: 'success',
     })
   } catch (err) {
     initToast({
-      message: $t('errors.coupon_creation_failed'),
+      message: t('errors.coupon_creation_failed'),
       color: 'danger',
     })
   }

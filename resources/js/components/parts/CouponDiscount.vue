@@ -1,23 +1,25 @@
 <template>
   <VaCard gradient class="rounded-xl shadow-lg overflow-hidden transform transition-all">
     <VaCardTitle>
-      <span class="font-bold va-h4">{{ coupon.coupon_code }}</span>
+      <span icon="content_copy" class="font-bold va-h4 cursor-copy" @click="copyCouponCode">{{ coupon.coupon_code
+      }}</span>
     </VaCardTitle>
     <VaCardContent>
       <div class="flex">
         <div class="grid grid-cols-2 gap-2 font-hairline text-sm">
           <div class="text-secondary">{{ t('discount') }}</div>
-          <div class="text-end text-primary">{{ t('cashback') }}</div>
+          <div v-if="Math.ceil(coupon.cashback)" class="text-end text-primary">{{ t('cashback') }}</div>
         </div>
       </div>
       <div class="avi-coupon-ratio-area">
         <div class="avi-coupon-ratio-box">
-          <div class="avi-coupon-ratio-discuont bg-primary" :style="{ width: `${couponDiscountPercent}%` }">
+          <div :class="Math.ceil(coupon.cashback) == 0 ? 'avi-border-right' : 'avi'"
+            class="avi-coupon-ratio-discuont bg-primary" :style="{ width: `${couponDiscountPercent}%` }">
             <b>{{ Math.ceil(coupon.coupon_value) }}%</b>
           </div>
-          <div class="avi-coupon-ratio-cachback bg-x-color text-primary"
+          <div v-if="Math.ceil(coupon.cashback)" class="avi-coupon-ratio-cachback bg-x-color text-primary"
             :style="{ width: `${couponCashbackPercent}%` }">
-            <b>{{ Math.ceil(coupon.cashback == 0 ? coupon.coupon_value : coupon.cashback) }}%</b>
+            <b>{{ Math.ceil(coupon.cashback ?? 0) }}%</b>
           </div>
         </div>
       </div>
@@ -25,16 +27,27 @@
       <div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <p>{{ t('coupons.usage_count') }}: <span class="font-bold">{{
-              bData.data.couponsSummary[coupon.coupon_code].usage_count }}</span></p>
-            <p>{{ t('coupons.total_cashback') }}: <span class="font-bold">{{
-              formatPrice(bData.data.couponsSummary[coupon.coupon_code].total_cashback) }}</span></p>
+            <p>
+              {{ t('coupons.usage_count') }}:
+              <span class="font-bold">{{ bData.data.couponsSummary[coupon.coupon_code]?.usage_count || 0 }}</span>
+            </p>
+            <p>
+              {{ t('coupons.total_cashback') }}:
+              <span class="font-bold">{{ formatPrice(bData.data.couponsSummary[coupon.coupon_code]?.total_cashback || 0)
+              }}</span>
+            </p>
           </div>
         </div>
       </div>
     </VaCardContent>
-    <VaCardActions>
-      <code>{{ couponUrl }}</code>
+    <!-- <VaDivider/> -->
+    <VaCardActions class="flex justify-rihgt gap-2">
+      <VaButton preset="secondary" class="mr-6 mb-2 cursor-copy" icon="content_copy" @click="copyCouponCode">
+        {{ t('coupons.copy_code') }}
+      </VaButton>
+      <VaButton preset="secondary" class="mr-6 mb-2 cursor-copy" icon="content_copy" @click="copyCouponUrl">
+        {{ t('coupons.copy_url') }}
+      </VaButton>
     </VaCardActions>
   </VaCard>
 </template>
@@ -65,7 +78,7 @@ const props = defineProps({
 })
 
 // Реактивные значения
-const maxDiscount = ref(20) // Твой fallback
+const maxDiscount = ref(20)
 const couponDiscountPercent = ref(0)
 const couponCashbackPercent = ref(0)
 const couponUrl = ref('https://avicenna.com.ru?')
@@ -74,21 +87,13 @@ const couponUrl = ref('https://avicenna.com.ru?')
 watch(
   [() => props.apiData, () => props.coupon],
   ([newApiData, newCoupon]) => {
-    
     // Обновляем maxDiscount
     const newMaxDiscount = newApiData?.cooperation_types?.[1]?.max_discount ?? 20
     maxDiscount.value = newMaxDiscount
-    console.log('maxDiscount:', maxDiscount.value)
 
     // Рассчитываем доли в процентах от maxDiscount
-    couponDiscountPercent.value = newCoupon?.coupon_value
-      ? (newCoupon.coupon_value / maxDiscount.value) * 100
-      : 0
-    couponCashbackPercent.value = newCoupon
-      ? ((newCoupon.cashback == 0 ? newCoupon.coupon_value : newCoupon.cashback) / maxDiscount.value) * 100
-      : 0
-    console.log('couponDiscountPercent:', couponDiscountPercent.value)
-    console.log('couponCashbackPercent:', couponCashbackPercent.value)
+    couponDiscountPercent.value = (newCoupon?.coupon_value ?? 0) / maxDiscount.value * 100
+    couponCashbackPercent.value = (newCoupon?.cashback ?? 0) / maxDiscount.value * 100
 
     // Очищаем coupon_base_url от лишних кавычек
     let baseUrl = newApiData?.cooperation_types?.[1]?.coupon_base_url ?? 'https://avicenna.com.ru?'
@@ -96,11 +101,52 @@ watch(
       baseUrl = baseUrl.slice(1, -1) // Убираем кавычки
     }
     // Формируем couponUrl
-    couponUrl.value = newCoupon?.coupon_code
-      ? `${baseUrl}${newCoupon.coupon_code}`
-      : 'https://avicenna.com.ru?'
-    console.log('couponUrl:', couponUrl.value)
+    couponUrl.value = newCoupon?.coupon_code ? `${baseUrl}${newCoupon.coupon_code}` : 'https://avicenna.com.ru?'
   },
   { immediate: true, deep: true }
 )
+
+// Копирование ссылки
+const copyCouponUrl = () => {
+  if (!couponUrl.value) {
+    initToast({
+      message: t('coupons.copy_failed'),
+      color: 'danger',
+    })
+    return
+  }
+  navigator.clipboard.writeText(couponUrl.value).then(() => {
+    initToast({
+      message: t('coupons.url_copied'),
+      color: 'success',
+    })
+  }).catch(() => {
+    initToast({
+      message: t('coupons.copy_failed'),
+      color: 'danger',
+    })
+  })
+}
+
+// Копирование промокода
+const copyCouponCode = () => {
+  if (!props.coupon?.coupon_code) {
+    initToast({
+      message: t('coupons.copy_failed'),
+      color: 'danger',
+    })
+    return
+  }
+  navigator.clipboard.writeText(props.coupon.coupon_code).then(() => {
+    initToast({
+      message: t('coupons.code_copied', { code: props.coupon.coupon_code }),
+      color: 'success',
+    })
+  }).catch(() => {
+    initToast({
+      message: t('coupons.copy_failed'),
+      color: 'danger',
+    })
+  })
+}
 </script>

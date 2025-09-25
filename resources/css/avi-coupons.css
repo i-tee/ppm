@@ -19,3 +19,9 @@ div.avi-coupon-ratio-cachback {
     padding: 5px 10px;
     text-align: right;
 }
+.cursor-copy {
+    cursor: copy;
+}
+.avi-border-right {
+    border-radius: 10px !important;
+}
