@@ -226,9 +226,9 @@ class UserCouponController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $orders,
                 'message' => 'orders.retrieved_successfully',
                 'count' => $orders->count(),
+                'data' => $orders,
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

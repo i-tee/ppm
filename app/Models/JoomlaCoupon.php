@@ -702,9 +702,44 @@ class JoomlaCoupon extends Model
         }
     }
 
+    // /**
+    //  * Получает заказы, связанные с купоном, с определёнными статусами (7 или 6).
+    //  * Возвращает массив заказов или пустой массив.
+    //  *
+    //  * @param int $couponId ID купона
+    //  * @return array Массив заказов
+    //  */
+    // public static function getPpOrders($couponId)
+    // {
+    //     try {
+    //         $couponId = (int) $couponId; // Защита от SQL-инъекции
+
+    //         if ($couponId <= 0) {
+    //             return [];
+    //         }
+
+    //         $orders = DB::connection('mysql_joomla')
+    //             ->table('jshopping_orders')
+    //             ->where('coupon_id', $couponId)
+    //             ->whereIn('order_status', [6, 7])
+    //             ->get()
+    //             ->toArray(); // Конвертируем в обычный массив
+
+    //         return $orders;
+    //     } catch (\Exception $e) {
+    //         Log::error("Failed to get PP orders", [
+    //             'coupon_id' => $couponId,
+    //             'error' => $e->getMessage(),
+    //         ]);
+    //         return [];
+    //     }
+    // }
+
     /**
      * Получает заказы, связанные с купоном, с определёнными статусами (7 или 6).
      * Возвращает массив заказов или пустой массив.
+     * Дополнительно: для купонов типа 0 с cashback=0 и coupon_value=10,
+     * модифицирует cashback заказа в возвращаемых данных (если cashback=0 и order_discount>0).
      *
      * @param int $couponId ID купона
      * @return array Массив заказов
@@ -715,17 +750,66 @@ class JoomlaCoupon extends Model
             $couponId = (int) $couponId; // Защита от SQL-инъекции
 
             if ($couponId <= 0) {
+                Log::warning("Invalid coupon ID", ['coupon_id' => $couponId]);
                 return [];
             }
 
+            // Получаем детали купона для проверки условий
+            $coupon = DB::connection('mysql_joomla')
+                ->table('jshopping_coupons')
+                ->where('coupon_id', $couponId)
+                ->first();
+
+            if (!$coupon) {
+                Log::warning("Coupon not found", ['coupon_id' => $couponId]);
+                return [];
+            }
+
+            // Логируем данные купона для отладки
+            Log::info("Checking coupon conditions", [
+                'coupon_id' => $couponId,
+                'coupon_type' => $coupon->coupon_type,
+                'cashback' => $coupon->cashback,
+                'coupon_value' => $coupon->coupon_value,
+            ]);
+
+            // Получаем заказы
             $orders = DB::connection('mysql_joomla')
                 ->table('jshopping_orders')
                 ->where('coupon_id', $couponId)
                 ->whereIn('order_status', [6, 7])
-                ->get()
-                ->toArray(); // Конвертируем в обычный массив
+                ->get();
 
-            return $orders;
+            // Проверяем условия: coupon_type=0, cashback=0, coupon_value=10
+            if ($coupon->coupon_type == 0 && (float) $coupon->cashback == 0.0 && (float) $coupon->coupon_value == 10.0) {
+                Log::info("Coupon conditions met, checking orders for cashback update", [
+                    'coupon_id' => $couponId,
+                ]);
+                $orders = $orders->map(function ($order) {
+                    // Приводим cashback и order_discount к числу для точного сравнения
+                    $orderCashback = (float) $order->cashback;
+                    $orderDiscount = (float) $order->order_discount;
+
+                    if ($orderCashback == 0.0 && $orderDiscount > 0) {
+                        $order->cashback = number_format($orderDiscount, 2, '.', '');
+                        Log::info("Updated order cashback", [
+                            'order_id' => $order->order_id,
+                            'cashback' => $order->cashback,
+                            'order_discount' => $orderDiscount,
+                        ]);
+                    }
+                    return $order;
+                });
+            } else {
+                Log::info("Coupon conditions not met, skipping cashback update", [
+                    'coupon_id' => $couponId,
+                    'coupon_type' => $coupon->coupon_type,
+                    'cashback' => $coupon->cashback,
+                    'coupon_value' => $coupon->coupon_value,
+                ]);
+            }
+
+            return $orders->toArray();
         } catch (\Exception $e) {
             Log::error("Failed to get PP orders", [
                 'coupon_id' => $couponId,
@@ -993,30 +1077,51 @@ class JoomlaCoupon extends Model
         ];
     }
 
+    /**
+     * Получает начисления по заказам пользователя, основываясь на методе orders().
+     * Суммирует cashback для заказов, где cashback > 0.
+     * Возвращает массив с общей суммой начислений, количеством заказов и списком заказов.
+     *
+     * @return array ['total_accruals' => float, 'orders_count' => int, 'orders' => array]
+     */
     public static function credits()
     {
-        // Получаем заказы через метод orders()
-        $ordersResponse = self::orders();
-        $orders = $ordersResponse->getData()->orders;
+        try {
+            // Получаем заказы через метод orders()
+            $ordersResponse = self::orders();
+            $orders = $ordersResponse->getData()->orders;
 
-        // Рассчитываем сумму начислений и обновляем cashback
-        $totalAccruals = 0.0;
-        foreach ($orders as $order) {
-            $cashback = (float) $order->cashback;
-            if ($cashback > 0) {
-                $totalAccruals += $cashback;
-            } elseif ($cashback == 0) {
-                $order->cashback = (float) $order->order_discount;
-                $totalAccruals += $order->cashback;
+            // Рассчитываем сумму начислений
+            $totalAccruals = 0.0;
+            foreach ($orders as $order) {
+                $cashback = (float) $order->cashback;
+                if ($cashback > 0) {
+                    $totalAccruals += $cashback;
+                }
+                // Пропускаем cashback <= 0, так как getPpOrders уже обработал cashback
             }
-            // Если cashback < 0 — пропускаем
-        }
 
-        return [
-            'total_accruals' => round($totalAccruals, 2), // Округляем до 2 знаков
-            'orders_count' => count($orders), // Счётчик заказов
-            'orders' => $orders
-        ];
+            // Логируем результат для отладки
+            Log::info("Calculated credits", [
+                'orders_count' => count($orders),
+                'total_accruals' => round($totalAccruals, 2),
+            ]);
+
+            return [
+                'total_accruals' => round($totalAccruals, 2), // Округляем до 2 знаков
+                'orders_count' => count($orders), // Счётчик заказов
+                'orders' => $orders // Массив заказов
+            ];
+        } catch (\Exception $e) {
+            Log::error("Failed to calculate credits", [
+                'error' => $e->getMessage(),
+            ]);
+            return [
+                'total_accruals' => 0.0,
+                'orders_count' => 0,
+                'orders' => []
+            ];
+        }
     }
 
     /**
@@ -1148,19 +1253,10 @@ class JoomlaCoupon extends Model
      */
     public static function getOrderInfoByCouponId($coupon_id)
     {
+        // Используем существующий метод getPpOrders для получения заказов
+        $orders = self::getPpOrders((int) $coupon_id);
 
-        // Получаем заказы по coupon_code из таблицы jshopping_orders
-        $orders = DB::connection('mysql_joomla')
-            ->table('jshopping_orders')
-            ->where('coupon_id', $coupon_id)
-            ->whereIn('order_status', [6, 7])
-            ->get();
-
-        // Если нужно расширить информацию (например, джойнить с другими таблицами), добавьте здесь
-        // Например, джойн с jshopping_order_status для статуса:
-        // ->join('jshopping_order_status', 'jshopping_orders.order_status', '=', 'jshopping_order_status.status_id')
-        // ->select('jshopping_orders.*', 'jshopping_order_status.name_en as status_name')
-
-        return $orders;
+        // Преобразуем массив обратно в коллекцию для совместимости
+        return collect($orders);
     }
 }
