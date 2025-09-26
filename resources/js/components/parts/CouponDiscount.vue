@@ -2,22 +2,28 @@
   <VaCard gradient class="rounded-xl shadow-lg overflow-hidden transform transition-all">
     <VaCardTitle>
       <span icon="content_copy" class="font-bold va-h4 cursor-copy" @click="copyCouponCode">{{ coupon.coupon_code
-      }}</span>
+        }}</span>
     </VaCardTitle>
     <VaCardContent>
       <div class="flex">
         <div class="grid grid-cols-2 gap-2 font-hairline text-sm">
-          <div class="text-secondary">{{ t('discount') }}</div>
-          <div v-if="Math.ceil(coupon.cashback)" class="text-end text-primary">{{ t('cashback') }}</div>
+          <div class="text-secondary">
+            <span v-if="Math.ceil(coupon.coupon_value)">{{ t('discount') }}</span>
+          </div>
+          <div v-if="Math.ceil(coupon.cashback)" class="text-end text-primary">
+            <span>{{ t('cashback') }}</span>
+          </div>
         </div>
       </div>
       <div class="avi-coupon-ratio-area">
         <div class="avi-coupon-ratio-box">
-          <div :class="Math.ceil(coupon.cashback) == 0 ? 'avi-border-right' : 'avi'"
+          <div v-if="Math.ceil(coupon.coupon_value)"
+            :class="Math.ceil(coupon.cashback) == 0 ? 'avi-border-important-10' : '-avi-'"
             class="avi-coupon-ratio-discuont bg-primary" :style="{ width: `${couponDiscountPercent}%` }">
             <b>{{ Math.ceil(coupon.coupon_value) }}%</b>
           </div>
           <div v-if="Math.ceil(coupon.cashback)" class="avi-coupon-ratio-cachback bg-x-color text-primary"
+            :class="Math.ceil(coupon.coupon_value) == 0 ? 'avi-border-important-10' : '-avi-'"
             :style="{ width: `${couponCashbackPercent}%` }">
             <b>{{ Math.ceil(coupon.cashback ?? 0) }}%</b>
           </div>
@@ -34,7 +40,7 @@
             <p>
               {{ t('coupons.total_cashback') }}:
               <span class="font-bold">{{ formatPrice(bData.data.couponsSummary[coupon.coupon_code]?.total_cashback || 0)
-              }}</span>
+                }}</span>
             </p>
           </div>
         </div>
