@@ -1139,4 +1139,28 @@ class JoomlaCoupon extends Model
 
         return $summary;
     }
+
+    /**
+     * Получает всю информацию о заказе(ах), сделанных с использованием купона по его ID.
+     *
+     * @param int $coupon_id ID купона в Joomla
+     * @return \Illuminate\Support\Collection Коллекция заказов с полной информацией
+     */
+    public static function getOrderInfoByCouponId($coupon_id)
+    {
+
+        // Получаем заказы по coupon_code из таблицы jshopping_orders
+        $orders = DB::connection('mysql_joomla')
+            ->table('jshopping_orders')
+            ->where('coupon_id', $coupon_id)
+            ->whereIn('order_status', [6, 7])
+            ->get();
+
+        // Если нужно расширить информацию (например, джойнить с другими таблицами), добавьте здесь
+        // Например, джойн с jshopping_order_status для статуса:
+        // ->join('jshopping_order_status', 'jshopping_orders.order_status', '=', 'jshopping_order_status.status_id')
+        // ->select('jshopping_orders.*', 'jshopping_order_status.name_en as status_name')
+
+        return $orders;
+    }
 }

@@ -191,9 +191,62 @@ class UserCouponController extends Controller
         ], 200);
     }
 
-    public static function getUserPercentCouponsSummary() {
+    public static function getUserPercentCouponsSummary()
+    {
 
         return JoomlaCoupon::getUserPercentCouponsSummary();
+    }
 
+    /**
+     * Получает информацию о заказах по ID купона
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getOrderInfoByCouponId(Request $request)
+    {
+        try {
+            // Валидация входных данных
+            $validated = $request->validate([
+                'coupon_id' => 'required|integer|min:1',
+            ]);
+
+            $couponId = $validated['coupon_id'];
+
+            // Вызываем метод модели
+            $orders = JoomlaCoupon::getOrderInfoByCouponId($couponId);
+
+            if ($orders->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'errors.no_orders_found',
+                    'data' => [],
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $orders,
+                'message' => 'orders.retrieved_successfully',
+                'count' => $orders->count(),
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'errors.validation_failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in getOrderInfoByCouponId: ' . $e->getMessage(), [
+                'coupon_id' => $request->input('coupon_id'),
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'errors.get_orders_failed',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

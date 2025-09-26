@@ -2,7 +2,7 @@
   <VaCard gradient class="rounded-xl shadow-lg overflow-hidden transform transition-all">
     <VaCardTitle>
       <span icon="content_copy" class="font-bold va-h4 cursor-copy" @click="copyCouponCode">{{ coupon.coupon_code
-        }}</span>
+      }}</span>
     </VaCardTitle>
     <VaCardContent>
       <div class="flex">
@@ -40,7 +40,7 @@
             <p>
               {{ t('coupons.total_cashback') }}:
               <span class="font-bold">{{ formatPrice(bData.data.couponsSummary[coupon.coupon_code]?.total_cashback || 0)
-                }}</span>
+              }}</span>
             </p>
           </div>
         </div>
@@ -53,6 +53,9 @@
       </VaButton>
       <VaButton preset="secondary" class="mr-6 mb-2 cursor-copy" icon="content_copy" @click="copyCouponUrl">
         {{ t('coupons.copy_url') }}
+      </VaButton>
+      <VaButton preset="secondary" class="mr-6 mb-2" icon="info" @click="orderInfo">
+        {{ t('coupons.orders') }}
       </VaButton>
     </VaCardActions>
   </VaCard>
@@ -67,6 +70,8 @@ import { useBase } from '@/composables/useBase'
 const { formatPrice } = useBase()
 const { t } = useI18n()
 const { init: initToast } = useToast()
+
+const emit = defineEmits(['open-order-info']);
 
 const props = defineProps({
   coupon: {
@@ -154,5 +159,10 @@ const copyCouponCode = () => {
       color: 'danger',
     })
   })
+}
+
+// Открытие модалки с информацией о заказе
+const orderInfo = () => {
+  emit('open-order-info', props.coupon)
 }
 </script>

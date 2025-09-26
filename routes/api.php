@@ -23,7 +23,7 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::get('/dev', [UserCouponController::class, 'getUserPercentCouponsSummary']);
+    
     Route::get('/dev2', [UserCouponController::class, 'withdrawals']);
     Route::get('/dev3', [UserCouponController::class, 'data']);
     Route::get('/dev4', [UserCouponController::class, 'index']);
@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/check-promocode', [UserCouponController::class, 'check']);
     Route::get('/user/business-data', [UserCouponController::class, 'data']);
     Route::post('/user/coupon/create', [UserCouponController::class, 'create']);
+    Route::post('/user/coupon/orders', [UserCouponController::class, 'getOrderInfoByCouponId']);
 
     Route::put('/user/change-password', [AuthController::class, 'changePassword']);
 

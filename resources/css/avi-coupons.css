@@ -25,3 +25,8 @@ div.avi-coupon-ratio-cachback {
 .avi-border-important-10 {
     border-radius: 10px !important;
 }
+.avi-chip {
+    padding: 10px;
+    text-align: right;
+    border-radius: 6px;
+}
