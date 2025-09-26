@@ -50,6 +50,7 @@
   "confirm_password": "Подтвердите пароль",
   "register_description": "Создайте учетную запись, чтобы начать работу с Avicenna®",
   "name": "Имя",
+  "summ": "Сумма",
   "login_description": "Введите свои данные для входа",
   "home": "Главная",
   "_dashboard": "Кабинет партнера",
@@ -322,6 +323,8 @@
   "shipping": "Доставка",
   "buyer": "Покупатель",
   "city": "Город",
+  "payout": "Выплата",
+  "payout_details": "Детали выплаты",
   "firstName": "Имя",
   "copy": "Скопировать",
   "coupons": {
@@ -352,6 +355,8 @@
     "created_at": "Дата выпуска",
     "no_data": "Нет данных",
     "bonus_code_details": "Бонусный промокод",
+    "bonus_codes": "Бонусные промокоды",
+    "discount_codes": "Скидочные промокоды",
     "tWithdrawalsTable": "Выплаты",
     "debits-no_data": "Нет данных о выплатах",
     "tTrueBonusCodesTable": "Бонусные промокоды",
@@ -413,11 +418,21 @@
     "discount": "Скидка",
     "subtotal": "Цена РРЦ",
     "tax": "Налог",
+    "details": "Детали заказа",
     "cashback": "Кэшбэк",
     "date": "Дата",
     "status": "Статус",
     "status_paid": "Оплачен",
     "status_other": "Не оплачен",
-    "retrieved_successfully": "Информация о заказе загружена"
+    "retrieved_successfully": "Информация о заказах загружена",
+    "subtotal_no_discount": "Сумма без скидки",
+    "customer_discount": "Скидка покупателя",
+    "actual_total": "Фактическая сумма",
+    "agent_cashback": "Кешбэк агента",
+    "recipient": "Получатель",
+    "email": "E-mail",
+    "phone": "Телефон",
+    "coupon": "Промокод",
+    "close": "Закрыть"
   }
 }

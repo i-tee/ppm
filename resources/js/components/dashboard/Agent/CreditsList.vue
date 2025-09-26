@@ -50,7 +50,7 @@
   </div>
 
   <!-- Модалка -->
-  <VaModal v-model="showModal" title="Детали заказа" hide-default-actions max-width="700px">
+  <VaModal v-model="showModal" :title="t('orders.details')" close-button hide-default-actions max-width="700px">
     <OrderDetailsModal :bData="bData" :order="selectedOrder" @close="showModal = false" />
   </VaModal>
 

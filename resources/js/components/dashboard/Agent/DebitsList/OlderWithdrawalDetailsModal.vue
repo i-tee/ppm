@@ -1,20 +1,20 @@
 <template>
   <div class="space-y-3">
-    <div class="text-lg font-semibold">Выплата ID:{{ withdrawal.id }}</div>
+    <div class="text-lg font-semibold">{{ $t('payout') }} ID:{{ withdrawal.id }}</div>
 
     <VaDivider />
 
     <div class="grid grid-cols-2 gap-3 text-sm">
-      <div><span class="text-gray-500">Сумма: </span> {{ formatPrice(withdrawal.summ) }}</div>
-      <div><span class="text-gray-500">Дата: </span> {{ formatDate(withdrawal.date_exec) }}</div>
-      <div><span class="text-gray-500">Получатель: </span> {{ (withdrawal.recipient) }}</div>
-      <div><span class="text-gray-500">Телефон: </span> {{ (withdrawal.phone) }}</div>
+      <div><span class="text-gray-500">{{ $t('summ') }}: </span> {{ formatPrice(withdrawal.summ) }}</div>
+      <div><span class="text-gray-500">{{ $t('date.date') }}: </span> {{ formatDate(withdrawal.date_exec) }}</div>
+      <div><span class="text-gray-500">{{ $t('orders.recipient') }}: </span> {{ (withdrawal.recipient) }}</div>
+      <div><span class="text-gray-500">{{ $t('orders.phone') }}: </span> {{ (withdrawal.phone) }}</div>
     </div>
 
     <VaDivider />
 
     <div class="text-right">
-      <VaButton @click="$emit('close')">Закрыть</VaButton>
+      <VaButton @click="$emit('close')">{{ $t('close') }}</VaButton>
     </div>
   </div>
 </template>

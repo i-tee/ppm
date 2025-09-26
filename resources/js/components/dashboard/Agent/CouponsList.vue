@@ -13,21 +13,29 @@
 
     <!-- Показываем список купонов, если они есть -->
     <div v-else-if="coupons.length" class="mt-4">
+
       <!-- Раздел для процентных промокодов (тип 0) -->
       <div v-if="percentageCoupons.length">
+        <VaDivider orientation="left" class="my-4">
+          <span class="px-2 text-secondary">{{ t('coupons.discount_codes') }}</span>
+        </VaDivider>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <CouponDiscount v-for="coupon in percentageCoupons" :key="coupon.coupon_id" :coupon="coupon" :bData="bData"
-            :apiData="apiData" @open-order-info="handleOrderInfo"/>
+            :apiData="apiData" @open-order-info="handleOrderInfo" />
         </div>
       </div>
 
       <!-- Раздел для бонусных промокодов (тип 1) -->
-      <div v-if="bonusCoupons.length" class="mt-8">
+      <div v-if="bonusCoupons.length">
+        <VaDivider orientation="left" class="my-4">
+          <span class="px-2 text-secondary">{{ t('coupons.bonus_codes') }}</span>
+        </VaDivider>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <CouponBonus v-for="coupon in bonusCoupons" :key="coupon.coupon_id" :coupon="coupon" :bData="bData"
             :apiData="apiData" @open-order-info="handleOrderInfo" />
         </div>
       </div>
+
     </div>
 
     <!-- Показываем сообщение, если купонов нет -->
@@ -36,7 +44,7 @@
     </div>
 
     <!-- Модалка -->
-    <VaModal v-model="showModal" :title="t('coupons.orders')" hide-default-actions max-width="700px">
+    <VaModal v-model="showModal" :title="t('coupons.orders')" hide-default-actions max-width="700px" close-button>
       <OrderInfoModal :coupon="selectedCoupon" @close="showModal = false" />
     </VaModal>
   </div>
@@ -96,7 +104,6 @@ const handleOrderInfo = (coupon) => {
 onMounted(() => {
   console.log('bData:', props.bData);
   console.log('apiData:', props.apiData);
-  console.log('bonusCoupons:', bonusCoupons.value);
 });
 
 watch(() => props.bData, (newValue) => {

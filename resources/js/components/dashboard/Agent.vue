@@ -32,7 +32,7 @@
           </div>
 
           <!-- Кнопка для создания нового купона, вызывает fetchAllData при создании -->
-          <div class="text-end my-2">
+          <div class="my-2">
             <CreateCoupon :apiData="apiData" :bData="bData" @coupon-created="handleCouponCreated" />
           </div>
 

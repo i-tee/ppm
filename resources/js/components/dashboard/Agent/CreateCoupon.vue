@@ -1,17 +1,15 @@
 <template>
   <!-- Основной контейнер для кнопки создания купона -->
-  <div class="create-coupon">
+  <div class="create-coupon pb-10">
+    <VaDivider orientation="left" class="my-4">
+      <span class="px-2 text-secondary">{{ t('coupons.create') }}</span>
+    </VaDivider>
     <!-- Кнопка Vuestic UI для открытия модального окна -->
-    <va-button @click="couponModal = true">{{ $t('coupons.create') }}</va-button>
+    <VaButton icon="va-plus" @click="couponModal = true">{{ $t('coupons.create') }}</VaButton>
   </div>
 
   <!-- Модальное окно Vuestic UI для создания купона -->
-  <VaModal
-    v-model="couponModal"
-    size="small"
-    close-button
-    :hide-default-actions="true"
-  >
+  <VaModal v-model="couponModal" size="small" close-button :hide-default-actions="true">
     <!-- Содержимое модального окна -->
     <template #default>
       <!-- Заголовок модального окна с локализацией -->
@@ -26,19 +24,11 @@
       <!-- Содержимое выбранной вкладки -->
       <div class="tab-content mt-4">
         <!-- Компонент для формы скидочного купона -->
-        <DiscountPercentageCode
-          :apiData="apiData"
-          :bData="bData"
-          v-model:modelDiscountValue="discountObject"
-          v-if="activeTab === 'discountForm'"
-        />
+        <DiscountPercentageCode :apiData="apiData" :bData="bData" v-model:modelDiscountValue="discountObject"
+          v-if="activeTab === 'discountForm'" />
         <!-- Компонент для формы бонусного купона -->
-        <BonusRedemptionCode
-          :apiData="apiData"
-          :bData="bData"
-          v-model:modelBonusValue="bonusObject"
-          v-else-if="activeTab === 'bonusForm'"
-        />
+        <BonusRedemptionCode :apiData="apiData" :bData="bData" v-model:modelBonusValue="bonusObject"
+          v-else-if="activeTab === 'bonusForm'" />
       </div>
     </template>
 
@@ -56,6 +46,7 @@
       </div>
     </template>
   </VaModal>
+
 </template>
 
 <script setup>

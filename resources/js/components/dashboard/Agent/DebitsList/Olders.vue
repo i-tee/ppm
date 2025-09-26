@@ -26,7 +26,7 @@
   </div>
 
   <!-- Модалка -->
-  <VaModal v-model="showModal" title="Детали выплаты" hide-default-actions max-width="700px">
+  <VaModal v-model="showModal" :title="$t('payout_details')" close-button hide-default-actions max-width="700px">
     <OlderWithdrawalDetailsModal :bData="bData" :withdrawal="selectedWithdrawal" @close="showModal = false" />
   </VaModal>
 
