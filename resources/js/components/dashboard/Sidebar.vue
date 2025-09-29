@@ -49,11 +49,8 @@
     </va-sidebar-item-content>
   </va-sidebar-item>
 
-  <!-- Динамические пункты: перебираем cooperation_types -->
-  <hr>
-
   <div v-for="type in apiData?.cooperation_types" :key="type.id">
-    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }">
+    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }" :active="$route.name === type.route">
       <va-sidebar-item-content>
         <!-- <va-icon name="work" /> -->
         <va-sidebar-item-title>
@@ -62,6 +59,14 @@
       </va-sidebar-item-content>
     </va-sidebar-item>
   </div>
+
+  <VaDivider v-if="isActive" class="my-4" />
+  <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'" v-if="isActive">
+    <va-sidebar-item-content>
+      <va-icon name="note" />
+      <va-sidebar-item-title>{{ $t('dashboard.requisite') }}</va-sidebar-item-title>
+    </va-sidebar-item-content>
+  </va-sidebar-item>
 
 </template>
 

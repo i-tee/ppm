@@ -7,6 +7,7 @@ use App\Http\Controllers\PartnersSettingController;
 use App\Http\Controllers\PartnerApplicationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserCouponController;
+use App\Http\Controllers\RequisiteController;
 use App\Http\Controllers\DevController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -23,10 +24,14 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    
+
     Route::get('/dev2', [UserCouponController::class, 'ddv']);
     Route::get('/dev3', [UserCouponController::class, 'data']);
     Route::get('/dev4', [UserCouponController::class, 'index']);
+
+    Route::get('/user/requisites', [RequisiteController::class, 'index']);
+    Route::post('/user/requisites', [RequisiteController::class, 'store']);
+    Route::delete('/user/requisites/{id}', [RequisiteController::class, 'destroy']);
 
     Route::get('/user/coupons', [UserCouponController::class, 'index']);
     Route::post('/user/check-promocode', [UserCouponController::class, 'check']);

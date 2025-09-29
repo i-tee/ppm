@@ -55,8 +55,32 @@
   "home": "Главная",
   "_dashboard": "Кабинет партнера",
   "logout": "Выход",
+  "requisites": {
+    "add": "Добавить",
+    "no_requisites": "Нет реквизитов",
+    "create_title": "Создать реквизит",
+    "partner_type": "Тип партнера",
+    "full_name": "ФИО",
+    "organization_name": "Название организации",
+    "inn": "ИНН",
+    "ogrn": "ОГРН",
+    "kpp": "КПП",
+    "legal_address": "Юридический адрес",
+    "postal_address": "Почтовый адрес",
+    "bank_name": "Название банка",
+    "bik": "БИК",
+    "correspondent_account": "Корреспондентский счет",
+    "payment_account": "Расчетный счет",
+    "card_number": "Номер карты",
+    "phone_for_sbp": "Телефон для СБП",
+    "additional_info": "Дополнительная информация",
+    "delete": "Удалить",
+    "confirm_delete": "Вы уверены, что хотите удалить реквизит?"
+  },
   "dashboard": {
     "types": "Форматы работ",
+    "requisites": "Реквизиты",
+    "requisite": "Реквизиты",
     "partner_applications": "Заявки партнеров",
     "title": "Панель управления партнёра Avicenna®",
     "welcome": "Добро пожаловать на вашу панель!",
@@ -251,7 +275,9 @@
   },
   "modal": {
     "submit": "Отправить",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "brake": "Отмена",
+    "save": "Сохранить"
   },
   "form": {
     "full_name": "ФИО",

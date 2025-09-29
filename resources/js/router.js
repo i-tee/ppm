@@ -7,6 +7,7 @@ import Promocodes from './components/dashboard/Promocodes.vue';
 import Dev from './components/dashboard/Dev.vue';
 import Influencer from './components/dashboard/Influencer.vue';
 import Agent from './components/dashboard/Agent.vue';
+import Requisite from './components/dashboard/Requisite.vue';
 import Wholesale from './components/dashboard/Wholesale.vue';
 import Distributor from './components/dashboard/Distributor.vue';
 import PartnerApplications from './components/dashboard/PartnerApplications.vue';
@@ -61,22 +62,27 @@ const routes = [
         name: 'Influencer',
         component: Influencer,
       },
-            {
+      {
         path: 'agent',
         name: 'Agent',
         component: Agent,
       },
-            {
+      {
+        path: 'requisite',
+        name: 'Requisite',
+        component: Requisite,
+      },
+      {
         path: 'wholesale',
         name: 'Wholesale',
         component: Wholesale,
       },
-            {
+      {
         path: 'distributor',
         name: 'Distributor',
         component: Distributor,
       },
-            {
+      {
         path: 'dev',
         name: 'Dev',
         component: Dev,

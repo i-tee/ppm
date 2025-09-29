@@ -1,8 +1,7 @@
 <template>
   <VaCard gradient class="rounded-xl shadow-lg overflow-hidden transform transition-all">
     <VaCardTitle>
-      <span icon="content_copy" class="font-bold va-h4 cursor-copy" @click="copyCouponCode">{{ coupon.coupon_code
-      }}</span>
+      <span icon="content_copy" class="font-bold va-h4 cursor-copy" @click="copyCouponCode">{{ coupon.coupon_code }}</span>
     </VaCardTitle>
     <VaCardContent>
       <div class="flex">
@@ -33,15 +32,15 @@
       <div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <p>
+            <div>
               {{ t('coupons.usage_count') }}:
               <span class="font-bold">{{ bData.data.couponsSummary[coupon.coupon_code]?.usage_count || 0 }}</span>
-            </p>
-            <p>
+            </div>
+            <div>
               {{ t('coupons.total_cashback') }}:
               <span class="font-bold">{{ formatPrice(bData.data.couponsSummary[coupon.coupon_code]?.total_cashback || 0)
               }}</span>
-            </p>
+            </div>
           </div>
         </div>
       </div>
@@ -54,7 +53,7 @@
       <VaButton preset="secondary" class="mr-6 mb-2 cursor-copy" icon="content_copy" @click="copyCouponUrl">
         {{ t('coupons.copy_url') }}
       </VaButton>
-      <VaButton preset="secondary" class="mr-6 mb-2" icon="info" @click="orderInfo">
+      <VaButton v-if="bData.data.couponsSummary[coupon.coupon_code]?.usage_count" preset="secondary" class="mr-6 mb-2" icon="info" @click="orderInfo">
         {{ t('coupons.orders') }}
       </VaButton>
     </VaCardActions>
