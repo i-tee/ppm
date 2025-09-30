@@ -1,10 +1,13 @@
 <template>
   <div>
+    
     <p class="va-h4 my-1">{{ $t('dashboard.requisites') }}</p>
+
     <div class="my-3">
       <div v-if="requisites && requisites.length">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div v-for="req in requisites" :key="req.id" class="mb-4">
+
             <VaCard class="p-4 max-w-md h-full">
               <div class="va-card-title mb-2 va-h6">
                 {{ $t(`partners.partner_types.${req.partner_type_name}`) }} #{{ req.id }}
@@ -24,6 +27,7 @@
                 </VaButton>
               </div>
             </VaCard>
+
           </div>
         </div>
       </div>
