@@ -263,6 +263,7 @@
     },
     "partner_type": "Тип партнера",
     "partner_types": {
+      "unknown": "Неизвестный тип",
       "individual_desc": "Физическое лицо",
       "selfemployed_desc": "Самозанятый",
       "entrepreneur_desc": "Индивидуальный предприниматель",

@@ -1,26 +1,29 @@
 <template>
   <div>
-    
+
     <p class="va-h4 my-1">{{ $t('dashboard.requisites') }}</p>
 
     <div class="my-3">
       <div v-if="requisites && requisites.length">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
           <div v-for="req in requisites" :key="req.id" class="mb-4">
 
-            <VaCard class="p-4 max-w-md h-full">
+            <VaCard class="p-4 max-w-lg h-full">
+              <!-- ЗАГОЛОВОК -->
               <div class="va-card-title mb-2 va-h6">
-                {{ $t(`partners.partner_types.${req.partner_type_name}`) }} #{{ req.id }}
+                {{ $t(`partners.partner_types.${getPartnerType(req.partner_type_id)?.name || 'unknown'}`) }}
+                <span class="text-secondary">#{{ req.id }}</span>
               </div>
-              <div class="va-card-content">
-                <p
-                  v-for="(value, field) in req"
-                  :key="field"
-                  v-if="value && field !== 'id' && field !== 'partner_type_id' && field !== 'partner_type_name'"
-                >
-                  <strong>{{ $t(`requisites.${field}`) }}:</strong> {{ value }}
+
+              <!-- СОДЕРЖИМОЕ -->
+              <div class="va-card-content space-y-2">
+                <p v-for="{ key, value } in visibleFields(req)" :key="key" class="m-0">
+                  <strong>{{ $t(`requisites.${key}`) }}:</strong>
+                  <span class="ml-1">{{ value }}</span>
                 </p>
               </div>
+
+              <!-- КНОПКИ -->
               <div class="va-card-actions mt-4 flex justify-end">
                 <VaButton color="danger" @click="deleteRequisite(req.id)">
                   {{ $t('requisites.delete') }}
@@ -48,28 +51,15 @@
       <VaForm ref="formRef" class="p-4 space-y-4">
         <h3 class="va-h5 mb-2">{{ $t('requisites.create_title') }}</h3>
 
-        <VaSelect
-          v-model="form.partner_type_id"
-          :label="$t('requisites.partner_type')"
-          :options="filteredPartnerTypes"
-          :rules="[(v) => !!v || $t('validation.required')]"
-          value-by="value"
-          text-by="text"
-          class="w-full"
-        />
+        <VaSelect v-model="form.partner_type_id" :label="$t('requisites.partner_type')" :options="filteredPartnerTypes"
+          :rules="[(v) => !!v || $t('validation.required')]" value-by="value" text-by="text" class="w-full" />
 
         <VaDivider />
 
         <div v-if="requisiteFieldsForm">
-          <VaInput
-            v-for="(field, key) in requisiteFieldsForm"
-            :key="key"
-            v-model="form[key]"
-            :type="field.type === 'number' ? 'number' : 'text'"
-            :label="$t(field.label)"
-            :rules="[(v) => !field.required || !!v || $t('validation.required')]"
-            class="w-full mb-2"
-          />
+          <VaInput v-for="(field, key) in requisiteFieldsForm" :key="key" v-model="form[key]"
+            :type="field.type === 'number' ? 'number' : 'text'" :label="$t(field.label)"
+            :rules="[(v) => !field.required || !!v || $t('validation.required')]" class="w-full mb-2" />
         </div>
       </VaForm>
 
@@ -119,8 +109,24 @@ const filteredPartnerTypes = computed(() => {
     }));
 });
 
+const visibleFields = (req) =>
+  Object.entries(req)
+    .filter(
+      ([k, v]) =>
+        !['id', 'partner_type_id','is_verified','tax_check_required', 'partner_type_name', 'user_id', 'created_at', 'updated_at'].includes(k) &&
+        v !== null &&
+        v !== undefined &&
+        v !== ''
+    )
+    .map(([k, v]) => ({ key: k, value: v }));
+
+const getPartnerType = (id) => {
+  return partnerSettings.value?.partner_types?.find(item => item.id === id) || null;
+};
+
 watch(partnerSettings, (newVal) => {
   if (newVal?.partner_types) {
+    console.log(newVal?.partner_types);
     isDataLoaded.value = true;
   }
 }, { immediate: true });
