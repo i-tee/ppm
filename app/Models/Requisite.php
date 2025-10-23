@@ -11,24 +11,24 @@ class Requisite extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'partner_type_id',
-        'full_name',
-        'organization_name',
-        'inn',
-        'ogrn',
-        'kpp',
-        'legal_address',
-        'postal_address',
-        'bank_name',
-        'bik',
-        'correspondent_account',
-        'payment_account',
-        'card_number',
-        'phone_for_sbp',
-        'tax_check_required',
-        'additional_info',
-        'is_verified',
+        'user_id', // ID пользователя (партнёра) в Laravel, связь one-to-one с User
+        'partner_type_id', // ID типа партнёра (1: individual/физлицо, 2: self-employed/самозанятый, 3: entrepreneur/ИП, 4: company/компания) из config/settings.json
+        'full_name', // ФИО для физлиц/самозанятых или ФИО директора/владельца для ИП/компаний
+        'organization_name', // Название организации для ИП/компаний (nullable для физлиц/самозанятых)
+        'inn', // ИНН (обязателен для самозанятых, ИП, компаний; опционален для физлиц)
+        'ogrn', // ОГРН/ОГРНИП (обязателен для ИП/компаний)
+        'kpp', // КПП (обязателен только для компаний/ООО)
+        'legal_address', // Юридический адрес (обязателен для ИП/компаний)
+        'postal_address', // Почтовый адрес (если отличается от юридического; опционален)
+        'bank_name', // Название банка (обязателен для ИП/компаний)
+        'bik', // БИК банка (обязателен для ИП/компаний)
+        'correspondent_account', // Корреспондентский счёт банка (обязателен для компаний)
+        'payment_account', // Расчётный счёт (обязателен для ИП/компаний)
+        'card_number', // Номер карты (для физлиц/самозанятых; опционален)
+        'phone_for_sbp', // Телефон для СБП (для физлиц/самозанятых; опционален)
+        'tax_check_required', // Флаг: требуется ли чек из "Мой налог" (true для самозанятых; default false)
+        'additional_info', // Дополнительная информация (паспортные данные, комментарии; опционален)
+        'is_verified', // Флаг верификации реквизитов (устанавливается админом; default false)
     ];
 
     /**

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\JoomlaCoupon; // модель для работы с Joomla
 use App\Models\JoomlaOrder;
+use App\Models\PayoutRequest;
 use App\Models\TrueBonusCode;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -95,6 +96,14 @@ class UserCouponController extends Controller
             $expenseSummary += $trueBonusCode['totalBonusCodesCost'];
         }
 
+        // Новое: Получаем данные о payout_requests
+        $payoutRequestsData = PayoutRequest::withdrawals();
+        $expenseSummary += $payoutRequestsData['debit']; // Добавляем в общие расходы (списание из баланса)
+
+        if (isset($payoutRequestsData['debit']) && $payoutRequestsData['debit'] > 0) {
+            $balance -= $payoutRequestsData['debit']; // Списываем из баланса агента
+        }
+
         // 3. Отдаём JSON
         return response()->json([
             'user' => $user,
@@ -104,6 +113,7 @@ class UserCouponController extends Controller
             'oldPromocodBalance' => $oldPromocodBalance,
             'credits' => $credits,
             'withdrawals' => $withdrawals,
+            'payoutRequests' => $payoutRequestsData,
             'coupon_types' => $coupon_types,
             'coupons' => $ids,
             'coupons_full' => $raw['coupons'],

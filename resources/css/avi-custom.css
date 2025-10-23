@@ -1,14 +1,18 @@
 .avi-bg-sb {
-    background-color: #ecf0f1;
+  background-color: #ecf0f1;
 }
-
 .avi-link:hover {
-    color: black;
+  color: black;
 }
 .avi-link {
-    cursor: pointer;
-    border-bottom: solid 1px;
+  cursor: pointer;
+  border-bottom: solid 1px;
 }
 .master-color {
-    color: var(--va-primary, #154ec1)
+  color: var(--va-primary, #154ec1);
+}
+.truncate {
+  white-space: nowrap; /* Запрещаем перенос текста */
+  overflow: hidden; /* Скрываем выходящий за границы текст */
+  text-overflow: ellipsis; /* Добавляем многоточие */
 }

@@ -19,7 +19,7 @@
             </template>
             <!-- Кастомный слот для значения бонусного кода -->
             <template #cell(bonus_code_id)="{ rowData }">
-                {{ bData.data.coupons_full.find(item => item.coupon_id === rowData.bonus_code_id).coupon_code }}
+                {{ bData.data.coupons_full.find(item => item.coupon_id === rowData.bonus_code_id)?.coupon_code }}
             </template>
             <!-- Кастомный слот для даты создания -->
             <template #cell(created_at)="{ rowData }">

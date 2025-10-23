@@ -16,9 +16,16 @@
 			"coupon_base_url": "'https://avicenna.com.ru/buy?_prcp='",
 			"active": true,
 			"min_payout": 500,
-			"max_discount": 30,
+			"max_discount": 20,
 			"old_std_discount": 20,
-			"bonus_koef": 1.2
+			"bonus_koef": 1.2,
+			"payout_statuses" : { 
+				"0": "created",
+				"10": "approved",
+				"20": "paid",
+				"50": "cancelled",
+				"99": "deleted"
+			}
 		},
 		{
 			"id": 3,
@@ -41,6 +48,8 @@
 			"name": "individual",
 			"description": "individual_desc",
 			"active": true,
+			"tax": 45,
+			"paytime": 604800,
 			"requisite_fields": {
 				"full_name": {
 					"required": true,
@@ -69,6 +78,8 @@
 			"name": "self-employed",
 			"description": "selfemployed_desc",
 			"active": true,
+			"tax": 2,
+			"paytime": 604800,
 			"requisite_fields": {
 				"full_name": {
 					"required": true,
@@ -97,6 +108,8 @@
 			"name": "entrepreneur",
 			"description": "entrepreneur_desc",
 			"active": true,
+			"tax": 0,
+			"paytime": 604800,
 			"requisite_fields": {
 				"full_name": {
 					"required": true,
@@ -140,6 +153,8 @@
 			"name": "company",
 			"description": "company_desc",
 			"active": true,
+			"tax": 0,
+			"paytime": 604800,
 			"requisite_fields": {
 				"organization_name": {
 					"required": true,

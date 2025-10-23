@@ -24,7 +24,6 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 
 Route::middleware('auth:sanctum')->group(function () {
 
-
     Route::get('/dev2', [UserCouponController::class, 'ddv']);
     Route::get('/dev3', [UserCouponController::class, 'data']);
     Route::get('/dev4', [UserCouponController::class, 'index']);

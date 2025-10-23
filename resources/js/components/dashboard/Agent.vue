@@ -1,10 +1,15 @@
 <template>
+
   <!-- Основной контейнер компонента с отступами -->
   <div class="agent-layout min-w-full">
+
     <!-- Показываем контент, если данные загружены (apiData и bData не null) -->
     <div v-if="apiData && bData">
+
       <!-- Заголовок с локализацией для типа сотрудничества "агент" -->
-      <h1 class="va-h4 my-1">{{ bData.data?.user?.name }} | <span class="master-color">{{ formatPrice(bData.data?.balance) ?? $t('common.no_data') }}</span></h1>
+      <h1 class="va-h4 my-1">{{ bData.data?.user?.name }} | <span @click="openPayoutModal" class="master-color">{{
+        formatPrice(bData.data?.balance) ?? $t('common.no_data') }}</span></h1>
+
       <!-- Описание пользовательского соглашения с ссылкой на контракт -->
       <p class="text-gray-400">
         <i>{{ $t('user_agreement.description') }}
@@ -56,6 +61,13 @@
     <!-- Показываем ошибку, если загрузка не удалась -->
     <div v-else-if="error">{{ error }}</div>
   </div>
+
+  <!-- Модалка для создания заявки -->
+  <VaModal v-model="showPayoutModal" close-button hide-default-actions
+    max-width="600px">
+    <PayoutModal :bData="bData" :apiData="apiData" @close="showPayoutModal = false" @created="handlePayoutCreated" />
+  </VaModal>
+
 </template>
 
 <script setup>
@@ -67,6 +79,7 @@ import CouponsList from './Agent/CouponsList.vue'
 import CreateCoupon from './Agent/CreateCoupon.vue'
 import CreditsList from './Agent/CreditsList.vue'
 import DebitsList from './Agent/DebitsList.vue'
+import PayoutModal from './Agent/PayoutModal.vue'
 import { getBusinessData } from '@/api/coupons'
 import { useBase } from '@/composables/useBase';
 import { useI18n } from 'vue-i18n'
@@ -91,6 +104,32 @@ const selectedCooperationType = computed(() => {
   if (!apiData.value?.cooperation_types) return null
   return apiData.value.cooperation_types.find(type => type.id === 2)
 })
+
+const showPayoutModal = ref(false)
+
+const props = defineProps({
+  user: { type: Object, default: null },  // Фикс: наследует user prop
+})
+
+const openPayoutModal = () => {
+  showPayoutModal.value = true
+}
+
+const handlePayoutCreated = async () => {
+  try {
+    refreshKey.value++ // Обновляем списки (debits и т.д.)
+    await fetchAllData() // Перезагружаем bData (баланс обновится)
+    initToast({
+      message: t('payoutRequest.create.success'),
+      color: 'success',
+    })
+  } catch (err) {
+    initToast({
+      message: t('errors.unexpected_error'),
+      color: 'danger',
+    })
+  }
+}
 
 // Обработчик создания купона
 const handleCouponCreated = async () => {
@@ -163,9 +202,12 @@ onMounted(fetchAllData)
   padding: 20px;
   min-width: 100%;
 }
+
 /* Стили для контейнера табов */
 .tabs-container {
-  display: inline-block; /* Контейнер занимает только ширину содержимого */
-  text-align: left; /* Выравнивание табов по левому краю */
+  display: inline-block;
+  /* Контейнер занимает только ширину содержимого */
+  text-align: left;
+  /* Выравнивание табов по левому краю */
 }
 </style>
