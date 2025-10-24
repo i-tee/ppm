@@ -1,14 +1,12 @@
 <template>
   <div class="space-y-4">
-
     <!-- Заголовок модального окна -->
     <h3 class="va-h3 mb-3">{{ $t('payoutRequest.create.title') }}</h3>
 
     <!-- Форма вывода средств -->
-    <!-- VaForm — это компонент Vuestic UI, который умеет работать с валидацией и submit -->
+    <!-- VaForm — компонент Vuestic UI с встроенной валидацией и обработкой submit -->
     <VaForm @submit="handleSubmit" v-slot="{ isSubmitting, errors }" :validation-warnings="false">
-
-      <!-- Показываем баланс пользователя -->
+      <!-- Отображение текущего бонусного баланса пользователя -->
       <div class="bg-gray-100 p-4 text-center my-2 rounded">
         <p>
           {{ $t('coupons.bonusBalance') }}:
@@ -16,21 +14,34 @@
         </p>
       </div>
 
-      <!-- Поле выбора реквизита -->
+      <!-- Выбор реквизита для вывода -->
       <div class="my-3">
         <p class="my-3">{{ $t('payoutRequest.create.description_1') }}</p>
-        <!-- v-model связывает выбранное значение с form.requisite_id -->
-        <VaSelect class="w-full" v-model="form.requisite_id" :label="$t('payoutRequest.fields.requisite')"
-          :options="requisiteOptions" :error="errors?.requisite_id || ''" :disabled="isSubmitting || loadingRequisites"
-          text-attribute="text" value-attribute="value" />
+        <VaSelect
+          class="w-full"
+          v-model="form.requisite_id"
+          :label="$t('payoutRequest.fields.requisite')"
+          :options="requisiteOptions"
+          :error="errors?.requisite_id || ''"
+          :disabled="isSubmitting || loadingRequisites"
+          text-attribute="text"
+          value-attribute="value"
+        />
       </div>
 
+      <!-- Отображение типов партнёров и соответствующих налогов -->
       <div class="my-3">
         <p class="my-3">{{ $t('payoutRequest.create.description_3') }}</p>
         <div class="flex flex-wrap gap-2">
-          <div v-for="partner in apiData.partner_types" class="flex-1 bg-gray-100 rounded-md text-center">
-            <div :class="selectedType === partner.id ? 'avi-changed bg-primary text-white' : 'avi-nochanged'"
-              class="p-4 rounded-md">
+          <div
+            v-for="partner in apiData.partner_types"
+            :key="partner.id"
+            class="flex-1 bg-gray-100 rounded-md text-center"
+          >
+            <div
+              :class="selectedType === partner.id ? 'avi-changed bg-primary text-white' : 'avi-nochanged'"
+              class="p-4 rounded-md"
+            >
               <p class="text-xs truncate">{{ $t('partners.partner_types.' + partner.name) }}</p>
               <p class="text-xl">{{ partner.tax }}%</p>
             </div>
@@ -38,30 +49,37 @@
         </div>
       </div>
 
+      <!-- Блок ввода суммы и расчёта комиссии (показывается только при выборе реквизита) -->
       <div v-if="form?.requisite_id">
-
         <p class="my-3">{{ $t('payoutRequest.fields.amount') }}</p>
         <div class="flex flex-nowrap items-center gap-2 w-full">
           <div class="w-1/4">
-            <VaInput v-model="form.withdrawal_amount" type="number" :error="errors?.withdrawal_amount || ''"
-              :disabled="isSubmitting" />
+            <VaInput
+              v-model="form.withdrawal_amount"
+              type="number"
+              :error="errors?.withdrawal_amount || ''"
+              :disabled="isSubmitting"
+            />
           </div>
           <div class="w-3/4 px-2">
-            <VaSlider v-model="form.withdrawal_amount" :min="0" :max="props.bData.data.balance" :step="50" />
+            <VaSlider
+              v-model="form.withdrawal_amount"
+              :min="0"
+              :max="props.bData.data.balance"
+              :step="50"
+            />
           </div>
         </div>
 
+        <!-- Отображение итоговой суммы и комиссии -->
         <div class="my-3">
-          <!-- контейнер-ряд -->
           <div class="flex flex-row gap-4">
-            <!-- колонка 1/2 -->
             <div class="text-white w-1/2 p-4 rounded-md" style="background: var(--va-primary)">
               <div class="text-center">
                 <div>{{ $t('payoutRequest.create.will_be_paid') }}</div>
                 <div class="text-lg font-bold mt-1">{{ formatPrice(receivedAmount) }}</div>
               </div>
             </div>
-            <!-- колонка 1/2 -->
             <div class="w-1/2 p-4 rounded-md" style="background-color: rgba(21, 78, 193, 0.2)">
               <div class="text-center" style="color: var(--va-primary)">
                 <div>{{ $t('payoutRequest.commission') }}</div>
@@ -72,77 +90,64 @@
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- Кнопка отправки формы -->
-      <VaButton type="submit" color="primary" class="w-full mt-3" :loading="isSubmitting">
-        {{ $t('payoutRequest.create.submit') }}
-      </VaButton>
+      <VaDivider />
 
+      <!-- Кнопки управления модальным окном -->
+      <div class="flex justify-end space-x-2 mt-4 mb-1">
+        <VaButton preset="secondary" @click="emit('close')">
+          {{ $t('modal.cancel') }}
+        </VaButton>
+        <VaButton type="submit" color="primary" :loading="isSubmitting">
+          {{ $t('payoutRequest.create.submit') }}
+        </VaButton>
+      </div>
     </VaForm>
   </div>
 </template>
 
 <script setup>
-// Импортируем нужные модули
+// Импорты
 import { ref, computed, onMounted, watch } from 'vue'
-import { useI18n } from 'vue-i18n' // для переводов
-import { useToast } from 'vuestic-ui' // для всплывающих уведомлений
-import { VaForm, VaInput, VaSelect, VaButton } from 'vuestic-ui' // UI-компоненты
-import axios from 'axios' // HTTP-запросы
-import { useAuthStore } from '@/stores/auth' // доступ к авторизационным данным
-import { useBase } from '@/composables/useBase' // общие утилиты (например, форматирование цены)
+import { useI18n } from 'vue-i18n'
+import { useToast } from 'vuestic-ui'
+import { VaForm, VaInput, VaSelect, VaButton, VaDivider } from 'vuestic-ui'
+import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
+import { useBase } from '@/composables/useBase'
 
-// === ИНИЦИАЛИЗАЦИЯ ===
+// Инициализация
 const { t } = useI18n()
 const { init: initToast } = useToast()
 const authStore = useAuthStore()
 const { formatPrice } = useBase()
 
-// Разрешаем компоненту принимать данные извне (через props)
+// Props и emits
 const props = defineProps({
-  bData: { type: Object, required: true }, // содержит баланс
-  apiData: { type: Object, required: true }, // содержит типы партнёров и налоги
+  bData: { type: Object, required: true }, // данные о балансе
+  apiData: { type: Object, required: true }, // данные о типах партнёров и налогах
 })
-
-// Для возможности закрыть модалку (emit → событие наружу)
 const emit = defineEmits(['close'])
 
-// === РЕАКТИВНЫЕ ДАННЫЕ ===
-
-// Данные формы (реактивный объект)
-
-// 'requisite_id',
-// 'withdrawal_amount',
-// 'received_amount',
-// 'commission_percentage',
-// 'commission_amount',
-// 'status',
-// 'note',
-
+// Реактивные данные формы
 const form = ref({
-  withdrawal_amount: null, // сумма для вывода
-  received_amount: null, // сумма к получению
-  commission_percentage: null, // процент коммиссии
-  commission_amount: null, // размер коммиссии
-  requisite_id: null, // выбранный реквизит
-  partner_type_id: null, // тип партнёра (нужен для налога)
-  note: '', // заметка
+  withdrawal_amount: null,
+  received_amount: null,
+  commission_percentage: null,
+  commission_amount: null,
+  requisite_id: null,
+  partner_type_id: null,
+  note: '',
 })
 
-// Список реквизитов, загруженных с сервера
 const requisites = ref([])
-
-// Флаг загрузки реквизитов
 const loadingRequisites = ref(true)
+const selectedType = ref(null)
 
-// === ВЫЧИСЛЯЕМЫЕ СВОЙСТВА ===
-
-// Текущий баланс пользователя
+// Вычисляемые свойства
 const computedBalance = computed(() => props.bData.data?.balance || 0)
 
-// Формируем список опций для выпадающего списка реквизитов
 const requisiteOptions = computed(() =>
   requisites.value.map(r => ({
     value: r.id,
@@ -150,152 +155,134 @@ const requisiteOptions = computed(() =>
   }))
 )
 
-// Получаем процент комиссии (tax/commission_percentage) для выбранного реквизита
+// Налог (процент комиссии) для выбранного типа партнёра
 const commissionPercentage = computed(() => {
-
-  let tax = props.apiData.partner_types.find(r => r.id === selectedType.value)
-  return tax.tax
-
+  const partner = props.apiData.partner_types.find(p => p.id === selectedType.value)
+  return partner?.tax ?? 0 // защита от undefined
 })
 
-// Рассчитываем резмер комиссии (commission_amount) для выбранного реквизита и указанной суммы вывода
+// Сумма комиссии
 const commissionAmount = computed(() => {
-
-  return Math.round((form.value.withdrawal_amount * commissionPercentage.value) / 100);
-
+  if (!form.value.withdrawal_amount) return 0
+  return Math.round((form.value.withdrawal_amount * commissionPercentage.value) / 100)
 })
 
-// Рассчитываем сумму к получению на счёт
+// Сумма к получению
 const receivedAmount = computed(() => {
-
-  let result = Math.round(form.value.withdrawal_amount - commissionAmount.value)
-  form.value.receivedAmount = result
+  const amount = form.value.withdrawal_amount || 0
+  const result = Math.round(amount - commissionAmount.value)
+  form.value.received_amount = result
   return result
-
 })
 
-// Рассчитываем остаток на балансе после оставления такой заявки
+// Остаток на балансе после вывода (не используется напрямую, но может пригодиться)
 const remainAmount = computed(() => {
-
-  return Math.round(computedBalance.value - form.value.withdrawal_amount);
-
+  return Math.round(computedBalance.value - (form.value.withdrawal_amount || 0))
 })
 
-// === ФУНКЦИИ ===
-
-// 1️⃣ Загрузка реквизитов с сервера
+// Загрузка реквизитов
 const fetchRequisites = async () => {
-
   try {
-
     const response = await axios.get('/api/user/requisites', {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
-
     requisites.value = response.data || []
-
-    console.log('fetchRequisites()::', requisites.value)
 
     if (requisites.value.length === 0) {
       initToast({ message: t('payoutRequest.create.no_requisites'), color: 'warning' })
       emit('close')
-      return
     }
-
   } catch (err) {
-    console.error(err)
     initToast({ message: t('errors.requisites_loading'), color: 'danger' })
   } finally {
     loadingRequisites.value = false
   }
-
 }
 
-// 2️⃣ Валидация данных перед отправкой
+// Валидация формы (возвращает payload или false)
 const validateForm = () => {
-  if (!form.value.requisite_id) {
-    initToast({ message: t('errors.no_requisite_selected'), color: 'warning' })
+  const payload = {
+    withdrawal_amount: form.value.withdrawal_amount,
+    requisite_id: form.value?.requisite_id?.value ?? form.value?.requisite_id,
+    received_amount: form.value.received_amount,
+    commission_percentage: commissionPercentage.value,
+    commission_amount: commissionAmount.value,
+  }
+
+  const fieldsToValidate = [
+    { key: 'requisite_id', required: true },
+    { key: 'withdrawal_amount', required: true },
+    { key: 'received_amount', required: true },
+    { key: 'commission_percentage', required: true },
+    { key: 'commission_amount', required: true },
+  ]
+
+  for (const { key, required } of fieldsToValidate) {
+    const value = payload[key]
+
+    if (required && (value === null || value === undefined || value === '')) {
+      const messageKey = `payoutRequest.validateFail.${key}`
+      initToast({ message: t(messageKey), color: 'warning' })
+      return false
+    }
+
+    if (['withdrawal_amount', 'received_amount', 'commission_percentage', 'commission_amount'].includes(key)) {
+      const numValue = Number(value)
+      if (isNaN(numValue) || numValue < 0) {
+        const messageKey = `payoutRequest.validateFail.${key}_invalid`
+        initToast({ message: t(messageKey), color: 'warning' })
+        return false
+      }
+    }
+  }
+
+  // Проверка: сумма вывода не должна превышать баланс
+  if (payload.withdrawal_amount > computedBalance.value) {
+    initToast({
+      message: t('payoutRequest.validateFail.insufficient_balance'),
+      color: 'warning'
+    })
     return false
   }
 
-  if (!form.value.withdrawal_amount || form.value.withdrawal_amount <= 0) {
-    initToast({ message: t('errors.invalid_amount'), color: 'warning' })
-    return false
-  }
-
-  // Всё в порядке
-  return true
+  return payload
 }
 
-// 3️⃣ Отправка формы
+// Отправка данных на сервер
 const handleSubmit = async () => {
-  // Проверяем данные перед отправкой
-  if (!validateForm()) return
+  const payload = validateForm()
+  if (!payload) return
 
   try {
     loadingRequisites.value = true
 
-    // Формируем тело запроса
-    const payload = {
-      withdrawal_amount: form.value.withdrawal_amount,
-      requisite_id: form.value.requisite_id,
-      partner_type_id: form.value.partner_type_id,
-      tax: form.value.tax,
-      note: form.value.note,
-    }
+    console.log(payload)
 
-    console.log('Отправляем запрос на вывод:', payload)
+    // await axios.post('/api/payout-requests', payload, {
+    //   headers: { Authorization: `Bearer ${authStore.token}` },
+    // })
 
-    // POST-запрос к API
-    await axios.post('/api/payout-requests', payload, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
-
-    // Успешно
     initToast({ message: t('payoutRequest.create.success'), color: 'success' })
-    emit('close') // закрываем модалку
+    emit('close')
   } catch (err) {
-    console.error(err)
     initToast({ message: t('payoutRequest.create.error'), color: 'danger' })
   } finally {
     loadingRequisites.value = false
   }
 }
 
-const selectedType = ref(null)
-
-// 4️⃣ Следим за изменением выбранного реквизита
+// Отслеживаем выбор реквизита для определения типа партнёра и налога
 watch(() => form.value.requisite_id, (newId) => {
+  selectedType.value = null
+  if (!newId) return
 
-  selectedType.value = null // сброс при смене
-
-  if (newId) {
-    // если newId — это объект { value, text }
-    const id = typeof newId === 'object' ? newId.value : newId
-
-    const selectedRequisite = requisites.value.find(r => r.id === id)
-
-    if (selectedRequisite?.partner_type_id) {
-      selectedType.value = selectedRequisite.partner_type_id
-    }
-
-    console.log('requisites.value:', requisites.value)
-    console.log('Выбран реквизит новый:', id)
-    console.log('All data:', selectedRequisite)
-    console.log('selectedType:', selectedType)
-
-  } else {
-
-    console.log('requisites.value:', requisites.value)
-    console.log('Выбран реквизит прошлый:', form.value.requisite_id)
-    const id = typeof form.value.requisite_id === 'object' ? form.value.requisite_id.value : form.value.requisite_id
-    const previousRequisite = requisites.value.find(r => r.id === id)
-    console.log('All data:', previousRequisite)
-
+  const id = typeof newId === 'object' ? newId.value : newId
+  const selectedRequisite = requisites.value.find(r => r.id === id)
+  if (selectedRequisite?.partner_type_id) {
+    selectedType.value = selectedRequisite.partner_type_id
   }
 })
 
-
-// При загрузке компонента автоматически получаем реквизиты
+// Загрузка реквизитов при монтировании компонента
 onMounted(fetchRequisites)
 </script>
