@@ -17,31 +17,19 @@
       <!-- Выбор реквизита для вывода -->
       <div class="my-3">
         <p class="my-3">{{ $t('payoutRequest.create.description_1') }}</p>
-        <VaSelect
-          class="w-full"
-          v-model="form.requisite_id"
-          :label="$t('payoutRequest.fields.requisite')"
-          :options="requisiteOptions"
-          :error="errors?.requisite_id || ''"
-          :disabled="isSubmitting || loadingRequisites"
-          text-attribute="text"
-          value-attribute="value"
-        />
+        <VaSelect class="w-full" v-model="form.requisite_id" :label="$t('payoutRequest.fields.requisite')"
+          :options="requisiteOptions" :error="errors?.requisite_id || ''" :disabled="isSubmitting || loadingRequisites"
+          text-attribute="text" value-attribute="value" />
       </div>
 
       <!-- Отображение типов партнёров и соответствующих налогов -->
       <div class="my-3">
         <p class="my-3">{{ $t('payoutRequest.create.description_3') }}</p>
         <div class="flex flex-wrap gap-2">
-          <div
-            v-for="partner in apiData.partner_types"
-            :key="partner.id"
-            class="flex-1 bg-gray-100 rounded-md text-center"
-          >
-            <div
-              :class="selectedType === partner.id ? 'avi-changed bg-primary text-white' : 'avi-nochanged'"
-              class="p-4 rounded-md"
-            >
+          <div v-for="partner in apiData.partner_types" :key="partner.id"
+            class="flex-1 bg-gray-100 rounded-md text-center">
+            <div :class="selectedType === partner.id ? 'avi-changed bg-primary text-white' : 'avi-nochanged'"
+              class="p-4 rounded-md">
               <p class="text-xs truncate">{{ $t('partners.partner_types.' + partner.name) }}</p>
               <p class="text-xl">{{ partner.tax }}%</p>
             </div>
@@ -54,20 +42,11 @@
         <p class="my-3">{{ $t('payoutRequest.fields.amount') }}</p>
         <div class="flex flex-nowrap items-center gap-2 w-full">
           <div class="w-1/4">
-            <VaInput
-              v-model="form.withdrawal_amount"
-              type="number"
-              :error="errors?.withdrawal_amount || ''"
-              :disabled="isSubmitting"
-            />
+            <VaInput v-model="form.withdrawal_amount" type="number" :error="errors?.withdrawal_amount || ''"
+              :disabled="isSubmitting" />
           </div>
           <div class="w-3/4 px-2">
-            <VaSlider
-              v-model="form.withdrawal_amount"
-              :min="0"
-              :max="props.bData.data.balance"
-              :step="50"
-            />
+            <VaSlider v-model="form.withdrawal_amount" :min="0" :max="props.bData.data.balance" :step="50" />
           </div>
         </div>
 
@@ -258,14 +237,21 @@ const handleSubmit = async () => {
 
     console.log(payload)
 
-    // await axios.post('/api/payout-requests', payload, {
-    //   headers: { Authorization: `Bearer ${authStore.token}` },
-    // })
+    const response = await axios.post('/api/payout-requests', payload, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
 
-    initToast({ message: t('payoutRequest.create.success'), color: 'success' })
-    emit('close')
+    if (response.data.success) {
+      initToast({ message: t('payoutRequest.create.success'), color: 'success' })
+      emit('created')  // Триггер refresh в Agent
+      emit('close')
+      form.value = { ...form.value, withdrawal_amount: '', requisite_id: null, note: '' }  // Reset
+    }
   } catch (err) {
-    initToast({ message: t('payoutRequest.create.error'), color: 'danger' })
+    initToast({
+      message: t('payoutRequest.create.error') || err.response?.data?.message || t('errors.unexpected_error'),
+      color: 'danger'
+    })
   } finally {
     loadingRequisites.value = false
   }

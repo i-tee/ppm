@@ -8,6 +8,7 @@ use App\Http\Controllers\PartnerApplicationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserCouponController;
 use App\Http\Controllers\RequisiteController;
+use App\Http\Controllers\PayoutRequestController;
 use App\Http\Controllers\DevController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -27,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dev2', [UserCouponController::class, 'ddv']);
     Route::get('/dev3', [UserCouponController::class, 'data']);
     Route::get('/dev4', [UserCouponController::class, 'index']);
+
+    Route::post('/payout-requests', [PayoutRequestController::class, 'store']);
 
     Route::get('/user/requisites', [RequisiteController::class, 'index']);
     Route::post('/user/requisites', [RequisiteController::class, 'store']);
