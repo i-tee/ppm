@@ -4,35 +4,141 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Helpers\Partners;
 
 class Requisite extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id', // ID пользователя (партнёра) в Laravel, связь one-to-one с User
-        'partner_type_id', // ID типа партнёра (1: individual/физлицо, 2: self-employed/самозанятый, 3: entrepreneur/ИП, 4: company/компания) из config/settings.json
-        'full_name', // ФИО для физлиц/самозанятых или ФИО директора/владельца для ИП/компаний
-        'organization_name', // Название организации для ИП/компаний (nullable для физлиц/самозанятых)
-        'inn', // ИНН (обязателен для самозанятых, ИП, компаний; опционален для физлиц)
-        'ogrn', // ОГРН/ОГРНИП (обязателен для ИП/компаний)
-        'kpp', // КПП (обязателен только для компаний/ООО)
-        'legal_address', // Юридический адрес (обязателен для ИП/компаний)
-        'postal_address', // Почтовый адрес (если отличается от юридического; опционален)
-        'bank_name', // Название банка (обязателен для ИП/компаний)
-        'bik', // БИК банка (обязателен для ИП/компаний)
-        'correspondent_account', // Корреспондентский счёт банка (обязателен для компаний)
-        'payment_account', // Расчётный счёт (обязателен для ИП/компаний)
-        'card_number', // Номер карты (для физлиц/самозанятых; опционален)
-        'phone_for_sbp', // Телефон для СБП (для физлиц/самозанятых; опционален)
-        'tax_check_required', // Флаг: требуется ли чек из "Мой налог" (true для самозанятых; default false)
-        'additional_info', // Дополнительная информация (паспортные данные, комментарии; опционален)
-        'is_verified', // Флаг верификации реквизитов (устанавливается админом; default false)
+        // === БАЗОВЫЕ ПОЛЯ ===
+        'user_id',                  // ID пользователя в системе
+        'partner_type_id',          // Тип партнера: 1-физлицо, 2-самозанятый, 3-ИП, 4-компания
+        'full_name',                // ФИО физического лица или директора компании
+        'is_verified',              // Статус верификации реквизитов администратором
+        'is_active',                // Актуальность реквизитов (вместо удаления)
+        'additional_info',          // Дополнительная информация (произвольные заметки)
+        'tax_check_required',       // Требуется ли чек из приложения "Мой налог" (для самозанятых)
+        
+        // === ПАСПОРТНЫЕ ДАННЫЕ ===
+        'passport_series',          // Серия паспорта (4 цифры)
+        'passport_number',          // Номер паспорта (6 цифр)
+        'passport_issued_date',     // Дата выдачи паспорта
+        'passport_issued_by',       // Кем выдан паспорт (полное название органа)
+        'passport_issued_by_code',  // Код подразделения (формат 000-000)
+        'passport_birth_place',     // Место рождения (как в паспорте)
+        'passport_registration_address', // Адрес регистрации (прописка)
+        'birth_date',               // Дата рождения
+        'birth_place',              // Место рождения
+        'passport_snils',           // СНИЛС - страховой номер индивидуального лицевого счета
+        
+        // === БАНКОВСКИЕ РЕКВИЗИТЫ ===
+        'bank_name',                // Наименование банка
+        'bank_bik',                 // БИК - банковский идентификационный код
+        'bank_correspondent_account', // Корреспондентский счет банка
+        'bank_payment_account',     // Расчетный счет организации/ИП
+        'bank_card_number',         // Номер банковской карты (для физлиц)
+        'bank_phone_for_sbp',       // Номер телефона для Системы Быстрых Платежей
+        'bank_account_type',        // Тип счета: settlement-расчетный, card-карточный, personal-лицевой
+        'bank_account_number',      // Номер счета (расчетного, лицевого)
+        'bank_card_holder',         // Имя держателя карты (как на карте)
+        'bank_card_expiry',         // Срок действия карты (формат MM/YY)
+        'bank_city',                // Город нахождения банка
+        'bank_inn',                 // ИНН банка
+        'bank_kpp',                 // КПП банка
+        
+        // === КАРТОЧКА ОРГАНИЗАЦИИ ===
+        'org_full_name',            // Полное наименование организации
+        'org_short_name',           // Сокращенное наименование организации
+        'org_legal_form',           // Организационно-правовая форма: ООО, АО, ИП и т.д.
+        'org_inn',                  // ИНН организации
+        'org_ogrn',                 // ОГРН - основной государственный регистрационный номер (для юрлиц)
+        'org_ogrnip',               // ОГРНИП - основной государственный регистрационный номер ИП
+        'org_kpp',                  // КПП - код причины постановки на учет (только для юрлиц)
+        'org_legal_address',        // Юридический адрес (место государственной регистрации)
+        'org_postal_address',       // Почтовый адрес (для корреспонденции)
+        'org_actual_address',       // Фактический адрес местонахождения
+        'org_phone',                // Телефон организации
+        'org_email',                // Email организации
+        'org_website',              // Сайт организации
+        'org_okpo',                 // ОКПО - общероссийский классификатор предприятий
+        'org_okato',                // ОКАТО - классификатор объектов административно-территориального деления
+        'org_oktmo',                // ОКТМО - классификатор территорий муниципальных образований
+        'org_okfs',                 // ОКФС - классификатор форм собственности
+        'org_okopf',                // ОКОПФ - классификатор организационно-правовых форм
+        'org_okved',                // ОКВЭД - классификатор видов экономической деятельности
+        'org_director_name',        // ФИО руководителя организации
+        'org_director_position',    // Должность руководителя
+        'org_director_basis',       // Основание полномочий (Устав, Доверенность)
+        'org_tax_system',           // Система налогообложения: ОСН, УСН, ЕНВД, Патент
+        
+        // === ДОКУМЕНТЫ ===
+        'doc_egrul',                // Выписка из ЕГРЮЛ/ЕГРИП
+        'doc_inn',                  // Свидетельство ИНН
+        'doc_ogrn',                 // Свидетельство ОГРН (для юрлиц)
+        'doc_ogrnip',               // Свидетельство ОГРНИП (для ИП)
+        'doc_kpp',                  // Свидетельство КПП
+        'doc_charter',              // Устав организации
+        'doc_director_appointment', // Приказ о назначении директора
+        'doc_bank_account',         // Выписка из банка о открытии счета
+        'doc_license',              // Лицензии (если деятельность лицензируется)
+        'doc_other',                // Прочие документы (JSON массив)
+    ];
+
+    protected $casts = [
+        // Базовые
+        'is_verified' => 'boolean',
+        'is_active' => 'boolean',
+        'tax_check_required' => 'boolean',
+        
+        // Даты
+        'passport_issued_date' => 'date',
+        'birth_date' => 'date',
+        
+        // JSON
+        'doc_other' => 'array',
+        
+        // Тимстемпы
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**
-     * Связь с пользователем.
+     * Scope для активных реквизитов
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope для верифицированных реквизитов
+     */
+    public function scopeVerified($query)
+    {
+        return $query->where('is_verified', true);
+    }
+
+    /**
+     * Scope по типу партнера
+     */
+    public function scopeByPartnerType($query, $partnerTypeId)
+    {
+        return $query->where('partner_type_id', $partnerTypeId);
+    }
+
+    /**
+     * Scope для поиска по ИНН (организации или банка)
+     */
+    public function scopeByInn($query, $inn)
+    {
+        return $query->where('org_inn', $inn)->orWhere('bank_inn', $inn);
+    }
+
+    /**
+     * Связь с пользователем
      */
     public function user()
     {
@@ -40,8 +146,7 @@ class Requisite extends Model
     }
 
     /**
-     * Получить тип партнера по ID (из хелпера Partners).
-     * Это вспомогательный метод, данные берутся из Partners::getSettings('partner_types').
+     * Получить тип партнера по ID
      */
     public function getPartnerTypeName()
     {
@@ -55,89 +160,167 @@ class Requisite extends Model
     }
 
     /**
-     * Валидация реквизитов в зависимости от типа партнера.
-     * Можно вызвать перед сохранением.
+     * Аксессор: полные паспортные данные
      */
-    public function validateByType()
+    public function getPassportFullAttribute()
     {
-        $errors = [];
-
-        switch ($this->partner_type_id) {
-            case 1: // individual (физлицо)
-                if (empty($this->full_name)) $errors[] = 'full_name required';
-                if (empty($this->card_number) && empty($this->phone_for_sbp)) $errors[] = 'card_number or phone_for_sbp required';
-                break;
-            case 2: // self-employed (самозанятый)
-                if (empty($this->full_name)) $errors[] = 'full_name required';
-                if (empty($this->inn)) $errors[] = 'inn required';
-                if (empty($this->card_number) && empty($this->phone_for_sbp)) $errors[] = 'card_number or phone_for_sbp required';
-                $this->tax_check_required = true; // Автоматически устанавливаем
-                break;
-            case 3: // entrepreneur (ИП)
-                if (empty($this->organization_name)) $errors[] = 'organization_name required';
-                if (empty($this->inn)) $errors[] = 'inn required';
-                if (empty($this->ogrn)) $errors[] = 'ogrn required';
-                if (empty($this->payment_account)) $errors[] = 'payment_account required';
-                if (empty($this->bik)) $errors[] = 'bik required';
-                if (empty($this->bank_name)) $errors[] = 'bank_name required';
-                break;
-            case 4: // company (ООО)
-                if (empty($this->organization_name)) $errors[] = 'organization_name required';
-                if (empty($this->inn)) $errors[] = 'inn required';
-                if (empty($this->ogrn)) $errors[] = 'ogrn required';
-                if (empty($this->kpp)) $errors[] = 'kpp required';
-                if (empty($this->payment_account)) $errors[] = 'payment_account required';
-                if (empty($this->bik)) $errors[] = 'bik required';
-                if (empty($this->bank_name)) $errors[] = 'bank_name required';
-                break;
-            default:
-                $errors[] = 'Invalid partner_type_id';
+        if ($this->passport_series && $this->passport_number) {
+            return "{$this->passport_series} {$this->passport_number}";
         }
-
-        if (!empty($errors)) {
-            throw new \Exception(implode(', ', $errors));
-        }
-
-        return true;
+        return null;
     }
 
-    // Пример CRUD-методов (статических для удобства, но лучше использовать в контроллере/репозитории)
+    /**
+     * Аксессор: полное наименование организации с ОПФ
+     */
+    public function getOrgFullNameWithLegalFormAttribute()
+    {
+        if (!$this->org_full_name) return null;
+        
+        if ($this->org_legal_form && !str_starts_with($this->org_full_name, $this->org_legal_form)) {
+            return "{$this->org_legal_form} «{$this->org_full_name}»";
+        }
+        
+        return $this->org_full_name;
+    }
 
     /**
-     * Создать новые реквизиты.
+     * Аксессор: основные банковские реквизиты
+     */
+    public function getBankSummaryAttribute()
+    {
+        $details = [];
+        if ($this->bank_name) $details[] = $this->bank_name;
+        if ($this->bank_bik) $details[] = "БИК: {$this->bank_bik}";
+        if ($this->bank_payment_account) $details[] = "Счет: {$this->bank_payment_account}";
+        if ($this->bank_account_number) $details[] = "Счет: {$this->bank_account_number}";
+        
+        return implode(', ', $details);
+    }
+
+    /**
+     * Аксессор: информация о директоре
+     */
+    public function getDirectorInfoAttribute()
+    {
+        $parts = [];
+        if ($this->org_director_name) $parts[] = $this->org_director_name;
+        if ($this->org_director_position) $parts[] = $this->org_director_position;
+        if ($this->org_director_basis) $parts[] = "на основании {$this->org_director_basis}";
+        
+        return implode(', ', $parts);
+    }
+
+    /**
+     * Проверить, заполнены ли паспортные данные
+     */
+    public function getHasPassportDataAttribute()
+    {
+        return !empty($this->passport_series) && !empty($this->passport_number);
+    }
+
+    /**
+     * Проверить, заполнены ли банковские реквизиты
+     */
+    public function getHasBankDetailsAttribute()
+    {
+        return !empty($this->bank_name) && 
+               (!empty($this->bank_payment_account) || !empty($this->bank_account_number) || !empty($this->bank_card_number));
+    }
+
+    /**
+     * Проверить, заполнены ли данные организации
+     */
+    public function getHasOrgDataAttribute()
+    {
+        return !empty($this->org_full_name) && !empty($this->org_inn);
+    }
+
+    /**
+     * Деактивировать реквизиты (мягкое удаление)
+     */
+    public function deactivate()
+    {
+        $this->is_active = false;
+        return $this->save();
+    }
+
+    /**
+     * Активировать реквизиты
+     */
+    public function activate()
+    {
+        $this->is_active = true;
+        return $this->save();
+    }
+
+    /**
+     * Добавить дополнительный документ
+     */
+    public function addDocument($name, $url, $uploadedAt = null)
+    {
+        $documents = $this->doc_other ?? [];
+        $documents[] = [
+            'name' => $name,
+            'url' => $url,
+            'uploaded_at' => $uploadedAt ?? now()->toDateTimeString(),
+        ];
+        
+        $this->doc_other = $documents;
+        return $this;
+    }
+
+    /**
+     * Получить реквизиты по user_id (только активные)
+     */
+    public static function getActiveByUserId($userId)
+    {
+        return self::where('user_id', $userId)->active()->first();
+    }
+
+    /**
+     * Получить все реквизиты пользователя (включая неактивные)
+     */
+    public static function getAllByUserId($userId)
+    {
+        return self::where('user_id', $userId)->get();
+    }
+
+    // === CRUD-МЕТОДЫ ДЛЯ ОБРАТНОЙ СОВМЕСТИМОСТИ ===
+
+    /**
+     * Создать новые реквизиты
      */
     public static function createRequisite(array $data)
     {
         $requisite = new self($data);
-        $requisite->validateByType();
         $requisite->save();
         return $requisite;
     }
 
     /**
-     * Обновить реквизиты.
+     * Обновить реквизиты
      */
     public function updateRequisite(array $data)
     {
         $this->fill($data);
-        $this->validateByType();
         $this->save();
         return $this;
     }
 
     /**
-     * Удалить реквизиты.
+     * Удалить реквизиты (деактивировать)
      */
     public function deleteRequisite()
     {
-        $this->delete();
+        return $this->deactivate();
     }
 
     /**
-     * Получить реквизиты по user_id.
+     * Получить реквизиты по ID пользователя (активные)
      */
     public static function getByUserId($userId)
     {
-        return self::where('user_id', $userId)->first();
+        return self::getActiveByUserId($userId);
     }
-};
+}

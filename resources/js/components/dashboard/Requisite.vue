@@ -1,4 +1,5 @@
 <template>
+
   <div>
 
     <p class="va-h4 my-1">{{ $t('dashboard.requisites') }}</p>
@@ -71,6 +72,7 @@
       </template>
     </VaModal>
   </div>
+  
 </template>
 
 <script setup>

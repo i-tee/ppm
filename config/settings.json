@@ -1,250 +1,462 @@
 {
-	"cooperation_types": [
-		{
-			"id": 1,
-			"name": "influencer",
-			"route": "Influencer",
-			"description": "influencer_desc",
-			"active": false
-		},
-		{
-			"id": 2,
-			"name": "agent",
-			"route": "Agent",
-			"description": "agent_desc",
-			"contract_url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
-			"coupon_base_url": "'https://avicenna.com.ru/buy?_prcp='",
-			"active": true,
-			"min_payout": 500,
-			"max_discount": 20,
-			"old_std_discount": 20,
-			"bonus_koef": 1.2,
-			"payout_statuses" : { 
-				"0": "created",
-				"10": "approved",
-				"20": "paid",
-				"50": "cancelled",
-				"99": "deleted"
-			}
-		},
-		{
-			"id": 3,
-			"name": "wholesale",
-			"route": "Wholesale",
-			"description": "wholesale_desc",
-			"active": false
-		},
-		{
-			"id": 4,
-			"name": "distributor",
-			"route": "Distributor",
-			"description": "distributor_desc",
-			"active": false
-		}
-	],
-	"partner_types": [
-		{
-			"id": 1,
-			"name": "individual",
-			"description": "individual_desc",
-			"active": true,
-			"tax": 45,
-			"paytime": 604800,
-			"requisite_fields": {
-				"full_name": {
-					"required": true,
-					"type": "text",
-					"label": "requisites.full_name"
-				},
-				"inn": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.inn"
-				},
-				"card_number": {
-					"required": false,
-					"type": "text",
-					"label": "requisites.card_number"
-				},
-				"phone_for_sbp": {
-					"required": false,
-					"type": "text",
-					"label": "requisites.phone_for_sbp"
-				}
-			}
-		},
-		{
-			"id": 2,
-			"name": "self-employed",
-			"description": "selfemployed_desc",
-			"active": true,
-			"tax": 2,
-			"paytime": 604800,
-			"requisite_fields": {
-				"full_name": {
-					"required": true,
-					"type": "text",
-					"label": "requisites.full_name"
-				},
-				"inn": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.inn"
-				},
-				"card_number": {
-					"required": false,
-					"type": "text",
-					"label": "requisites.card_number"
-				},
-				"phone_for_sbp": {
-					"required": false,
-					"type": "text",
-					"label": "requisites.phone_for_sbp"
-				}
-			}
-		},
-		{
-			"id": 3,
-			"name": "entrepreneur",
-			"description": "entrepreneur_desc",
-			"active": true,
-			"tax": 0,
-			"paytime": 604800,
-			"requisite_fields": {
-				"full_name": {
-					"required": true,
-					"type": "text",
-					"label": "requisites.full_name"
-				},
-				"inn": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.inn"
-				},
-				"ogrn": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.ogrn"
-				},
-				"legal_address": {
-					"required": false,
-					"type": "text",
-					"label": "requisites.legal_address"
-				},
-				"bank_name": {
-					"required": true,
-					"type": "text",
-					"label": "requisites.bank_name"
-				},
-				"bik": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.bik"
-				},
-				"payment_account": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.payment_account"
-				}
-			}
-		},
-		{
-			"id": 4,
-			"name": "company",
-			"description": "company_desc",
-			"active": true,
-			"tax": 0,
-			"paytime": 604800,
-			"requisite_fields": {
-				"organization_name": {
-					"required": true,
-					"type": "text",
-					"label": "requisites.organization_name"
-				},
-				"inn": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.inn"
-				},
-				"kpp": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.kpp"
-				},
-				"ogrn": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.ogrn"
-				},
-				"legal_address": {
-					"required": true,
-					"type": "text",
-					"label": "requisites.legal_address"
-				},
-				"bank_name": {
-					"required": true,
-					"type": "text",
-					"label": "requisites.bank_name"
-				},
-				"bik": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.bik"
-				},
-				"correspondent_account": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.correspondent_account"
-				},
-				"payment_account": {
-					"required": true,
-					"type": "number",
-					"label": "requisites.payment_account"
-				}
-			}
-		}
-	],
-	"access_levels": [
-		{
-			"id": 1,
-			"name": "superadmin",
-			"description": "Superadmin has full access to all system features and settings.",
-			"active": true
-		},
-		{
-			"id": 2,
-			"name": "admin",
-			"description": "Admin has access to most system features with some restrictions.",
-			"active": true
-		},
-		{
-			"id": 3,
-			"name": "manager",
-			"description": "Manager has limited access to specific system features.",
-			"active": true
-		}
-	],
-	"documents": [
-		{
-			"id": 1,
-			"name": "pruvacy_policy",
-			"description": "pruvacy_policy_desc",
-			"url": "https://avicenna.com.ru/DOCS/ppm/p.pdf",
-			"active": true
-		},
-		{
-			"id": 2,
-			"name": "сontract",
-			"description": "сontract_desc",
-			"url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
-			"active": true
-		},
-		{
-			"id": 3,
-			"name": "offer",
-			"description": "offer_desc",
-			"url": "https://avicenna.com.ru/DOCS/ppm/do.pdf",
-			"active": true
-		}
-	]
+  "cooperation_types": [
+    {
+      "id": 1,
+      "name": "influencer",
+      "route": "Influencer",
+      "description": "influencer_desc",
+      "active": false
+    },
+    {
+      "id": 2,
+      "name": "agent",
+      "route": "Agent",
+      "description": "agent_desc",
+      "contract_url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
+      "coupon_base_url": "'https://avicenna.com.ru/buy?_prcp='",
+      "active": true,
+      "min_payout": 500,
+      "max_discount": 20,
+      "old_std_discount": 20,
+      "bonus_koef": 1.2,
+      "payout_statuses": {
+        "0": "created",
+        "10": "approved",
+        "20": "paid",
+        "50": "cancelled",
+        "99": "deleted"
+      }
+    },
+    {
+      "id": 3,
+      "name": "wholesale",
+      "route": "Wholesale",
+      "description": "wholesale_desc",
+      "active": false
+    },
+    {
+      "id": 4,
+      "name": "distributor",
+      "route": "Distributor",
+      "description": "distributor_desc",
+      "active": false
+    }
+  ],
+  "partner_types": [
+    {
+      "id": 1,
+      "name": "individual",
+      "description": "individual_desc",
+      "active": true,
+      "tax": 45,
+      "paytime": 604800,
+      "requisite_fields": {
+        "full_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.full_name",
+          "group": "basic"
+        },
+        "passport_series": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.passport_series",
+          "group": "passport"
+        },
+        "passport_number": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.passport_number",
+          "group": "passport"
+        },
+        "passport_issued_date": {
+          "required": true,
+          "type": "date",
+          "label": "requisites.passport_issued_date",
+          "group": "passport"
+        },
+        "passport_issued_by": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.passport_issued_by",
+          "group": "passport"
+        },
+        "passport_registration_address": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.passport_registration_address",
+          "group": "passport"
+        },
+        "birth_date": {
+          "required": true,
+          "type": "date",
+          "label": "requisites.birth_date",
+          "group": "passport"
+        },
+        "passport_snils": {
+          "required": false,
+          "type": "text",
+          "label": "requisites.passport_snils",
+          "group": "passport"
+        },
+        "bank_card_number": {
+          "required": false,
+          "type": "text",
+          "label": "requisites.bank_card_number",
+          "group": "bank"
+        },
+        "bank_phone_for_sbp": {
+          "required": false,
+          "type": "text",
+          "label": "requisites.bank_phone_for_sbp",
+          "group": "bank"
+        },
+        "bank_card_holder": {
+          "required": false,
+          "type": "text",
+          "label": "requisites.bank_card_holder",
+          "group": "bank"
+        },
+        "additional_info": {
+          "required": false,
+          "type": "textarea",
+          "label": "requisites.additional_info",
+          "group": "basic"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "self-employed",
+      "description": "selfemployed_desc",
+      "active": true,
+      "tax": 2,
+      "paytime": 604800,
+      "requisite_fields": {
+        "full_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.full_name",
+          "group": "basic"
+        },
+        "passport_series": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.passport_series",
+          "group": "passport"
+        },
+        "passport_number": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.passport_number",
+          "group": "passport"
+        },
+        "passport_issued_date": {
+          "required": true,
+          "type": "date",
+          "label": "requisites.passport_issued_date",
+          "group": "passport"
+        },
+        "passport_issued_by": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.passport_issued_by",
+          "group": "passport"
+        },
+        "passport_registration_address": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.passport_registration_address",
+          "group": "passport"
+        },
+        "birth_date": {
+          "required": true,
+          "type": "date",
+          "label": "requisites.birth_date",
+          "group": "passport"
+        },
+        "passport_snils": {
+          "required": false,
+          "type": "text",
+          "label": "requisites.passport_snils",
+          "group": "passport"
+        },
+        "org_inn": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.org_inn",
+          "group": "organization"
+        },
+        "bank_card_number": {
+          "required": false,
+          "type": "text",
+          "label": "requisites.bank_card_number",
+          "group": "bank"
+        },
+        "bank_phone_for_sbp": {
+          "required": false,
+          "type": "text",
+          "label": "requisites.bank_phone_for_sbp",
+          "group": "bank"
+        },
+        "bank_card_holder": {
+          "required": false,
+          "type": "text",
+          "label": "requisites.bank_card_holder",
+          "group": "bank"
+        },
+        "additional_info": {
+          "required": false,
+          "type": "textarea",
+          "label": "requisites.additional_info",
+          "group": "basic"
+        },
+        "tax_check_required": {
+          "required": true,
+          "type": "checkbox",
+          "label": "requisites.tax_check_required",
+          "group": "basic",
+          "default": true
+        }
+      }
+    },
+    {
+      "id": 3,
+      "name": "entrepreneur",
+      "description": "entrepreneur_desc",
+      "active": true,
+      "tax": 0,
+      "paytime": 604800,
+      "requisite_fields": {
+        "full_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.full_name",
+          "group": "basic"
+        },
+        "org_full_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_full_name",
+          "group": "organization"
+        },
+        "org_legal_form": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_legal_form",
+          "group": "organization"
+        },
+        "org_inn": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.org_inn",
+          "group": "organization"
+        },
+        "org_ogrnip": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.org_ogrnip",
+          "group": "organization"
+        },
+        "org_legal_address": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_legal_address",
+          "group": "organization"
+        },
+        "org_director_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_director_name",
+          "group": "organization"
+        },
+        "org_director_position": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_director_position",
+          "group": "organization"
+        },
+        "bank_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.bank_name",
+          "group": "bank"
+        },
+        "bank_bik": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.bank_bik",
+          "group": "bank"
+        },
+        "bank_payment_account": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.bank_payment_account",
+          "group": "bank"
+        },
+        "org_tax_system": {
+          "required": false,
+          "type": "select",
+          "label": "requisites.org_tax_system",
+          "group": "organization",
+          "options": ["ОСН", "УСН", "ЕНВД", "Патент"]
+        },
+        "additional_info": {
+          "required": false,
+          "type": "textarea",
+          "label": "requisites.additional_info",
+          "group": "basic"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "name": "company",
+      "description": "company_desc",
+      "active": true,
+      "tax": 0,
+      "paytime": 604800,
+      "requisite_fields": {
+        "org_full_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_full_name",
+          "group": "organization"
+        },
+        "org_short_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_short_name",
+          "group": "organization"
+        },
+        "org_legal_form": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_legal_form",
+          "group": "organization"
+        },
+        "org_inn": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.org_inn",
+          "group": "organization"
+        },
+        "org_kpp": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.org_kpp",
+          "group": "organization"
+        },
+        "org_ogrn": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.org_ogrn",
+          "group": "organization"
+        },
+        "org_legal_address": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_legal_address",
+          "group": "organization"
+        },
+        "org_director_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_director_name",
+          "group": "organization"
+        },
+        "org_director_position": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_director_position",
+          "group": "organization"
+        },
+        "org_director_basis": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.org_director_basis",
+          "group": "organization"
+        },
+        "bank_name": {
+          "required": true,
+          "type": "text",
+          "label": "requisites.bank_name",
+          "group": "bank"
+        },
+        "bank_bik": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.bank_bik",
+          "group": "bank"
+        },
+        "bank_correspondent_account": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.bank_correspondent_account",
+          "group": "bank"
+        },
+        "bank_payment_account": {
+          "required": true,
+          "type": "number",
+          "label": "requisites.bank_payment_account",
+          "group": "bank"
+        },
+        "org_tax_system": {
+          "required": false,
+          "type": "select",
+          "label": "requisites.org_tax_system",
+          "group": "organization"
+        },
+        "additional_info": {
+          "required": false,
+          "type": "textarea",
+          "label": "requisites.additional_info",
+          "group": "basic"
+        }
+      }
+    }
+  ],
+  "access_levels": [
+    {
+      "id": 1,
+      "name": "superadmin",
+      "description": "Superadmin has full access to all system features and settings.",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "admin",
+      "description": "Admin has access to most system features with some restrictions.",
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "manager",
+      "description": "Manager has limited access to specific system features.",
+      "active": true
+    }
+  ],
+  "documents": [
+    {
+      "id": 1,
+      "name": "pruvacy_policy",
+      "description": "pruvacy_policy_desc",
+      "url": "https://avicenna.com.ru/DOCS/ppm/p.pdf",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "сontract",
+      "description": "сontract_desc",
+      "url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "offer",
+      "description": "offer_desc",
+      "url": "https://avicenna.com.ru/DOCS/ppm/do.pdf",
+      "active": true
+    }
+  ]
 }
