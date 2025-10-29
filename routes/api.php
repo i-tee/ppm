@@ -8,6 +8,7 @@ use App\Http\Controllers\PartnerApplicationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserCouponController;
 use App\Http\Controllers\RequisiteController;
+use App\Http\Controllers\RequisitesSettingController;
 use App\Http\Controllers\PayoutRequestController;
 use App\Http\Controllers\DevController;
 use Illuminate\Support\Facades\Route;
@@ -52,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
 
     Route::get('/ps', [PartnersSettingController::class, 'index']);
+    Route::get('/rs', [RequisitesSettingController::class, 'index']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);

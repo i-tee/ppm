@@ -5,11 +5,13 @@
     <p class="va-h4 my-1">{{ $t('dashboard.requisites') }}</p>
 
     <div class="my-3">
+
       <div v-if="requisites && requisites.length">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
           <div v-for="req in requisites" :key="req.id" class="mb-4">
 
             <VaCard class="p-4 max-w-lg h-full">
+
               <!-- ЗАГОЛОВОК -->
               <div class="va-card-title mb-2 va-h6">
                 {{ $t(`partners.partner_types.${getPartnerType(req.partner_type_id)?.name || 'unknown'}`) }}
@@ -30,20 +32,25 @@
                   {{ $t('requisites.delete') }}
                 </VaButton>
               </div>
+
             </VaCard>
 
           </div>
         </div>
       </div>
+
       <div v-else-if="requisites">
         <VaAlert color="info">{{ $t('requisites.no_requisites') }}</VaAlert>
       </div>
+
       <div v-else>
         <VaAlert color="warning">{{ $t('loading_data') }}</VaAlert>
       </div>
+
       <VaButton color="primary" class="mt-4" @click="openDialog" :disabled="!isDataLoaded">
         {{ $t('requisites.add') }}
       </VaButton>
+
     </div>
 
     <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true">
@@ -72,7 +79,7 @@
       </template>
     </VaModal>
   </div>
-  
+
 </template>
 
 <script setup>
@@ -82,11 +89,13 @@ import axios from 'axios';
 import { useToast } from 'vuestic-ui';
 import { useAuthStore } from '@/stores/auth';
 import { usePartnersHelper } from '@/composables/partnersHelper';
+import { useRequisitesHelper } from '@/composables/requisitesHelper';
 
 const { t } = useI18n();
 const toast = useToast();
 const authStore = useAuthStore();
 const { partnerSettings } = usePartnersHelper();
+const { requisiteSettings, fetchRequisiteSettings } = useRequisitesHelper();
 
 const requisites = ref(null);
 const showDialog = ref(false);
@@ -97,6 +106,10 @@ const requisiteFieldsForm = ref(null);
 
 const form = ref({
   partner_type_id: null,
+});
+
+onMounted(() => {
+  console.log(requisiteSettings)
 });
 
 const filteredPartnerTypes = computed(() => {
@@ -115,7 +128,7 @@ const visibleFields = (req) =>
   Object.entries(req)
     .filter(
       ([k, v]) =>
-        !['id', 'partner_type_id','is_verified','tax_check_required', 'partner_type_name', 'user_id', 'created_at', 'updated_at'].includes(k) &&
+        !['id', 'partner_type_id', 'is_verified', 'tax_check_required', 'partner_type_name', 'user_id', 'created_at', 'updated_at'].includes(k) &&
         v !== null &&
         v !== undefined &&
         v !== ''
@@ -128,7 +141,7 @@ const getPartnerType = (id) => {
 
 watch(partnerSettings, (newVal) => {
   if (newVal?.partner_types) {
-    console.log(newVal?.partner_types);
+    //  console.log(newVal?.partner_types);
     isDataLoaded.value = true;
   }
 }, { immediate: true });
