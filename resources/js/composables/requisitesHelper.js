@@ -6,11 +6,11 @@ import { useToast } from "vuestic-ui";
 export function useRequisitesHelper() {
   const authStore = useAuthStore();
   const toast = useToast();
-  
+
   // Реактивные данные
-  const requisiteSettings = ref(null);  // Основные настройки реквизитов из API
-  const error = ref(null);              // Ошибки загрузки
-  const loading = ref(false);           // Статус загрузки
+  const requisiteSettings = ref(null); // Основные настройки реквизитов из API
+  const error = ref(null); // Ошибки загрузки
+  const loading = ref(false); // Статус загрузки
 
   /**
    * Загрузка настроек реквизитов с сервера
@@ -44,16 +44,16 @@ export function useRequisitesHelper() {
    * @returns {Array} Отсортированный массив полей, видимых для данного типа партнера
    */
   const getFieldsByPartnerType = (partnerTypeId) => {
-    console.log('🔍 Поиск полей для типа партнера:', partnerTypeId);
-    
+    console.log("🔍 Поиск полей для типа партнера:", partnerTypeId);
+
     if (!requisiteSettings.value) {
-      console.log('❌ requisiteSettings не загружены');
+      console.log("❌ requisiteSettings не загружены");
       return [];
     }
-    
+
     // Пробуем разные возможные структуры данных
     let fields = [];
-    
+
     // Вариант 1: прямая структура
     if (requisiteSettings.value.requisite_fields) {
       fields = requisiteSettings.value.requisite_fields;
@@ -66,20 +66,21 @@ export function useRequisitesHelper() {
     else if (Array.isArray(requisiteSettings.value)) {
       fields = requisiteSettings.value;
     }
-    
+
     // console.log('📋 Найдено полей всего:', fields.length);
-    
+
     const filteredFields = fields
-      .filter(field => {
-        const isVisible = field.visible && field.visible.includes(Number(partnerTypeId));
+      .filter((field) => {
+        const isVisible =
+          field.visible && field.visible.includes(Number(partnerTypeId));
         // console.log(`🔎 Поле "${field.name}": visible=${JSON.stringify(field.visible)}, includes=${isVisible}`);
         return isVisible;
       })
       .sort((a, b) => (a.order || 0) - (b.order || 0));
-    
+
     // console.log(`✅ Отфильтровано полей для типа ${partnerTypeId}:`, filteredFields.length);
     // console.log('📝 Поля:', filteredFields);
-    
+
     return filteredFields;
   };
 
@@ -89,8 +90,9 @@ export function useRequisitesHelper() {
    * @returns {Array} Массив обязательных полей
    */
   const getRequiredFieldsByPartnerType = (partnerTypeId) => {
-    return getFieldsByPartnerType(partnerTypeId)
-      .filter(field => field.required);
+    return getFieldsByPartnerType(partnerTypeId).filter(
+      (field) => field.required
+    );
   };
 
   /**
@@ -100,8 +102,9 @@ export function useRequisitesHelper() {
    * @returns {Array} Поля указанной группы
    */
   const getFieldsByGroup = (partnerTypeId, groupName) => {
-    return getFieldsByPartnerType(partnerTypeId)
-      .filter(field => field.group === groupName);
+    return getFieldsByPartnerType(partnerTypeId).filter(
+      (field) => field.group === groupName
+    );
   };
 
   /**
@@ -111,7 +114,7 @@ export function useRequisitesHelper() {
    */
   const getFieldByName = (fieldName) => {
     if (!requisiteSettings.value) return null;
-    
+
     let fields = [];
     if (requisiteSettings.value.requisite_fields) {
       fields = requisiteSettings.value.requisite_fields;
@@ -120,8 +123,8 @@ export function useRequisitesHelper() {
     } else if (Array.isArray(requisiteSettings.value)) {
       fields = requisiteSettings.value;
     }
-    
-    return fields.find(field => field.name === fieldName);
+
+    return fields.find((field) => field.name === fieldName);
   };
 
   /**
@@ -153,7 +156,9 @@ export function useRequisitesHelper() {
    */
   const isFieldRequiredForPartner = (fieldName, partnerTypeId) => {
     const field = getFieldByName(fieldName);
-    return field ? field.required && field.visible.includes(Number(partnerTypeId)) : false;
+    return field
+      ? field.required && field.visible.includes(Number(partnerTypeId))
+      : false;
   };
 
   // ===========================================================================
@@ -170,21 +175,53 @@ export function useRequisitesHelper() {
   const validateRequisitesData = (data, partnerTypeId) => {
     const errors = [];
     const requiredFields = getRequiredFieldsByPartnerType(partnerTypeId);
-    
-    requiredFields.forEach(field => {
+
+    console.log("🔍 Валидация данных:", data);
+    console.log("📋 Обязательные поля:", requiredFields);
+
+    requiredFields.forEach((field) => {
       const value = data[field.name];
-      // Проверяем что значение не пустое (учитываем false и 0 как валидные)
-      if (!value && value !== false && value !== 0) {
+      console.log(
+        `🔎 Проверка поля "${field.name}":`,
+        value,
+        "required:",
+        field.required
+      );
+
+      // Проверяем что значение не пустое (учитываем разные типы)
+      let isEmpty = false;
+
+      if (field.type === "checkbox") {
+        // Для чекбоксов проверяем что значение true
+        isEmpty = value !== true;
+      } else if (field.type === "number") {
+        // Для чисел проверяем что значение не null/undefined и не пустая строка
+        isEmpty = value === null || value === undefined || value === "";
+      } else {
+        // Для остальных типов стандартная проверка
+        isEmpty = !value && value !== 0 && value !== false;
+      }
+
+      if (isEmpty) {
+        console.log(`❌ Поле "${field.name}" не заполнено`);
         errors.push({
           field: field.name,
-          message: `Поле "${getFieldLabel(field.name)}" обязательно для заполнения`
+          message: `Поле "${getFieldLabel(
+            field.name
+          )}" обязательно для заполнения`,
         });
+      } else {
+        console.log(`✅ Поле "${field.name}" заполнено:`, value);
       }
     });
 
+    console.log("📊 Результат валидации:", {
+      isValid: errors.length === 0,
+      errors,
+    });
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   };
 
@@ -198,8 +235,8 @@ export function useRequisitesHelper() {
   const filterRequisitesData = (data, partnerTypeId) => {
     const filteredData = {};
     const visibleFields = getFieldsByPartnerType(partnerTypeId);
-    
-    visibleFields.forEach(field => {
+
+    visibleFields.forEach((field) => {
       // Добавляем поле только если оно есть в данных и не undefined/null
       if (data[field.name] !== undefined && data[field.name] !== null) {
         filteredData[field.name] = data[field.name];
@@ -218,20 +255,27 @@ export function useRequisitesHelper() {
   const getDefaultValuesForPartner = (partnerTypeId) => {
     const defaultValues = {};
     const fields = getFieldsByPartnerType(partnerTypeId);
-    
-    fields.forEach(field => {
+
+    fields.forEach((field) => {
       // Используем значение по умолчанию из конфига если есть
       if (field.default !== undefined) {
         defaultValues[field.name] = field.default;
-      } else if (field.type === 'checkbox') {
+      } else if (field.type === "checkbox") {
         // Для чекбоксов по умолчанию false
         defaultValues[field.name] = false;
-      } else if (field.type === 'select' && field.options && field.options.length > 0) {
+      } else if (
+        field.type === "select" &&
+        field.options &&
+        field.options.length > 0
+      ) {
         // Для селектов берем первую опцию
         defaultValues[field.name] = field.options[0];
+      } else if (field.type === "date") {
+        // Для дат используем null вместо пустой строки
+        defaultValues[field.name] = null;
       } else {
         // Для остальных типов пустая строка
-        defaultValues[field.name] = '';
+        defaultValues[field.name] = "";
       }
     });
 
@@ -246,9 +290,9 @@ export function useRequisitesHelper() {
   const getGroupedFields = (partnerTypeId) => {
     const fields = getFieldsByPartnerType(partnerTypeId);
     const groups = {};
-    
+
     // Группируем поля по названию группы
-    fields.forEach(field => {
+    fields.forEach((field) => {
       if (!groups[field.group]) {
         groups[field.group] = [];
       }
@@ -258,8 +302,8 @@ export function useRequisitesHelper() {
     // Сортируем группы по порядку первого поля в группе
     return Object.keys(groups)
       .sort((a, b) => {
-        const orderA = Math.min(...groups[a].map(f => f.order));
-        const orderB = Math.min(...groups[b].map(f => f.order));
+        const orderA = Math.min(...groups[a].map((f) => f.order));
+        const orderB = Math.min(...groups[b].map((f) => f.order));
         return orderA - orderB;
       })
       .reduce((acc, groupName) => {
@@ -278,7 +322,7 @@ export function useRequisitesHelper() {
    */
   const requisiteFields = computed(() => {
     if (!requisiteSettings.value) return [];
-    
+
     if (requisiteSettings.value.requisite_fields) {
       return requisiteSettings.value.requisite_fields;
     } else if (requisiteSettings.value.data?.requisite_fields) {
@@ -286,7 +330,7 @@ export function useRequisitesHelper() {
     } else if (Array.isArray(requisiteSettings.value)) {
       return requisiteSettings.value;
     }
-    
+
     return [];
   });
 
@@ -296,9 +340,9 @@ export function useRequisitesHelper() {
   const fieldGroups = computed(() => {
     const fields = requisiteFields.value;
     if (!fields.length) return [];
-    
+
     const groups = new Set();
-    fields.forEach(field => {
+    fields.forEach((field) => {
       groups.add(field.group);
     });
     return Array.from(groups);
@@ -321,28 +365,28 @@ export function useRequisitesHelper() {
 
   return {
     // === ДАННЫЕ ===
-    requisiteSettings,   // Основные настройки реквизитов
-    requisiteFields,     // Реактивный массив всех полей
-    fieldGroups,         // Реактивный массив групп полей
-    error,               // Ошибки загрузки
-    loading,             // Статус загрузки
-    
+    requisiteSettings, // Основные настройки реквизитов
+    requisiteFields, // Реактивный массив всех полей
+    fieldGroups, // Реактивный массив групп полей
+    error, // Ошибки загрузки
+    loading, // Статус загрузки
+
     // === ОСНОВНЫЕ ФУНКЦИИ ===
-    fetchRequisiteSettings,      // Принудительная перезагрузка настроек
-    getFieldsByPartnerType,      // Поля для типа партнера
+    fetchRequisiteSettings, // Принудительная перезагрузка настроек
+    getFieldsByPartnerType, // Поля для типа партнера
     getRequiredFieldsByPartnerType, // Обязательные поля
-    getFieldsByGroup,            // Поля по группе
-    getFieldByName,              // Найти поле по имени
-    getFieldLabel,               // Получить метку поля
-    isFieldVisibleForPartner,    // Проверить видимость поля
-    isFieldRequiredForPartner,   // Проверить обязательность поля
-    
+    getFieldsByGroup, // Поля по группе
+    getFieldByName, // Найти поле по имени
+    getFieldLabel, // Получить метку поля
+    isFieldVisibleForPartner, // Проверить видимость поля
+    isFieldRequiredForPartner, // Проверить обязательность поля
+
     // === ФУНКЦИИ ДЛЯ РАБОТЫ С ДАННЫМИ ===
-    validateRequisitesData,      // Валидация данных формы
-    filterRequisitesData,        // Фильтрация данных перед отправкой
-    getDefaultValuesForPartner,  // Дефолтные значения для формы
-    getGroupedFields,            // Группировка полей для отображения
-    
+    validateRequisitesData, // Валидация данных формы
+    filterRequisitesData, // Фильтрация данных перед отправкой
+    getDefaultValuesForPartner, // Дефолтные значения для формы
+    getGroupedFields, // Группировка полей для отображения
+
     // === АЛИАСЫ ДЛЯ УДОБСТВА ===
     getPartnerTypeFields: getFieldsByPartnerType, // Короткий алиас
   };

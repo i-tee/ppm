@@ -23,27 +23,14 @@ class RequisiteController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'partner_type_id' => 'required|integer|in:1,2,3,4',
-            'full_name' => 'sometimes|required|string|max:255',
-            'organization_name' => 'nullable|string|max:255',
-            'inn' => 'nullable|string|max:20',
-            'ogrn' => 'nullable|string|max:20',
-            'kpp' => 'nullable|string|max:20',
-            'legal_address' => 'nullable|string|max:255',
-            'postal_address' => 'nullable|string|max:255',
-            'bank_name' => 'nullable|string|max:255',
-            'bik' => 'nullable|string|max:20',
-            'correspondent_account' => 'nullable|string|max:20',
-            'payment_account' => 'nullable|string|max:20',
-            'card_number' => 'nullable|string|max:20',
-            'phone_for_sbp' => 'nullable|string|max:20',
-            'additional_info' => 'nullable|string',
+            'partner_type_id' => 'required|integer',
+            'inn' => 'nullable|string|max:20'
         ]);
 
         $data['user_id'] = Auth::id();
 
         $requisite = new Requisite($data);
-        $requisite->validateByType(); // Валидация по типу из модели
+        // $requisite->validateByType(); // Валидация по типу из модели
         $requisite->save();
 
         return response()->json($requisite, 201);

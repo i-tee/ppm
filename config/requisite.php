@@ -167,8 +167,8 @@ return [
         ],
         [
             'name' => 'org_legal_form',
-            'required' => true,
-            'visible' => [3, 4],
+            'required' => false,
+            'visible' => [],
             'type' => 'text',
             'label' => 'requisites.org_legal_form',
             'group' => 'organization',

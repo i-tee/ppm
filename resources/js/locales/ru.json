@@ -56,7 +56,6 @@
   "_dashboard": "Кабинет партнера",
   "logout": "Выход",
   "requisites": {
-    
     "add": "Добавить",
     "no_requisites": "Нет реквизитов",
     "create_title": "Создать реквизит",
@@ -217,6 +216,9 @@
   },
   "vuestic": {
     "goLastPage": "На последнюю страницу",
+    "switchView": "Сменить вид",
+    "nextPeriod": "Следующий период",
+    "previousPeriod": "Предыдущий период",
     "goFirstPage": "На первую страницу",
     "goToTheFirstPage": "На первую страницу",
     "goNextPage": "Следующая страница",
@@ -225,6 +227,7 @@
     "sliderValue": "Значение",
     "loading": "загрузка...",
     "close": "Закрыть",
+    "toggleDropdown": "toggleDropdown Что-то там",
     "sortColumnBy": "Сортировать по",
     "goToSpecificPage": "Перейти на страницу",
     "pagination": "Разбиение по страницам",

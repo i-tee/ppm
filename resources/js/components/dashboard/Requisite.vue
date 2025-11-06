@@ -1,17 +1,12 @@
 <template>
-
   <div>
-
     <p class="va-h4 my-1">{{ $t('dashboard.requisites') }}</p>
 
     <div class="my-3">
-
       <div v-if="requisites && requisites.length">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
           <div v-for="req in requisites" :key="req.id" class="mb-4">
-
             <VaCard class="p-4 max-w-lg h-full">
-
               <!-- ЗАГОЛОВОК -->
               <div class="va-card-title mb-2 va-h6">
                 {{ $t(`partners.partner_types.${getPartnerType(req.partner_type_id)?.name || 'unknown'}`) }}
@@ -32,9 +27,7 @@
                   {{ $t('requisites.delete') }}
                 </VaButton>
               </div>
-
             </VaCard>
-
           </div>
         </div>
       </div>
@@ -50,36 +43,117 @@
       <VaButton color="primary" class="mt-4" @click="openDialog" :disabled="!isDataLoaded">
         {{ $t('requisites.add') }}
       </VaButton>
-
     </div>
 
-    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true">
+    <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ РЕКВИЗИТОВ -->
+    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" size="large">
       <VaProgressBar v-if="submitting" indeterminate color="primary" class="mb-4" />
 
       <VaForm ref="formRef" class="p-4 space-y-4">
         <h3 class="va-h5 mb-2">{{ $t('requisites.create_title') }}</h3>
 
-        <VaSelect v-model="form.partner_type_id" :label="$t('requisites.partner_type')" :options="filteredPartnerTypes"
-          :rules="[(v) => !!v || $t('validation.required')]" value-by="value" text-by="text" class="w-full" />
+        <VaSelect 
+          v-model="form.partner_type_id" 
+          :label="$t('requisites.partner_type')" 
+          :options="filteredPartnerTypes"
+          :rules="[(v) => !!v || $t('validation.required')]" 
+          value-by="value" 
+          text-by="text" 
+          class="w-full" 
+        />
 
         <VaDivider />
 
-        <div v-if="requisiteFieldsForm">
-          <VaInput v-for="(field, key) in requisiteFieldsForm" :key="key" v-model="form[key]"
-            :type="field.type === 'number' ? 'number' : 'text'" :label="$t(field.label)"
-            :rules="[(v) => !field.required || !!v || $t('validation.required')]" class="w-full mb-2" />
+        <!-- ДИНАМИЧЕСКИЕ ПОЛЯ РЕКВИЗИТОВ -->
+        <div v-if="requisiteFieldsForm && requisiteFieldsForm.length > 0">
+          <div v-for="field in requisiteFieldsForm" :key="field.name" class="mb-4">
+            
+            <!-- ТЕКСТОВОЕ ПОЛЕ -->
+            <VaInput 
+              v-if="field.type === 'text'"
+              v-model="form[field.name]"
+              :label="$t(field.label)"
+              :rules="getFieldRules(field)"
+              class="w-full"
+            />
+            
+            <!-- ЧИСЛОВОЕ ПОЛЕ -->
+            <VaInput 
+              v-else-if="field.type === 'number'"
+              v-model.number="form[field.name]"
+              type="number"
+              :label="$t(field.label)"
+              :rules="getFieldRules(field)"
+              class="w-full"
+            />
+            
+            <!-- EMAIL ПОЛЕ -->
+            <VaInput 
+              v-else-if="field.type === 'email'"
+              v-model="form[field.name]"
+              type="email"
+              :label="$t(field.label)"
+              :rules="getFieldRules(field)"
+              class="w-full"
+            />
+            
+            <!-- ДАТА -->
+            <VaDateInput 
+              v-else-if="field.type === 'date'"
+              v-model="form[field.name]"
+              :label="$t(field.label)"
+              class="w-full"
+            />
+            
+            <!-- ЧЕКБОКС -->
+            <VaCheckbox 
+              v-else-if="field.type === 'checkbox'"
+              v-model="form[field.name]"
+              :label="$t(field.label)"
+              class="w-full"
+            />
+            
+            <!-- СЕЛЕКТ -->
+            <VaSelect 
+              v-else-if="field.type === 'select'"
+              v-model="form[field.name]"
+              :label="$t(field.label)"
+              :options="field.options || []"
+              :rules="getFieldRules(field)"
+              class="w-full"
+            />
+            
+            <!-- ТЕКСТОВАЯ ОБЛАСТЬ -->
+            <VaTextarea 
+              v-else-if="field.type === 'textarea'"
+              v-model="form[field.name]"
+              :label="$t(field.label)"
+              :rules="getFieldRules(field)"
+              class="w-full"
+            />
+            
+            <!-- НЕИЗВЕСТНЫЙ ТИП ПОЛЯ -->
+            <div v-else class="text-red-500">
+              Неизвестный тип поля: {{ field.type }} для {{ field.name }}
+            </div>
+          </div>
+        </div>
+        
+        <div v-else-if="form.partner_type_id" class="text-center text-gray-500 py-4">
+          Нет доступных полей для выбранного типа партнера
         </div>
       </VaForm>
 
       <template #footer>
         <div class="flex justify-end space-x-4">
           <VaButton @click="resetForm" color="secondary">{{ $t('modal.cancel') }}</VaButton>
-          <VaButton @click="validateAndSubmit" color="primary">{{ $t('modal.submit') }}</VaButton>
+          <VaButton @click="validateAndSubmit" color="primary" :disabled="!canSubmit">
+            {{ $t('modal.submit') }}
+          </VaButton>
         </div>
       </template>
     </VaModal>
   </div>
-
 </template>
 
 <script setup>
@@ -96,17 +170,18 @@ const toast = useToast();
 const authStore = useAuthStore();
 const { partnerSettings } = usePartnersHelper();
 
-// Получаем ВСЕ данные из хелпера, включая reactive состояния
+// Получаем ВСЕ данные из хелпера реквизитов
 const {
   requisiteSettings,
   loading: requisitesLoading,
   getFieldsByPartnerType,
-  getGroupedFields,
   validateRequisitesData,
   getDefaultValuesForPartner,
-  fetchRequisiteSettings
+  fetchRequisiteSettings,
+  filterRequisitesData
 } = useRequisitesHelper();
 
+// Реактивные данные компонента
 const requisites = ref(null);
 const showDialog = ref(false);
 const submitting = ref(false);
@@ -114,23 +189,16 @@ const formRef = ref(null);
 const isDataLoaded = ref(false);
 const requisiteFieldsForm = ref(null);
 
-const form = ref({
-  partner_type_id: null,
-});
+// Данные формы - инициализируем как пустой объект
+const form = ref({});
 
-// Reactive computed свойства вместо констант
-const fieldsForIndividual = computed(() => {
-  // Ждем загрузки данных и только тогда вызываем функцию
-  if (!requisiteSettings.value) return [];
-  return getFieldsByPartnerType(1);
-});
+// ===========================================================================
+// COMPUTED СВОЙСТВА
+// ===========================================================================
 
-const groupedFields = computed(() => {
-  // Только когда есть данные и выбран тип партнера
-  if (!requisiteSettings.value || !form.value.partner_type_id) return {};
-  return getGroupedFields(form.value.partner_type_id);
-});
-
+/**
+ * Доступные типы партнеров для выбора
+ */
 const filteredPartnerTypes = computed(() => {
   if (!partnerSettings.value?.partner_types) {
     return [];
@@ -143,6 +211,43 @@ const filteredPartnerTypes = computed(() => {
     }));
 });
 
+/**
+ * Можно ли отправлять форму
+ */
+const canSubmit = computed(() => {
+  return form.value.partner_type_id && requisiteFieldsForm.value && requisiteFieldsForm.value.length > 0;
+});
+
+// ===========================================================================
+// ФУНКЦИИ
+// ===========================================================================
+
+/**
+ * Получить правила валидации для поля
+ */
+const getFieldRules = (field) => {
+  const rules = [];
+  
+  if (field.required) {
+    // Для разных типов полей разные правила обязательности
+    if (field.type === 'checkbox') {
+      // Для чекбоксов проверяем что значение true
+      rules.push((v) => v === true || t('validation.required'));
+    } else if (field.type === 'select') {
+      // Для селектов проверяем что значение не пустое
+      rules.push((v) => !!v || t('validation.required'));
+    } else {
+      // Для остальных полей стандартная проверка
+      rules.push((v) => !!v || t('validation.required'));
+    }
+  }
+  
+  return rules;
+};
+
+/**
+ * Получить видимые поля реквизита для отображения
+ */
 const visibleFields = (req) =>
   Object.entries(req)
     .filter(
@@ -154,66 +259,66 @@ const visibleFields = (req) =>
     )
     .map(([k, v]) => ({ key: k, value: v }));
 
+/**
+ * Найти тип партнера по ID
+ */
 const getPartnerType = (id) => {
   return partnerSettings.value?.partner_types?.find(item => item.id === id) || null;
 };
 
-// Отслеживаем загрузку данных из обоих хелперов
-watch([partnerSettings, requisiteSettings], ([partnerData, requisiteData]) => {
-  if (partnerData?.partner_types && requisiteData) {
-    isDataLoaded.value = true;
-    console.log('Fields for individual:', fieldsForIndividual.value);
-  }
-}, { immediate: true });
-
-watch(
-  () => form.value.partner_type_id,
-  (newValue) => {
-    if (!requisiteSettings.value) return;
-    
-    const selectedType = partnerSettings.value?.partner_types.find(item => item.id === newValue);
-    
-    // Используем наш хелпер для получения полей вместо данных из partnerSettings
-    if (newValue) {
-      requisiteFieldsForm.value = getFieldsByPartnerType(newValue);
-      console.log('Fields for partner type', newValue, ':', requisiteFieldsForm.value);
-    } else {
-      requisiteFieldsForm.value = null;
-    }
-  }
-);
-
+/**
+ * Открыть модальное окно добавления реквизитов
+ */
 function openDialog() {
   form.value.partner_type_id = filteredPartnerTypes.value[0]?.value || null;
   showDialog.value = true;
 }
 
+/**
+ * Сбросить форму
+ */
 function resetForm() {
-  form.value = { partner_type_id: null };
+  form.value = {};
   showDialog.value = false;
 }
 
+/**
+ * Валидация и отправка формы
+ */
 async function validateAndSubmit() {
-  const isValid = await formRef.value.validate();
-
-  console.log('Данные формы:', form.value);
-
-  if (!isValid) {
-    toast.init({ message: t('validation.form_invalid'), color: 'warning' });
-    return;
+  console.log('🔄 Начало валидации формы...');
+  
+  // Валидация Vuestic формы
+  if (formRef.value) {
+    const isValid = await formRef.value.validate();
+    if (!isValid) {
+      console.log('❌ Vuestic валидация не пройдена');
+      toast.init({ message: t('validation.form_invalid'), color: 'warning' });
+      return;
+    }
   }
 
-  // Используем нашу функцию валидации
+  console.log('✅ Vuestic валидация пройдена');
+
+  // Валидация бизнес-логики через наш хелпер
   const validationResult = validateRequisitesData(form.value, form.value.partner_type_id);
+  console.log('🔍 Результат бизнес-валидации:', validationResult);
+  
   if (!validationResult.isValid) {
     validationResult.errors.forEach(error => {
+      console.log(`❌ Ошибка валидации: ${error.message}`);
       toast.init({ message: error.message, color: 'danger' });
     });
     return;
   }
 
-  // Используем функцию фильтрации данных
+  console.log('✅ Все валидации пройдены');
+  console.log('📝 Данные формы:', form.value);
+
+  // Фильтруем данные перед отправкой
   const payload = filterRequisitesData(form.value, form.value.partner_type_id);
+  payload.partner_type_id = form.value.partner_type_id;
+  console.log('📤 Отправляемые данные:', payload);
 
   submitting.value = true;
 
@@ -226,26 +331,16 @@ async function validateAndSubmit() {
     await loadRequisites();
     resetForm();
   } catch (e) {
+    console.error('❌ Ошибка при создании реквизитов:', e);
     toast.init({ message: e.response?.data?.message || t('errors.submit_error'), color: 'danger' });
   } finally {
     submitting.value = false;
   }
 }
 
-// Добавляем недостающую функцию фильтрации
-const filterRequisitesData = (data, partnerTypeId) => {
-  const filteredData = {};
-  const fields = getFieldsByPartnerType(partnerTypeId);
-  
-  fields.forEach(field => {
-    if (data[field.name] !== undefined && data[field.name] !== null) {
-      filteredData[field.name] = data[field.name];
-    }
-  });
-
-  return filteredData;
-};
-
+/**
+ * Загрузка реквизитов пользователя
+ */
 async function loadRequisites() {
   try {
     const response = await axios.get('/api/user/requisites', {
@@ -257,10 +352,14 @@ async function loadRequisites() {
       return req;
     });
   } catch (err) {
+    console.error('❌ Ошибка загрузки реквизитов:', err);
     toast.init({ message: t('errors.load_error'), color: 'danger' });
   }
 }
 
+/**
+ * Удаление реквизита
+ */
 async function deleteRequisite(id) {
   if (!confirm(t('requisites.confirm_delete'))) return;
 
@@ -271,13 +370,87 @@ async function deleteRequisite(id) {
     toast.init({ message: t('success.requisite_deleted'), color: 'success' });
     await loadRequisites();
   } catch (e) {
+    console.error('❌ Ошибка при удалении реквизитов:', e);
     toast.init({ message: t('errors.delete_error'), color: 'danger' });
   }
 }
 
+// ===========================================================================
+// WATCHERS И HOOKS
+// ===========================================================================
+
+/**
+ * Отслеживаем загрузку данных из обоих хелперов
+ */
+watch([partnerSettings, requisiteSettings], ([partnerData, requisiteData]) => {
+  console.log('🔍 Отслеживание загрузки данных:');
+  console.log('   - partnerSettings:', partnerData);
+  console.log('   - requisiteSettings:', requisiteData);
+  
+  if (partnerData?.partner_types && requisiteData) {
+    isDataLoaded.value = true;
+    console.log('✅ Все данные загружены!');
+  }
+}, { immediate: true });
+
+/**
+ * Отслеживаем изменение типа партнера в форме
+ */
+watch(
+  () => form.value.partner_type_id,
+  (newValue) => {
+    console.log('🔄 Изменен тип партнера:', newValue);
+    
+    if (!requisiteSettings.value) {
+      console.log('❌ requisiteSettings не загружены, не могу получить поля');
+      return;
+    }
+    
+    if (newValue) {
+      // Получаем поля для выбранного типа партнера
+      requisiteFieldsForm.value = getFieldsByPartnerType(newValue);
+      console.log('✅ Поля для типа', newValue, ':', requisiteFieldsForm.value);
+      
+      // Инициализируем дефолтные значения для новых полей
+      if (requisiteFieldsForm.value.length > 0) {
+        const defaultValues = getDefaultValuesForPartner(newValue);
+        
+        // Для полей даты устанавливаем корректные значения
+        requisiteFieldsForm.value.forEach(field => {
+          if (field.type === 'date') {
+            // Для дат используем null или конкретную дату по умолчанию
+            if (defaultValues[field.name] === '' || defaultValues[field.name] === undefined) {
+              defaultValues[field.name] = null;
+            }
+          }
+        });
+        
+        // Сохраняем partner_type_id и добавляем дефолтные значения
+        form.value = { 
+          partner_type_id: newValue,
+          ...defaultValues 
+        };
+        
+        console.log('🎯 Дефолтные значения установлены:', defaultValues);
+        console.log('📋 Текущая форма:', form.value);
+      }
+    } else {
+      requisiteFieldsForm.value = null;
+      form.value = {};
+    }
+  }
+);
+
+/**
+ * Инициализация компонента
+ */
 onMounted(() => {
+  console.log('🚀 Компонент Requisite mounted');
   loadRequisites();
+  
   // Принудительно загружаем настройки реквизитов если нужно
-  fetchRequisiteSettings();
+  if (!requisiteSettings.value) {
+    fetchRequisiteSettings();
+  }
 });
 </script>
