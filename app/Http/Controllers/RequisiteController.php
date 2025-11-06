@@ -24,28 +24,36 @@ class RequisiteController extends Controller
     {
         $data = $request->validate([
             'partner_type_id' => 'required|integer',
-            'inn' => 'nullable|string|max:20'
+            'inn' => 'nullable|string|max:20' // если хотите сохранить только эту валидацию
         ]);
 
         $data['user_id'] = Auth::id();
 
-        $requisite = new Requisite($data);
-        // $requisite->validateByType(); // Валидация по типу из модели
+        // Добавляем все остальные поля
+        $allData = array_merge($data, $request->except(['partner_type_id', 'inn']));
+
+        $requisite = new Requisite($allData);
         $requisite->save();
 
         return response()->json($requisite, 201);
     }
 
     /**
-     * Удалить реквизиты (только если принадлежат пользователю).
+     * Удалить реквизиты (мягкое удаление через SoftDeletes).
      */
     public function destroy($id)
     {
-        $requisite = Requisite::findOrFail($id);
-        if ($requisite->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        $requisite->delete();
-        return response()->json(['message' => 'Requisite deleted']);
+        $requisite = Requisite::where('user_id', Auth::id())->findOrFail($id);
+
+        // Устанавливаем is_active = false и сохраняем
+        $requisite->is_active = false;
+        $requisite->save();
+
+        $requisite->delete(); // Это установит deleted_at благодаря SoftDeletes
+
+        return response()->json([
+            'message' => 'Requisite deleted successfully',
+            'deleted_at' => $requisite->deleted_at
+        ]);
     }
 }

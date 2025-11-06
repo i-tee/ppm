@@ -44,10 +44,10 @@ export function useRequisitesHelper() {
    * @returns {Array} Отсортированный массив полей, видимых для данного типа партнера
    */
   const getFieldsByPartnerType = (partnerTypeId) => {
-    console.log("🔍 Поиск полей для типа партнера:", partnerTypeId);
+    // console.log("🔍 Поиск полей для типа партнера:", partnerTypeId);
 
     if (!requisiteSettings.value) {
-      console.log("❌ requisiteSettings не загружены");
+      // console.log("❌ requisiteSettings не загружены");
       return [];
     }
 
@@ -176,17 +176,17 @@ export function useRequisitesHelper() {
     const errors = [];
     const requiredFields = getRequiredFieldsByPartnerType(partnerTypeId);
 
-    console.log("🔍 Валидация данных:", data);
-    console.log("📋 Обязательные поля:", requiredFields);
+    // console.log("🔍 Валидация данных:", data);
+    // console.log("📋 Обязательные поля:", requiredFields);
 
     requiredFields.forEach((field) => {
       const value = data[field.name];
-      console.log(
-        `🔎 Проверка поля "${field.name}":`,
-        value,
-        "required:",
-        field.required
-      );
+      // console.log(
+      //   `🔎 Проверка поля "${field.name}":`,
+      //   value,
+      //   "required:",
+      //   field.required
+      // );
 
       // Проверяем что значение не пустое (учитываем разные типы)
       let isEmpty = false;
@@ -203,7 +203,7 @@ export function useRequisitesHelper() {
       }
 
       if (isEmpty) {
-        console.log(`❌ Поле "${field.name}" не заполнено`);
+        // console.log(`❌ Поле "${field.name}" не заполнено`);
         errors.push({
           field: field.name,
           message: `Поле "${getFieldLabel(
@@ -211,14 +211,14 @@ export function useRequisitesHelper() {
           )}" обязательно для заполнения`,
         });
       } else {
-        console.log(`✅ Поле "${field.name}" заполнено:`, value);
+        // console.log(`✅ Поле "${field.name}" заполнено:`, value);
       }
     });
 
-    console.log("📊 Результат валидации:", {
-      isValid: errors.length === 0,
-      errors,
-    });
+    // console.log("📊 Результат валидации:", {
+    //   isValid: errors.length === 0,
+    //   errors,
+    // });
     return {
       isValid: errors.length === 0,
       errors,

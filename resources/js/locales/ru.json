@@ -419,6 +419,7 @@
   "success": {
     "application_submitted": "Заявка успешно отправлена",
     "saved": "Данные успешно сохранены",
+    "requisite_deleted": "Реквизиты удалены",
     "deleted": "Заявка успешно удалена"
   },
   "confirm": {
