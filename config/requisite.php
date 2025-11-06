@@ -12,17 +12,8 @@ return [
             'order' => 10
         ],
         [
-            'name' => 'birth_date',
-            'required' => true,
-            'visible' => [1, 2],
-            'type' => 'date',
-            'label' => 'requisites.birth_date',
-            'group' => 'passport',
-            'order' => 20
-        ],
-        [
             'name' => 'passport_series',
-            'required' => false,
+            'required' => true,
             'visible' => [1, 2],
             'type' => 'text',
             'label' => 'requisites.passport_series',
@@ -31,7 +22,7 @@ return [
         ],
         [
             'name' => 'passport_number',
-            'required' => false,
+            'required' => true,
             'visible' => [1, 2],
             'type' => 'text',
             'label' => 'requisites.passport_number',
@@ -40,7 +31,7 @@ return [
         ],
         [
             'name' => 'passport_issued_date',
-            'required' => false,
+            'required' => true,
             'visible' => [1, 2],
             'type' => 'date',
             'label' => 'requisites.passport_issued_date',
@@ -49,7 +40,7 @@ return [
         ],
         [
             'name' => 'passport_issued_by',
-            'required' => false,
+            'required' => true,
             'visible' => [1, 2],
             'type' => 'text',
             'label' => 'requisites.passport_issued_by',
@@ -57,18 +48,54 @@ return [
             'order' => 60
         ],
         [
+            'name' => 'passport_issued_by_code',
+            'required' => true,
+            'visible' => [1],
+            'type' => 'text',
+            'label' => 'requisites.passport_issued_by_code',
+            'group' => 'passport',
+            'order' => 65
+        ],
+        [
+            'name' => 'birth_date',
+            'required' => true,
+            'visible' => [1],
+            'type' => 'date',
+            'label' => 'requisites.birth_date',
+            'group' => 'passport',
+            'order' => 20
+        ],
+        [
+            'name' => 'passport_birth_place',
+            'required' => true,
+            'visible' => [1],
+            'type' => 'text',
+            'label' => 'requisites.passport_birth_place',
+            'group' => 'passport',
+            'order' => 67
+        ],
+        [
             'name' => 'passport_registration_address',
-            'required' => false,
-            'visible' => [1, 2],
+            'required' => true,
+            'visible' => [1, 2, 3],
             'type' => 'text',
             'label' => 'requisites.passport_registration_address',
             'group' => 'passport',
             'order' => 70
         ],
         [
+            'name' => 'birth_place',
+            'required' => true,
+            'visible' => [],
+            'type' => 'text',
+            'label' => 'requisites.birth_place',
+            'group' => 'passport',
+            'order' => 75
+        ],
+        [
             'name' => 'passport_snils',
-            'required' => false,
-            'visible' => [1, 2],
+            'required' => true,
+            'visible' => [1],
             'type' => 'text',
             'label' => 'requisites.passport_snils',
             'group' => 'passport',
@@ -76,7 +103,7 @@ return [
         ],
         [
             'name' => 'bank_card_number',
-            'required' => false,
+            'required' => true,
             'visible' => [1, 2],
             'type' => 'text',
             'label' => 'requisites.bank_card_number',
@@ -86,7 +113,7 @@ return [
         [
             'name' => 'bank_card_holder',
             'required' => false,
-            'visible' => [1, 2],
+            'visible' => [],
             'type' => 'text',
             'label' => 'requisites.bank_card_holder',
             'group' => 'bank',
@@ -94,7 +121,7 @@ return [
         ],
         [
             'name' => 'bank_phone_for_sbp',
-            'required' => false,
+            'required' => true,
             'visible' => [1, 2],
             'type' => 'text',
             'label' => 'requisites.bank_phone_for_sbp',
@@ -103,8 +130,8 @@ return [
         ],
         [
             'name' => 'tax_check_required',
-            'required' => true,
-            'visible' => [2],
+            'required' => false,
+            'visible' => [],
             'type' => 'checkbox',
             'label' => 'requisites.tax_check_required',
             'group' => 'basic',
@@ -114,7 +141,7 @@ return [
         [
             'name' => 'org_inn',
             'required' => true,
-            'visible' => [2, 3, 4],
+            'visible' => [1, 2, 3, 4],
             'type' => 'number',
             'label' => 'requisites.org_inn',
             'group' => 'organization',
@@ -150,7 +177,7 @@ return [
         [
             'name' => 'org_ogrnip',
             'required' => true,
-            'visible' => [3],
+            'visible' => [3, 4],
             'type' => 'number',
             'label' => 'requisites.org_ogrnip',
             'group' => 'organization',
@@ -177,11 +204,56 @@ return [
         [
             'name' => 'org_legal_address',
             'required' => true,
-            'visible' => [3, 4],
+            'visible' => [4],
             'type' => 'text',
             'label' => 'requisites.org_legal_address',
             'group' => 'organization',
             'order' => 200
+        ],
+        [
+            'name' => 'org_postal_address',
+            'required' => true,
+            'visible' => [4],
+            'type' => 'text',
+            'label' => 'requisites.org_postal_address',
+            'group' => 'organization',
+            'order' => 205
+        ],
+        [
+            'name' => 'org_actual_address',
+            'required' => true,
+            'visible' => [4],
+            'type' => 'text',
+            'label' => 'requisites.org_actual_address',
+            'group' => 'organization',
+            'order' => 207
+        ],
+        [
+            'name' => 'org_phone',
+            'required' => true,
+            'visible' => [3, 4],
+            'type' => 'text',
+            'label' => 'requisites.org_phone',
+            'group' => 'organization',
+            'order' => 209
+        ],
+        [
+            'name' => 'org_email',
+            'required' => true,
+            'visible' => [3, 4],
+            'type' => 'email',
+            'label' => 'requisites.org_email',
+            'group' => 'organization',
+            'order' => 211
+        ],
+        [
+            'name' => 'org_website',
+            'required' => true,
+            'visible' => [3, 4],
+            'type' => 'text',
+            'label' => 'requisites.org_website',
+            'group' => 'organization',
+            'order' => 213
         ],
         [
             'name' => 'org_director_name',
@@ -212,7 +284,7 @@ return [
         ],
         [
             'name' => 'org_tax_system',
-            'required' => false,
+            'required' => true,
             'visible' => [3, 4],
             'type' => 'select',
             'label' => 'requisites.org_tax_system',
@@ -223,7 +295,7 @@ return [
         [
             'name' => 'bank_name',
             'required' => true,
-            'visible' => [3, 4],
+            'visible' => [1, 2, 3, 4],
             'type' => 'text',
             'label' => 'requisites.bank_name',
             'group' => 'bank',
@@ -232,7 +304,7 @@ return [
         [
             'name' => 'bank_bik',
             'required' => true,
-            'visible' => [3, 4],
+            'visible' => [1, 2, 3, 4],
             'type' => 'number',
             'label' => 'requisites.bank_bik',
             'group' => 'bank',
@@ -240,8 +312,8 @@ return [
         ],
         [
             'name' => 'bank_payment_account',
-            'required' => true,
-            'visible' => [3, 4],
+            'required' => false,
+            'visible' => [],
             'type' => 'number',
             'label' => 'requisites.bank_payment_account',
             'group' => 'bank',
@@ -249,17 +321,36 @@ return [
         ],
         [
             'name' => 'bank_correspondent_account',
-            'required' => true,
-            'visible' => [4],
+            'required' => false,
+            'visible' => [],
             'type' => 'number',
             'label' => 'requisites.bank_correspondent_account',
             'group' => 'bank',
             'order' => 280
         ],
         [
+            'name' => 'bank_account_type',
+            'required' => false,
+            'visible' => [],
+            'type' => 'select',
+            'label' => 'requisites.bank_account_type',
+            'group' => 'bank',
+            'options' => ['settlement', 'card', 'personal'],
+            'order' => 285
+        ],
+        [
+            'name' => 'bank_account_number',
+            'required' => true,
+            'visible' => [1, 2, 3, 4],
+            'type' => 'text',
+            'label' => 'requisites.bank_account_number',
+            'group' => 'bank',
+            'order' => 290
+        ],
+        [
             'name' => 'additional_info',
             'required' => false,
-            'visible' => [1, 2, 3, 4],
+            'visible' => [],
             'type' => 'textarea',
             'label' => 'requisites.additional_info',
             'group' => 'basic',

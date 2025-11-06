@@ -95,7 +95,17 @@ const { t } = useI18n();
 const toast = useToast();
 const authStore = useAuthStore();
 const { partnerSettings } = usePartnersHelper();
-const { requisiteSettings, fetchRequisiteSettings } = useRequisitesHelper();
+
+// Получаем ВСЕ данные из хелпера, включая reactive состояния
+const {
+  requisiteSettings,
+  loading: requisitesLoading,
+  getFieldsByPartnerType,
+  getGroupedFields,
+  validateRequisitesData,
+  getDefaultValuesForPartner,
+  fetchRequisiteSettings
+} = useRequisitesHelper();
 
 const requisites = ref(null);
 const showDialog = ref(false);
@@ -108,8 +118,17 @@ const form = ref({
   partner_type_id: null,
 });
 
-onMounted(() => {
-  console.log(requisiteSettings)
+// Reactive computed свойства вместо констант
+const fieldsForIndividual = computed(() => {
+  // Ждем загрузки данных и только тогда вызываем функцию
+  if (!requisiteSettings.value) return [];
+  return getFieldsByPartnerType(1);
+});
+
+const groupedFields = computed(() => {
+  // Только когда есть данные и выбран тип партнера
+  if (!requisiteSettings.value || !form.value.partner_type_id) return {};
+  return getGroupedFields(form.value.partner_type_id);
 });
 
 const filteredPartnerTypes = computed(() => {
@@ -139,18 +158,28 @@ const getPartnerType = (id) => {
   return partnerSettings.value?.partner_types?.find(item => item.id === id) || null;
 };
 
-watch(partnerSettings, (newVal) => {
-  if (newVal?.partner_types) {
-    //  console.log(newVal?.partner_types);
+// Отслеживаем загрузку данных из обоих хелперов
+watch([partnerSettings, requisiteSettings], ([partnerData, requisiteData]) => {
+  if (partnerData?.partner_types && requisiteData) {
     isDataLoaded.value = true;
+    console.log('Fields for individual:', fieldsForIndividual.value);
   }
 }, { immediate: true });
 
 watch(
   () => form.value.partner_type_id,
   (newValue) => {
+    if (!requisiteSettings.value) return;
+    
     const selectedType = partnerSettings.value?.partner_types.find(item => item.id === newValue);
-    requisiteFieldsForm.value = selectedType?.requisite_fields || null;
+    
+    // Используем наш хелпер для получения полей вместо данных из partnerSettings
+    if (newValue) {
+      requisiteFieldsForm.value = getFieldsByPartnerType(newValue);
+      console.log('Fields for partner type', newValue, ':', requisiteFieldsForm.value);
+    } else {
+      requisiteFieldsForm.value = null;
+    }
   }
 );
 
@@ -167,7 +196,6 @@ function resetForm() {
 async function validateAndSubmit() {
   const isValid = await formRef.value.validate();
 
-  // Выводим все данные формы для отладки
   console.log('Данные формы:', form.value);
 
   if (!isValid) {
@@ -175,11 +203,17 @@ async function validateAndSubmit() {
     return;
   }
 
-  // Преобразуем данные для отправки
-  const payload = {
-    ...form.value,
-    inn: form.value.inn ? String(form.value.inn) : null, // Гарантируем, что inn — строка
-  };
+  // Используем нашу функцию валидации
+  const validationResult = validateRequisitesData(form.value, form.value.partner_type_id);
+  if (!validationResult.isValid) {
+    validationResult.errors.forEach(error => {
+      toast.init({ message: error.message, color: 'danger' });
+    });
+    return;
+  }
+
+  // Используем функцию фильтрации данных
+  const payload = filterRequisitesData(form.value, form.value.partner_type_id);
 
   submitting.value = true;
 
@@ -197,6 +231,20 @@ async function validateAndSubmit() {
     submitting.value = false;
   }
 }
+
+// Добавляем недостающую функцию фильтрации
+const filterRequisitesData = (data, partnerTypeId) => {
+  const filteredData = {};
+  const fields = getFieldsByPartnerType(partnerTypeId);
+  
+  fields.forEach(field => {
+    if (data[field.name] !== undefined && data[field.name] !== null) {
+      filteredData[field.name] = data[field.name];
+    }
+  });
+
+  return filteredData;
+};
 
 async function loadRequisites() {
   try {
@@ -229,5 +277,7 @@ async function deleteRequisite(id) {
 
 onMounted(() => {
   loadRequisites();
+  // Принудительно загружаем настройки реквизитов если нужно
+  fetchRequisiteSettings();
 });
 </script>
