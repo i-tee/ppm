@@ -5,30 +5,63 @@
     <div class="my-3">
 
       <div v-if="requisites && requisites.length">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-          <div v-for="req in requisites" :key="req.id" class="mb-4">
-            <VaCard class="p-4 max-w-lg h-full">
+        <div>
+          <div v-for="(req, idx) in requisites" :key="req.id" class="p-4 mb-4 bg-white" :class="{
+            'is-first': idx === 0,              // первый
+            'is-last': idx === requisites.length - 1, // последний
+            'is-even': idx % 2 === 0,           // чётный
+            'is-odd': idx % 2 !== 0             // нечётный
+          }">
+
+            <div class="p-4">
               <!-- ЗАГОЛОВОК -->
-              <div class="va-card-title mb-2 va-h6">
+              <div class="va-card-title mb-2 va-h2 mt-4">
                 {{ $t(`partners.partner_types.${getPartnerType(req.partner_type_id)?.name || 'unknown'}`) }}
-                <span class="text-secondary">#{{ req.id }}</span>
+              </div>
+
+              <div v-if="req.is_verified">
+                <div>
+                  <VaBadge :text="$t('requisites.active')" color="primary" />
+                </div>
+                <div>
+                  <span class="text-secondary">{{ $t('requisites.contract') }} #{{ req.id }}</span>
+                </div>
+              </div>
+              <div v-else>
+                  <div>
+                    <VaBadge :text="$t('requisites.validate_requisites')" color="secondary" />
+                  </div>
+                  <div>
+                    <span class="text-secondary">{{ $t('requisites.prepare_contract') }}</span>
+                  </div>
               </div>
 
               <!-- СОДЕРЖИМОЕ -->
               <div class="va-card-content space-y-2">
-                <p v-for="{ key, value } in visibleFields(req)" :key="key" class="m-0">
-                  <strong>{{ $t(`requisites.${key}`) }}:</strong>
-                  <span class="ml-1">{{ value }}</span>
-                </p>
+                <template v-for="({ key, value }, i) in visibleFields(req)" :key="key">
+                  <!-- пропускаем полностью is_active -->
+                  <div v-if="key !== 'is_active'" class="m-0">
+                    <p v-if="i === 0" class="va-h5 mb-3">
+                      <span>{{ value }}</span>
+                    </p>
+                    <p v-else>
+                      <strong>{{ $t(`requisites.${key}`) }}:</strong>
+                      <span class="ml-1">{{ value }}</span>
+                    </p>
+                  </div>
+                </template>
               </div>
 
               <!-- КНОПКИ -->
-              <div class="va-card-actions mt-4 justify-end">
+              <VaDivider class="mt-4" />
+              <div class="va-card-actions mt-4 justify-end text-end">
                 <VaButton preset="secondary" @click="deleteRequisite(req.id)">
                   {{ $t('requisites.delete') }}
                 </VaButton>
               </div>
-            </VaCard>
+
+            </div>
+
           </div>
         </div>
       </div>

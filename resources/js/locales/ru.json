@@ -57,6 +57,10 @@
   "logout": "Выход",
   "requisites": {
     "add": "Добавить",
+    "contract": "Договор",
+    "active": "Активен",
+    "prepare_contract": "Договор готовится, ожидайте",
+    "validate_requisites": "Реквизиты на проверке...",
     "no_requisites": "Нет реквизитов",
     "create_title": "Создать реквизит",
     "edit_title": "Редактировать реквизит",
