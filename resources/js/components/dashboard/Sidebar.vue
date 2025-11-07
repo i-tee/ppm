@@ -42,6 +42,13 @@
     </va-sidebar-item-content>
   </va-sidebar-item>
 
+  <va-sidebar-item :to="{ name: 'RequisiteVerification' }" :active="$route.name === 'RequisiteVerification'" v-if="isAdmin">
+    <va-sidebar-item-content>
+      <va-icon name="business" />
+      <va-sidebar-item-title>{{ $t('dashboard.requisite_verification') }}</va-sidebar-item-title>
+    </va-sidebar-item-content>
+  </va-sidebar-item>
+
   <va-sidebar-item :to="{ name: 'Dev' }" :active="$route.name === 'Dev'" v-if="isSuperAdmin">
     <va-sidebar-item-content>
       <va-icon name="code" />

@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payout-requests', [PayoutRequestController::class, 'store']);
 
     Route::get('/user/requisites', [RequisiteController::class, 'index']);
+    Route::get('/user/requisites-all', [RequisiteController::class, 'all']);
+    Route::put('/user/requisites/{id}/verify', [RequisiteController::class, 'verify']);
     Route::post('/user/requisites', [RequisiteController::class, 'store']);
     Route::delete('/user/requisites/{id}', [RequisiteController::class, 'destroy']);
 

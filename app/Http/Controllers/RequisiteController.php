@@ -18,6 +18,54 @@ class RequisiteController extends Controller
     }
 
     /**
+     * Получить все реквизиты (для админов — unverified; для юзеров — свои).
+     * Пагинация и сортировка на фронте.
+     */
+    public function all(Request $request)
+    {
+        $user = Auth::user();
+        $isAdmin = $user->hasAccessLevel(1) || $user->hasAccessLevel(2); // Проверка через UserAccessLevel
+
+        $query = Requisite::query();
+
+        if ($isAdmin) {
+            // Для админов: все неверифицированные (без active(), без with('user'))
+            $query->where('is_verified', false);
+        } else {
+            // Для юзеров: свои активные верифицированные
+            $query->where('user_id', $user->id)->active()->verified();
+        }
+
+        // Дефолтная сортировка (фронт может переопределить клиентски)
+        $query->orderBy('created_at', 'desc');
+        $requisites = $query->get();
+
+        return response()->json($requisites);
+    }
+
+    /**
+     * Верифицировать реквизиты (только для админов).
+     */
+    public function verify($id)
+    {
+        $user = Auth::user();
+        $isAdmin = $user->hasAccessLevel(1) || $user->hasAccessLevel(2); // Проверка через UserAccessLevel
+
+        if (!$isAdmin) {
+            return response()->json(['message' => 'Доступ запрещён'], 403);
+        }
+
+        $requisite = Requisite::findOrFail($id);
+        $requisite->is_verified = true;
+        $requisite->save();
+
+        return response()->json([
+            'message' => 'Реквизиты верифицированы',
+            'requisite' => $requisite
+        ]);
+    }
+
+    /**
      * Создать новые реквизиты для пользователя.
      */
     public function store(Request $request)

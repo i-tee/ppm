@@ -23,4 +23,13 @@ class UserAccessLevel extends Model
         $settings = \App\Helpers\Partners::getSettings();
         return $settings['access_levels'][$this->access_level_id] ?? null;
     }
+
+    /**
+     * Быстрая проверка, является ли уровень админским (1 или 2).
+     * Используй в scope или коллекциях: $accessLevels->contains(fn($level) => $level->isAdminLevel())
+     */
+    public function isAdminLevel(): bool
+    {
+        return in_array($this->access_level_id, [1, 2]);
+    }
 }
