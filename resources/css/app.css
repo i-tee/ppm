@@ -5,6 +5,7 @@
 @import './va-input-coupon.css'; /* Кастомные стили для VaInput при создании купона */
 @import './avi-custom.css'; /* Кастомные стили для all */
 @import './avi-coupons.css'; /* Кастомные стили для промокодов */
+@import './avi-640.css'; /* Кастомные стили для max-width: 640px */
 
 /* Подключение Tailwind CSS */
 @tailwind base;

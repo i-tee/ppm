@@ -3,13 +3,18 @@
     <p class="va-h4 my-2 mt-4">{{ $t('dashboard.types') }}</p>
     <p class="my-2">{{ $t('dashboard.types_descr') }}</p>
     <VaDivider class="my-4"/>
+
     <div class="my-3">
       <div v-if="apiData">
         <div>
+
           <div v-if="apiData.cooperation_types && apiData.cooperation_types.length"
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div v-for="type in apiData.cooperation_types" :key="'coop-' + type.id" class="mb-4">
-              <VaCard class="p-4 max-w-md h-full">
+            class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+            <div v-for="type in sortedTypes(apiData.cooperation_types)" :key="'coop-' + type.id" class="mb-4 pr-4">
+
+              <div class="h-full">
+                
                 <div class="va-card-title mb-2 va-h6">
                   {{ $t('partners.cooperation_types.' + type.name + '.title') }}
                 </div>
@@ -57,18 +62,20 @@
                   </div>
 
                 </div>
-              </VaCard>
+              </div>
             </div>
           </div>
           <div v-else>
             <VaAlert color="info">{{ $t('dashboard.no_cooperation_types') }}</VaAlert>
           </div>
         </div>
+        
       </div>
       <div v-else>
         <VaAlert color="warning">{{ $t('loading_data') }}</VaAlert>
       </div>
     </div>
+
 
     <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true">
 
@@ -222,6 +229,16 @@ const filteredPartnerTypes = computed(() => {
     }));
   return options;
 });
+
+const sortedTypes = (types) => {
+  if (!types) return [];
+  
+  return [...types].sort((a, b) => {
+    const nameA = t(`partners.cooperation_types.${a.name}.title`).toLowerCase();
+    const nameB = t(`partners.cooperation_types.${b.name}.title`).toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+};
 
 function openDialog(type) {
   if (!apiData.value || !apiData.value.partner_types) {
