@@ -67,8 +67,9 @@
     </va-sidebar-item>
   </div>
 
-  <VaDivider v-if="isActive" class="my-4" />
-  <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'" v-if="isActive">
+  <VaDivider v-if="isActive && hasApprovedApplications" class="my-4" />
+  
+  <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'" v-if="isActive && hasApprovedApplications">
     <va-sidebar-item-content>
       <va-icon name="note" />
       <va-sidebar-item-title>{{ $t('dashboard.requisite') }}</va-sidebar-item-title>
@@ -80,12 +81,14 @@
 <script setup>
 
 import { usePartnerApplications } from '@/composables/usePartnerApplications';
-const { getApplication } = usePartnerApplications();
+const { getApplication, hasApplicationsWithStatus } = usePartnerApplications();
 import { computed } from 'vue';
 
 import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
+
+const hasApprovedApplications = hasApplicationsWithStatus(2);
 
 // Определяем реактивные переменные
 const apiData = ref(null);
@@ -103,6 +106,7 @@ onMounted(async () => {
     error.value = err.response?.data || err.message;
     console.error('Ошибка загрузки:', error.value);
   }
+
 });
 
 const props = defineProps({

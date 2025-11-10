@@ -1,6 +1,8 @@
 <template>
   <div>
-    <p class="va-h4 my-1">{{ $t('dashboard.types') }}</p>
+    <p class="va-h4 my-2 mt-4">{{ $t('dashboard.types') }}</p>
+    <p class="my-2">{{ $t('dashboard.types_descr') }}</p>
+    <VaDivider class="my-4"/>
     <div class="my-3">
       <div v-if="apiData">
         <div>
