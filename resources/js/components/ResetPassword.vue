@@ -1,10 +1,12 @@
 <!-- resources/js/components/ResetPassword.vue -->
 <template>
   <div class="flex h-screen">
+    
     <!-- Левая часть: Infobar -->
     <div class="w-1/2 hidden md:block">
       <Infobar />
     </div>
+
     <!-- Правая часть: Форма сброса пароля -->
     <div class="w-full md:w-1/2 bg-gray-50 flex justify-center items-center p-6">
       <div class="w-full max-w-md">

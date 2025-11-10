@@ -4,7 +4,7 @@ import Register from "./components/Register.vue";
 import Dashboard from "./components/Dashboard.vue";
 import Overview from "./components/dashboard/Overview.vue";
 import Promocodes from "./components/dashboard/Promocodes.vue";
-import Dev from "./components/dashboard/Dev.vue";
+// import Dev from "./components/dashboard/Dev.vue";
 import Influencer from "./components/dashboard/Influencer.vue";
 import Agent from "./components/dashboard/Agent.vue";
 import Requisite from "./components/dashboard/Requisite.vue";
@@ -83,11 +83,11 @@ const routes = [
         name: "Distributor",
         component: Distributor,
       },
-      {
-        path: "dev",
-        name: "Dev",
-        component: Dev,
-      },
+      // {
+      //   path: "dev",
+      //   name: "Dev",
+      //   component: Dev,
+      // },
       {
         path: "requisite-verification",
         name: "RequisiteVerification",

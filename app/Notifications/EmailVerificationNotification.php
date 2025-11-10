@@ -40,7 +40,7 @@ class EmailVerificationNotification extends Notification
 
         return (new MailMessage)
             ->subject(__('notifications.emails.verify_email_subject'))
-            ->greeting(__('notifications.others.hello') . ' ' . $notifiable->name)
+            ->greeting(__('notifications.others.hello') . ', ' . $notifiable->name)
             ->line(__('notifications.emails.verify_intro'))
             ->action(__('notifications.emails.verify_button'), $verifyUrl)
             ->line(__('notifications.emails.verify_footer'));

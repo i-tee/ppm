@@ -49,12 +49,12 @@
     </va-sidebar-item-content>
   </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'Dev' }" :active="$route.name === 'Dev'" v-if="isSuperAdmin">
+  <!-- <va-sidebar-item :to="{ name: 'Dev' }" :active="$route.name === 'Dev'" v-if="isSuperAdmin">
     <va-sidebar-item-content>
       <va-icon name="code" />
       <va-sidebar-item-title>{{ $t('dashboard.dev') }}</va-sidebar-item-title>
     </va-sidebar-item-content>
-  </va-sidebar-item>
+  </va-sidebar-item> -->
 
   <div v-for="type in apiData?.cooperation_types" :key="type.id">
     <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }" :active="$route.name === type.route">

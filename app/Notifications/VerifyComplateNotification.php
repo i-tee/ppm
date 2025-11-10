@@ -41,8 +41,8 @@ class VerifyComplateNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject(__('notifications.emails.verify_complate'))
-            ->greeting(__('notifications.others.hello') . ' ' . $notifiable->name)
+            ->subject(__('notifications.emails.verify_complete'))
+            ->greeting(__('notifications.others.hello') . ', ' . $notifiable->name)
             ->line(__('notifications.emails.collaborations'))
             ->action(__('notifications.emails.start_collaboration'), url('/dashboard/types'));
     }

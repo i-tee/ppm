@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -107,21 +108,22 @@ class AuthController extends Controller
         return response()->json(['message' => 'Password changed successfully'], 200);
     }
 
-    // Новый эндпоинт для запроса сброса пароля
+    // эндпоинт для запроса сброса пароля
     public function forgotPassword(Request $request)
     {
-        //\Log::info('Forgot Password Request: ', $request->all()); // Логируем запрос
         $request->validate(['email' => 'required|email']);
 
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
-        //\Log::info('Password Reset Status: ' . $status); // Логируем статус
+        // Log::info('Password Reset Status: ' . $status); // <-- Закомментируйте или удалите для production
 
-        return $status === Password::RESET_LINK_SENT
-            ? response()->json(['message' => __($status)])
-            : response()->json(['message' => __($status)], 400);
+        if ($status === Password::RESET_LINK_SENT) {
+            return response()->json(['message' => __($status)]);
+        }
+
+        return response()->json(['message' => __($status)], 400);
     }
 
     public function showResetPasswordForm(Request $request)

@@ -49,7 +49,7 @@ class ResetPasswordNotification extends Notification
 
         return (new MailMessage)
             ->subject(__('notifications.emails.password_reset_subject'))
-            ->greeting(__('notifications.others.hello') . ' ' . $notifiable->name)
+            ->greeting(__('notifications.others.hello') . ', ' . $notifiable->name)
             ->line(__('notifications.emails.password_reset_intro'))
             ->action(__('notifications.emails.password_reset_action'), $resetUrl)
             ->line(__('notifications.emails.password_reset_expires', [

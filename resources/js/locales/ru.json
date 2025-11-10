@@ -50,9 +50,13 @@
   "confirm_password": "Подтвердите пароль",
   "register_description": "Создайте учетную запись, чтобы начать работу с Avicenna®",
   "name": "Имя",
+  "register_reset_description": "Введите e-mail, с помощью которого вы получали доступ к личному кабинету. Мы отправим на этот адрес инструкцию по сбросу пароля.",
   "summ": "Сумма",
   "login_description": "Введите свои данные для входа",
   "home": "Главная",
+  "auth_forgotPassword_success": "Инструкция по сбросу пароля отправлена на вашу почту",
+  "auth_forgotPassword_noAccount": "Нет такого аккаунта",
+  "auth_forgotPassword_error": "Ошибка при отправке инструкции",
   "_dashboard": "Кабинет партнера",
   "logout": "Выход",
   "requisites": {
