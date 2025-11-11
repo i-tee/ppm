@@ -12,17 +12,22 @@
         <div>
 
           <div v-if="apiData.cooperation_types && apiData.cooperation_types.length"
-            class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            class="grid grid-cols-1 sm:grid-cols-2">
 
-            <div v-for="type in sortedTypes(apiData.cooperation_types)" :key="'coop-' + type.id" class="mb-4 pr-4">
+            <div v-for="type in sortedTypes(apiData.cooperation_types)" :key="'coop-' + type.id"
+              class="mr-4 my-3">
 
               <div class="h-full">
 
-                <div class="va-card-title mb-2 va-h6">
-                  {{ $t('partners.cooperation_types.' + type.name + '.title') }}
+                <div class="va-card-title mb-2 va-h6 cursor-help text-primary" @click="showConditions(type.id)">
+                  <span>{{ $t('partners.cooperation_types.' + type.name + '.title') }}</span>
+                  <span> </span>
+                  <VaIcon color="primary" name="info" />
                 </div>
+
                 <div class="va-card-content">
                   <p>{{ $t('partners.cooperation_types.' + type.name + '.' + type.description) }}</p>
+                  <p><a @click="showConditions(type.id)" href="#" class="va-link">{{ $t('more') }}</a></p>
                 </div>
                 <div class="va-card-actions mt-4 flex justify-between">
 
@@ -58,9 +63,6 @@
                     <div class="col">
                       <VaButton :disabled="!type.active" color="primary" class="w-40" @click="openDialog(type)">
                         {{ $t('partners.apply') }}
-                      </VaButton>
-                      <VaButton :disabled="!type.active" class="w-40" preset="secondary" @click="showConditions = true">
-                        {{ $t('partners.conditions') }}
                       </VaButton>
                     </div>
                     <div v-if="!type.active" class="col flex flex-col justify-center p-2">
@@ -175,18 +177,47 @@
 
     </VaModal>
 
-    <VaModal v-model="showConditions" :close-button="true" :hide-default-actions="true">
-      <Conditions :apiData="apiData"/>
-      <template #footer>
-        <VaButton @click="showConditions=false">OK</VaButton>
-      </template>
-    </VaModal>
+    <div>
+      <!-- ... остальная разметка ... -->
+
+      <!-- Модальные окна условий -->
+      <VaModal v-model="showConditions_Agent" :close-button="true" :hide-default-actions="true">
+        <Conditions_Agent :apiData="apiData" />
+        <template #footer>
+          <VaButton @click="showConditions_Agent = false">OK</VaButton>
+        </template>
+      </VaModal>
+
+      <VaModal v-model="showConditions_Influencer" :close-button="true" :hide-default-actions="true">
+        <Conditions_Influencer :apiData="apiData" />
+        <template #footer>
+          <VaButton @click="showConditions_Influencer = false">OK</VaButton>
+        </template>
+      </VaModal>
+
+      <VaModal v-model="showConditions_Wholesale" :close-button="true" :hide-default-actions="true">
+        <Conditions_Wholesale :apiData="apiData" />
+        <template #footer>
+          <VaButton @click="showConditions_Wholesale = false">OK</VaButton>
+        </template>
+      </VaModal>
+
+      <VaModal v-model="showConditions_Distributor" :close-button="true" :hide-default-actions="true">
+        <Conditions_Distributor :apiData="apiData" />
+        <template #footer>
+          <VaButton @click="showConditions_Distributor = false">OK</VaButton>
+        </template>
+      </VaModal>
+    </div>
 
   </div>
 </template>
 
 <script setup>
-import Conditions from '@/components/parts/Conditions.vue';
+import Conditions_Agent from '@/components/parts/Conditions/Agent.vue';
+import Conditions_Influencer from '@/components/parts/Conditions/Influencer.vue';
+import Conditions_Wholesale from '@/components/parts/Conditions/Wholesale.vue';
+import Conditions_Distributor from '@/components/parts/Conditions/Distributor.vue';
 import { useAuthStore } from '@/stores/auth';
 import { usePartnerApplications } from '@/composables/usePartnerApplications';
 import { ref, onMounted, computed } from 'vue';
@@ -219,10 +250,15 @@ const authStore = useAuthStore();
 const apiData = ref(null);
 const error = ref(null);
 const showDialog = ref(false);
-const showConditions = ref(false);
 const selectedType = ref(null);
 const submitting = ref(false);
 const formRef = ref(null);
+
+// Рефы для модальных окон условий
+const showConditions_Agent = ref(false);
+const showConditions_Influencer = ref(false);
+const showConditions_Wholesale = ref(false);
+const showConditions_Distributor = ref(false);
 
 const props = defineProps({
   user: {
@@ -257,6 +293,28 @@ const filteredPartnerTypes = computed(() => {
     }));
   return options;
 });
+
+// Функция для показа условий
+function showConditions(id) {
+  console.log('Opening conditions for ID:', id);
+
+  switch (id) {
+    case 1: // influencer
+      showConditions_Influencer.value = true;
+      break;
+    case 2: // agent
+      showConditions_Agent.value = true;
+      break;
+    case 3: // wholesale
+      showConditions_Wholesale.value = true;
+      break;
+    case 4: // distributor
+      showConditions_Distributor.value = true;
+      break;
+    default:
+      console.warn(`Модальное окно для ID ${id} не найдено`);
+  }
+}
 
 const sortedTypes = (types) => {
   if (!types) return [];
