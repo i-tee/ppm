@@ -1,8 +1,11 @@
 <template>
   <div>
-    <p class="va-h4 my-2 mt-4">{{ $t('dashboard.types') }}</p>
-    <p class="my-2">{{ $t('dashboard.types_descr') }}</p>
-    <VaDivider class="my-4"/>
+
+    <div class="d-head">
+      <p class="va-h4 my-2 mt-4">{{ $t('dashboard.types') }}</p>
+      <p class="my-2">{{ $t('dashboard.types_descr') }}</p>
+      <VaDivider class="my-4" />
+    </div>
 
     <div class="my-3">
       <div v-if="apiData">
@@ -14,7 +17,7 @@
             <div v-for="type in sortedTypes(apiData.cooperation_types)" :key="'coop-' + type.id" class="mb-4 pr-4">
 
               <div class="h-full">
-                
+
                 <div class="va-card-title mb-2 va-h6">
                   {{ $t('partners.cooperation_types.' + type.name + '.title') }}
                 </div>
@@ -36,7 +39,8 @@
 
                   <div v-else-if="hasApplication(2, type.id)" class="row">
                     <div class="col">
-                      <VaButton :to="{ name: type.route }" color="success" class="w-40" @click="iAlert($t('partners.actived_alert'))">
+                      <VaButton :to="{ name: type.route }" color="success" class="w-40"
+                        @click="iAlert($t('partners.actived_alert'))">
                         {{ $t('partners.actived') }}
                       </VaButton>
                     </div>
@@ -55,6 +59,9 @@
                       <VaButton :disabled="!type.active" color="primary" class="w-40" @click="openDialog(type)">
                         {{ $t('partners.apply') }}
                       </VaButton>
+                      <VaButton :disabled="!type.active" class="w-40" preset="secondary" @click="showConditions = true">
+                        {{ $t('partners.conditions') }}
+                      </VaButton>
                     </div>
                     <div v-if="!type.active" class="col flex flex-col justify-center p-2">
                       <p class="text-xs text-gray-500 mt-1 text-center">{{ $t('partners.ondevelopment') }}</p>
@@ -69,15 +76,22 @@
             <VaAlert color="info">{{ $t('dashboard.no_cooperation_types') }}</VaAlert>
           </div>
         </div>
-        
+
       </div>
+
       <div v-else>
-        <VaAlert color="warning">{{ $t('loading_data') }}</VaAlert>
+        <p class="text-gray-400">{{ $t('loading_data') }}</p>
+        <br>
+        <VaSkeleton tag="h1" variant="text" class="va-h1" />
+        <VaSkeleton tag="h1" variant="text" class="va-h1" />
+        <VaSkeleton tag="h1" variant="text" class="va-h1" />
+        <VaSkeleton tag="h1" variant="text" class="va-h1" />
       </div>
+
     </div>
 
 
-    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true">
+    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" :close-button="true">
 
       <VaProgressBar v-if="submitting" indeterminate color="primary" class="mb-4" />
 
@@ -129,18 +143,22 @@
           </div>
 
           <div>
-            <VaInput v-model="form.experience" :label="$t('form.experience')" class="w-full" />
+            <VaInput v-model="form.experience" :label="$t('partnerApplications.specialty')" class="w-full" />
           </div>
 
-          <div class="col-span-1 md:col-span-2 border-2 border-gray-200 p-6 rounded-md my-2">
+          <!-- <div class="col-span-1 md:col-span-2 border-2 border-gray-200 p-6 rounded-md my-2">
             <VaSwitch v-model="isCompanyEnabled" :label="$t('partners.affiliation')"
               @update:modelValue="toggleCompanyInput" class="mb-2" />
             <VaInput v-model="form.company_name" :label="$t('form.company_name')" :disabled="!isCompanyEnabled"
               class="w-full transition-opacity duration-300 bg-white-50" :class="{ 'opacity-50': !isCompanyEnabled }" />
-          </div>
+          </div> -->
 
           <div class="col-span-1 md:col-span-2">
             <VaTextarea v-model="form.comment" :label="$t('form.comment')" rows="3" class="w-full" />
+          </div>
+
+          <div class="col-span-1 md:col-span-2 p-4 text-sm bg-gray-100 rounded-md text-gray-600">
+            <p>{{ $t('disclaimer.agent') }}</p>
           </div>
 
         </div>
@@ -156,10 +174,19 @@
       </template>
 
     </VaModal>
+
+    <VaModal v-model="showConditions" :close-button="true" :hide-default-actions="true">
+      <Conditions :apiData="apiData"/>
+      <template #footer>
+        <VaButton @click="showConditions=false">OK</VaButton>
+      </template>
+    </VaModal>
+
   </div>
 </template>
 
 <script setup>
+import Conditions from '@/components/parts/Conditions.vue';
 import { useAuthStore } from '@/stores/auth';
 import { usePartnerApplications } from '@/composables/usePartnerApplications';
 import { ref, onMounted, computed } from 'vue';
@@ -192,6 +219,7 @@ const authStore = useAuthStore();
 const apiData = ref(null);
 const error = ref(null);
 const showDialog = ref(false);
+const showConditions = ref(false);
 const selectedType = ref(null);
 const submitting = ref(false);
 const formRef = ref(null);
@@ -232,7 +260,7 @@ const filteredPartnerTypes = computed(() => {
 
 const sortedTypes = (types) => {
   if (!types) return [];
-  
+
   return [...types].sort((a, b) => {
     const nameA = t(`partners.cooperation_types.${a.name}.title`).toLowerCase();
     const nameB = t(`partners.cooperation_types.${b.name}.title`).toLowerCase();

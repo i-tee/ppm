@@ -1,6 +1,7 @@
 <template>
 
   <div>
+
     <div v-if="user && !user.email_verified_at" class="mb-6">
 
       <div class="row">
@@ -36,11 +37,13 @@
 
   <div v-else>
 
-    <h1 class="va-h4 my-4">{{ $t('welcomes.short_head') }}</h1>
-    <p>{{ $t('welcomes.short') }}</p>
+    <div class="d-head">
+      <p class="va-h4 my-2 mt-4">{{ $t('welcomes.short_head') }}</p>
+      <p class="my-2">{{ $t('welcomes.short') }}</p>
+      <VaDivider class="my-4" />
+    </div>
 
     <div v-if="user && user.email_verified_at" class="mb-6">
-      <hr class="my-4" />
       <p>{{ $t('welcomes.choose_text') }}</p>
       <br>
       <VaButton :to="{ name: 'Types' }">{{ $t('welcomes.choose') }}</VaButton>
