@@ -48,6 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/partner-applications', [PartnerApplicationController::class, 'store']);
     Route::get('/partner-applications', [PartnerApplicationController::class, 'index']);
+    Route::get('/partner-applications/statuses', [PartnerApplicationController::class, 'getStatuses']);
     Route::get('/partner-applications/{id}', [PartnerApplicationController::class, 'show']);
     Route::put('/partner-applications/{id}', [PartnerApplicationController::class, 'update']);
     Route::delete('/partner-applications/{id}', [PartnerApplicationController::class, 'destroy']);

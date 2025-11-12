@@ -1,52 +1,93 @@
 <template>
 
-  <div>
 
-    <div v-if="user && !user.email_verified_at" class="mb-6">
+  <!-- For Unverified Email --------------------------------------------------------------------------------------->
+  <div v-if="user && !user.email_verified_at" class="mb-6">
 
-      <div class="row">
-        <VaAlert class="w-full" color="warning" icon="warning">
-          <div>
-            <span>
-              {{ $t('vuestic.profile.email_not_verified') }}!
-            </span>
-            <span> </span>
-            <span>
-              {{ $t('vuestic.profile.resend_verification_description') }}
-            </span>
-          </div>
-        </VaAlert>
-      </div>
-
-      <div class="row mt-2">
-        <VaButton icon-right="mail" :loading="isSendingVerification" @click="sendVerificationEmail" size="small">
-        </VaButton>
-        <VaDivider vertical />
-        <a href="#" @click.prevent="sendVerificationEmail"
-          class="underline text-primary cursor-pointer whitespace-nowrap">
-          {{ $t('vuestic.profile.resend_verification') }}
-        </a>
-      </div>
-
+    <div class="row">
+      <VaAlert class="w-full" color="warning" icon="warning">
+        <div>
+          <span>
+            {{ $t('vuestic.profile.email_not_verified') }}!
+          </span>
+          <span> </span>
+          <span>
+            {{ $t('vuestic.profile.resend_verification_description') }}
+          </span>
+        </div>
+      </VaAlert>
     </div>
+
+    <div class="row mt-2">
+      <VaButton icon-right="mail" :loading="isSendingVerification" @click="sendVerificationEmail" size="small">
+      </VaButton>
+      <VaDivider vertical />
+      <a href="#" @click.prevent="sendVerificationEmail"
+        class="underline text-primary cursor-pointer whitespace-nowrap">
+        {{ $t('vuestic.profile.resend_verification') }}
+      </a>
+    </div>
+
   </div>
 
-  <div v-if="hasApprovedApplications">
-    <h1 class="va-h4 my-4">Заявка есть, включаем иную логику</h1>
-  </div>
-
+  <!-- For Verified Email --------------------------------------------------------------------------------------->
   <div v-else>
 
-    <div class="d-head">
-      <p class="va-h4 my-2 mt-4">{{ $t('welcomes.short_head') }}</p>
-      <p class="my-2">{{ $t('welcomes.short') }}</p>
-      <VaDivider class="my-4" />
+    <!-- For Approved Application --------------------------------------------------------------------------------------->
+    <div v-if="hasApprovedApplications">
+      <div class="d-head">
+        <p class="va-h4 my-2 mt-4">{{ $t('welcomes.head') }}</p>
+        <p>{{ $t('partnerApplications.appstatus') }}: {{ $t('status.' + partnerApplications[0]?.status_name) }}</p>
+        <VaDivider class="my-4" />
+      </div>
     </div>
 
-    <div v-if="user && user.email_verified_at" class="mb-6">
-      <p>{{ $t('welcomes.choose_text') }}</p>
-      <br>
-      <VaButton :to="{ name: 'Types' }">{{ $t('welcomes.choose') }}</VaButton>
+    <!-- For Problem Application --------------------------------------------------------------------------------------->
+    <div v-else-if="hasProblemApplications">
+
+      <div class="d-head">
+        <p class="va-h4 my-2 mt-4">{{ $t('status.' + partnerApplications[0]?.status_name + '_user') }}</p>
+        <p>{{ $t('partnerApplications.appstatus') }}: {{ $t('status.' + partnerApplications[0]?.status_name) }}</p>
+        <VaDivider class="my-4" />
+        <div class="p-4 my-4 rounded-lg bg-gray-200">
+          <p class="my-2">{{ $t('welcomes.apps.rejected') }}</p>
+          <p class="my-2">{{ $t('welcomes.apps.rejected_contact') }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- For Process Application --------------------------------------------------------------------------------------->
+    <div v-else-if="hasAnyApplications">
+
+      <div class="d-head">
+        <p class="va-h4 my-2 mt-4">{{ $t('status.' + partnerApplications[0]?.status_name + '_user') }}</p>
+        <p>{{ $t('partnerApplications.appstatus') }}: {{ $t('status.' + partnerApplications[0]?.status_name) }}</p>
+        <VaDivider class="my-4" />
+        <div class="p-4 my-4 rounded-lg bg-gray-200">
+          <p class="my-2">{{ $t('welcomes.apps.received') }}</p>
+          <p class="my-2">{{ $t('welcomes.apps.responseTime') }}</p>
+          <p class="my-2">{{ $t('welcomes.apps.notification') }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- For No (missing) Application --------------------------------------------------------------------------------------->
+    <div v-else>
+
+      <div class="d-head">
+        <p class="va-h4 my-2 mt-4">{{ $t('welcomes.short_head') }}</p>
+        <p class="my-2">{{ $t('welcomes.short') }}</p>
+        <VaDivider class="my-4" />
+      </div>
+
+      <div v-if="user && user.email_verified_at" class="mb-6">
+        <p>{{ $t('welcomes.choose_text') }}</p>
+        <br>
+        <VaButton :to="{ name: 'Types' }">{{ $t('welcomes.choose') }}</VaButton>
+      </div>
+
     </div>
 
   </div>
@@ -74,8 +115,9 @@ const props = defineProps({
 });
 
 // Проверяем, есть ли заявки со статусом 2
-const { hasApplicationsWithStatus } = usePartnerApplications();
-const hasApprovedApplications = hasApplicationsWithStatus(2);
+const { hasApplicationsWithStatus, hasAnyApplications, partnerApplications } = usePartnerApplications()
+const hasApprovedApplications = hasApplicationsWithStatus(2)
+const hasProblemApplications = hasApplicationsWithStatus(3) || hasApplicationsWithStatus(9) ? true : false;
 
 // Состояние загрузки
 const isSendingVerification = ref(false);

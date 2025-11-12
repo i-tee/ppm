@@ -44,15 +44,18 @@ class UserCouponController extends Controller
     public function data(Request $request)
     {
 
+        // 1. Получаем данные (Юзер создается в Джумла если его нет)
+        $raw = JoomlaCoupon::getUserCoupons();   // может быть Collection, может быть массив
+        
         $user = $request->user();
         $joomlaUser = JoomlaCoupon::joomlaUser();
+
+        Log::debug('joomlaUser: ', [$joomlaUser]);
+
         $expenseSummary = 0;
 
         $balance = 0;
         $oldPromocodBalance = JoomlaCoupon::oldPromocodBalance($joomlaUser->id);
-
-        // 1. Получаем данные (то, что вы уже точно вызываете)
-        $raw = JoomlaCoupon::getUserCoupons();   // может быть Collection, может быть массив
 
         // 2. Превращаем в коллекцию и берём только coupon_id
         $ids = collect($raw['coupons'] ?? $raw)  // если вернулся массив вида ['coupons'=>[...]]

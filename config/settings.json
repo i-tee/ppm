@@ -99,7 +99,7 @@
   "documents": [
     {
       "id": 1,
-      "name": "pruvacy_policy",
+      "name": "privacy_policy",
       "description": "pruvacy_policy_desc",
       "url": "https://avicenna.com.ru/DOCS/ppm/p.pdf",
       "active": true

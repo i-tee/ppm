@@ -1,5 +1,4 @@
 <template>
-
   <!-- Основной контейнер компонента с отступами -->
   <div class="agent-layout min-w-full">
 
@@ -8,22 +7,23 @@
 
       <!-- Заголовок с локализацией для типа сотрудничества "агент" -->
       <h1 class="va-h4 my-1">{{ bData.data?.user?.name }} | <span @click="openPayoutModal" class="master-color">{{
-        formatPrice(bData.data?.balance) ?? $t('common.no_data') }}</span></h1>
+        formatPrice(bData.data?.balance) ?? $t('common.no_data') }}</span></h1> <!-- ← $t вместо t -->
 
       <!-- Описание пользовательского соглашения с ссылкой на контракт -->
       <p class="text-gray-400">
-        <i>{{ $t('user_agreement.description') }}
+        <i>{{ $t('user_agreement.description') }} <!-- ← $t -->
           <a class="avi-link avi-link-out" target="_blank" :href="selectedCooperationType?.contract_url">
-            {{ $t('user_agreement.link_name') }}
-          </a></i>
+            {{ $t('user_agreement.link_name') }} <!-- ← $t -->
+          </a>
+        </i>
       </p>
 
       <!-- Контейнер для табов, прижат к левому краю -->
       <div class="tabs-container">
         <VaTabs v-model="activeTab">
-          <VaTab name="coupons">{{ $t('coupons.coupons') }}</VaTab>
-          <VaTab name="credits">{{ $t('coupons.credits') }}</VaTab>
-          <VaTab name="debits">{{ $t('coupons.debits') }}</VaTab>
+          <VaTab name="coupons">{{ $t('coupons.coupons') }}</VaTab> <!-- ← $t -->
+          <VaTab name="credits">{{ $t('coupons.credits') }}</VaTab> <!-- ← $t -->
+          <VaTab name="debits">{{ $t('coupons.debits') }}</VaTab> <!-- ← $t -->
         </VaTabs>
       </div>
 
@@ -50,7 +50,8 @@
         </div>
       </div>
     </div>
-    <!-- Показываем предупреждение, если данные загружаются -->
+
+    <!-- Показываем предупреждение, пока данные загружаются -->
     <div v-else-if="loading">
 
       <div class="w-full">
@@ -58,13 +59,17 @@
         <VaSkeleton variant="squared" width="100%" height="6rem" />
       </div>
     </div>
+
     <!-- Показываем ошибку, если загрузка не удалась -->
-    <div v-else-if="error">{{ error }}</div>
+    <div v-else-if="error">
+      <p>Ошибка!?</p>
+      {{ error }}
+    </div>
+
   </div>
 
   <!-- Модалка для создания заявки -->
-  <VaModal v-model="showPayoutModal" close-button hide-default-actions
-    max-width="600px">
+  <VaModal v-model="showPayoutModal" close-button hide-default-actions max-width="600px">
     <PayoutModal :bData="bData" :apiData="apiData" @close="showPayoutModal = false" @created="handlePayoutCreated" />
   </VaModal>
 
@@ -85,7 +90,7 @@ import { useBase } from '@/composables/useBase';
 import { useI18n } from 'vue-i18n'
 
 const { formatPrice } = useBase();
-const { t } = useI18n()
+const { t } = useI18n()  // ← t для скрипта
 
 // Реактивные переменные
 const apiData = ref(null)
@@ -97,7 +102,7 @@ const activeTab = ref('coupons')
 
 // Хранилище и уведомления
 const authStore = useAuthStore()
-const { init: initToast } = useToast()
+const { init: initToast } = useToast()  // ← useToast для уведомлений
 
 // Вычисляемые свойства
 const selectedCooperationType = computed(() => {
@@ -159,20 +164,20 @@ const fetchApiData = async () => {
     })
     apiData.value = response.data
   } catch (err) {
-    throw new Error(err.response?.data?.message || $t('errors.data_loading'))
+    throw new Error(err.response?.data?.message || t('errors.data_loading'))  // ← t вместо $t
   }
 }
 
 const loadBusinessData = async () => {
   try {
-    const response = await getBusinessData()
+    const response = await getBusinessData()  // ← ФИКС: Добавь await здесь!
     if (response.success) {
-      bData.value = response
+      bData.value = response  // Теперь response = {success: true, data: {...}}, bData.data?.user сработает
     } else {
-      throw new Error($t('errors.business_data_loading'))
+      throw new Error(t('errors.business_data_loading'))
     }
   } catch (err) {
-    throw new Error(err.message || $t('errors.business_data_loading'))
+    throw new Error(err.message || t('errors.business_data_loading'))
   }
 }
 
@@ -184,10 +189,9 @@ const fetchAllData = async () => {
   } catch (err) {
     error.value = err.message
     initToast({
-      message: err.message,
+      message: t('errors.data_loading'),
       color: 'danger',
     })
-    console.error('Ошибка загрузки данных:', err)
   } finally {
     loading.value = false
   }

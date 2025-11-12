@@ -32,7 +32,12 @@ export async function getUserCoupons() {
 export async function getBusinessData() {
   const authStore = useAuthStore();
 
+  // console.error('API getBusinessData START');  // ← Для дебага
+
   try {
+
+    // console.log('response');
+
     const response = await axios.get('/api/user/business-data', {
       headers: {
         Authorization: `Bearer ${authStore.token}`,
@@ -40,11 +45,14 @@ export async function getBusinessData() {
       },
     });
 
+    // console.log('response DATA:', response);
+    // console.error('API getBusinessData Data:', response.data || []);  // ← Для дебага
     return {
       success: true,
       data: response.data || []
     };
   } catch (error) {
+    console.error('API getBusinessData Error:', error);  // ← Для дебага
     return {
       success: false,
       error: error.response?.data?.message || error.message,

@@ -22,6 +22,8 @@ class PartnerApplication extends Model
         'links'
     ];
 
+    protected $appends = ['status_name'];
+
     protected $casts = [
         'links' => 'array', // Автоматическое преобразование JSON ↔ array
     ];
@@ -52,7 +54,6 @@ class PartnerApplication extends Model
         return collect($settings['partner_types'])->firstWhere('id', $this->partner_type_id);
     }
 
-    // Название статуса
     public function getStatusNameAttribute(): string
     {
         return match ($this->status_id) {
@@ -60,6 +61,7 @@ class PartnerApplication extends Model
             1 => 'in_progress',
             2 => 'accepted',
             3 => 'rejected',
+            9 => 'blocked',
             default => 'unknown',
         };
     }
