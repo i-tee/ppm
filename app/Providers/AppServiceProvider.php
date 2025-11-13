@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\PartnerApplication;
+use App\Models\User;
 use App\Observers\PartnerApplicationObserver;
+use App\Observers\UserObserver;
 use App\Observers\JoomlaOrderObserver;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,5 +26,6 @@ class AppServiceProvider extends ServiceProvider
     {
         //
         PartnerApplication::observe(PartnerApplicationObserver::class);
+        User::observe(UserObserver::class);
     }
 }

@@ -175,6 +175,8 @@
         </div>
       </template>
 
+      <VaProgressBar v-if="submitting" indeterminate color="primary" class="my-2" />
+
     </VaModal>
 
     <div>

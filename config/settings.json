@@ -118,5 +118,8 @@
       "url": "https://avicenna.com.ru/DOCS/ppm/do.pdf",
       "active": true
     }
-  ]
+  ],
+  "global": {
+    "responsible_partnersmail": "it@avicenna.com.ru"
+  }
 }

@@ -1,6 +1,7 @@
 <template>
+
   <!-- Основной контейнер компонента с отступами -->
-  <div class="agent-layout min-w-full">
+  <div v-if="hasAgent" class="agent-layout min-w-full">
 
     <!-- Показываем контент, если данные загружены (apiData и bData не null) -->
     <div v-if="apiData && bData">
@@ -62,10 +63,17 @@
 
     <!-- Показываем ошибку, если загрузка не удалась -->
     <div v-else-if="error">
-      <p>Ошибка!?</p>
       {{ error }}
     </div>
 
+  </div>
+
+  <div v-else>
+    <div class="p-4 my-4 rounded-lg bg-gray-200">
+      <p class="my-2">{{ $t('welcomes.apps.rejected') }}</p>
+      <VaDivider class="my-2" />
+      <p class="my-2">{{ $t('welcomes.apps.rejected_contact') }}</p>
+    </div>
   </div>
 
   <!-- Модалка для создания заявки -->
@@ -88,6 +96,8 @@ import PayoutModal from './Agent/PayoutModal.vue'
 import { getBusinessData } from '@/api/coupons'
 import { useBase } from '@/composables/useBase';
 import { useI18n } from 'vue-i18n'
+import { usePartnerApplications } from '@/composables/usePartnerApplications';
+const { hasApplication } = usePartnerApplications();
 
 const { formatPrice } = useBase();
 const { t } = useI18n()  // ← t для скрипта
@@ -196,6 +206,10 @@ const fetchAllData = async () => {
     loading.value = false
   }
 }
+
+const hasAgent = computed(() => {
+  return hasApplication(2, 2);
+});
 
 // Загружаем данные при монтировании
 onMounted(fetchAllData)
