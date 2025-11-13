@@ -40,6 +40,9 @@
         <p>{{ $t('partnerApplications.appstatus') }}: {{ $t('status.' + partnerApplications[0]?.status_name) }}</p>
         <VaDivider class="my-4" />
       </div>
+
+      <AgentOverview/>
+
     </div>
 
     <!-- For Problem Application --------------------------------------------------------------------------------------->
@@ -101,6 +104,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vuestic-ui';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
+import AgentOverview from './Overview/AgentOverview.vue';
 
 const { t } = useI18n();
 const toast = useToast();

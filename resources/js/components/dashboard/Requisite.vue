@@ -1,6 +1,11 @@
 <template>
   <div>
-    <p class="va-h4 my-1">{{ $t('dashboard.requisites') }}</p>
+
+    <div class="d-head">
+      <p class="va-h4 my-2 mt-4">{{ $t('dashboard.requisites') }}</p>
+      <p>{{ $t('dashboard.requisites_descr') }}</p>
+      <VaDivider class="my-4" />
+    </div>
 
     <div class="my-3">
 
@@ -28,12 +33,12 @@
                 </div>
               </div>
               <div v-else>
-                  <div>
-                    <VaBadge :text="$t('requisites.validate_requisites')" color="secondary" />
-                  </div>
-                  <div>
-                    <span class="text-secondary">{{ $t('requisites.prepare_contract') }}</span>
-                  </div>
+                <div>
+                  <VaBadge :text="$t('requisites.validate_requisites')" color="secondary" />
+                </div>
+                <div>
+                  <span class="text-secondary">{{ $t('requisites.prepare_contract') }}</span>
+                </div>
               </div>
 
               <!-- СОДЕРЖИМОЕ -->
@@ -67,11 +72,13 @@
       </div>
 
       <div v-else-if="requisites">
-        <VaAlert color="info">{{ $t('requisites.no_requisites') }}</VaAlert>
+        <p>{{ $t('requisites.no_requisites') }}</p>
       </div>
 
       <div v-else>
-        <VaAlert color="warning">{{ $t('loading_data') }}</VaAlert>
+        <VaSkeleton />
+        <br>
+        <VaSkeleton />
       </div>
 
       <VaButton color="primary" class="mt-4" @click="openDialog" :disabled="!isDataLoaded">
@@ -80,7 +87,7 @@
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ РЕКВИЗИТОВ -->
-    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" size="large">
+    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" :close-button="true" size="medium">
       <VaProgressBar v-if="submitting" indeterminate color="primary" class="mb-4" />
 
       <VaForm ref="formRef" class="p-4 space-y-4">
@@ -133,6 +140,7 @@
         <div v-else-if="form.partner_type_id" class="text-center text-gray-500 py-4">
           Нет доступных полей для выбранного типа партнера
         </div>
+
       </VaForm>
 
       <template #footer>
@@ -143,6 +151,9 @@
           </VaButton>
         </div>
       </template>
+
+      <VaProgressBar v-if="submitting" indeterminate color="primary" class="my-2" />
+
     </VaModal>
   </div>
 </template>
