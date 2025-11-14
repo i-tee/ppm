@@ -1,5 +1,8 @@
 <template>
   <div class="space-y-4">
+    
+    <VaProgressBar v-if="loadingRequisites" indeterminate color="primary" class="my-2" />
+
     <!-- Заголовок модального окна -->
     <h3 class="va-h3 mb-3">{{ $t('payoutRequest.create.title') }}</h3>
 
@@ -7,7 +10,7 @@
     <!-- VaForm — компонент Vuestic UI с встроенной валидацией и обработкой submit -->
     <VaForm @submit="handleSubmit" v-slot="{ isSubmitting, errors }" :validation-warnings="false">
       <!-- Отображение текущего бонусного баланса пользователя -->
-      <div class="bg-gray-100 p-4 text-center my-2 rounded">
+      <div class="bg-primary p-4 text-center my-2 text-white rounded-md">
         <p>
           {{ $t('coupons.bonusBalance') }}:
           <span class="font-bold">{{ formatPrice(computedBalance) }}</span>
@@ -17,8 +20,8 @@
       <!-- Выбор реквизита для вывода -->
       <div class="my-3">
         <p class="my-3">{{ $t('payoutRequest.create.description_1') }}</p>
-        <VaSelect class="w-full" v-model="form.requisite_id" :label="$t('payoutRequest.fields.requisite')"
-          :options="requisiteOptions" :error="errors?.requisite_id || ''" :disabled="isSubmitting || loadingRequisites"
+        <VaSelect class="w-full text-primary font-bold" v-model="form.requisite_id" :label="$t('payoutRequest.fields.requisite')"
+          :options="requisiteOptions" :disabled="isSubmitting || loadingRequisites"
           text-attribute="text" value-attribute="value" />
       </div>
 
@@ -42,7 +45,7 @@
         <p class="my-3">{{ $t('payoutRequest.fields.amount') }}</p>
         <div class="flex flex-nowrap items-center gap-2 w-full">
           <div class="w-1/4">
-            <VaInput v-model="form.withdrawal_amount" type="number" :error="errors?.withdrawal_amount || ''"
+            <VaInput v-model="form.withdrawal_amount" type="number"
               :disabled="isSubmitting" />
           </div>
           <div class="w-3/4 px-2">
@@ -119,6 +122,8 @@ const form = ref({
   partner_type_id: null,
   note: '',
 })
+
+const min_payout = props.apiData.cooperation_types[1].min_payout
 
 const requisites = ref([])
 const loadingRequisites = ref(true)
@@ -224,6 +229,15 @@ const validateForm = () => {
     return false
   }
 
+  // Проверка: сумма вывода не должна быть мень чем ограничение из настроек
+  if (payload.withdrawal_amount < min_payout) {
+    initToast({
+      message: t('payoutRequest.validateFail.min_payout', { min_payout }),
+      color: 'warning'
+    })
+    return false
+  }
+
   return payload
 }
 
@@ -252,6 +266,7 @@ const handleSubmit = async () => {
       message: t('payoutRequest.create.error') || err.response?.data?.message || t('errors.unexpected_error'),
       color: 'danger'
     })
+    loadingRequisites.value = false
   } finally {
     loadingRequisites.value = false
   }
@@ -270,5 +285,10 @@ watch(() => form.value.requisite_id, (newId) => {
 })
 
 // Загрузка реквизитов при монтировании компонента
-onMounted(fetchRequisites)
+onMounted(
+  fetchRequisites,
+  // console.log('"|||"', props.apiData.cooperation_types[1].min_payout)
+)
+
+// Это вот нормальное состояние, когда я на 289 строке
 </script>

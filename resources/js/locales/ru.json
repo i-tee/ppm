@@ -639,6 +639,7 @@
   },
   "payoutRequest": {
     "validateFail": { 
+      "min_payout": "Сумма вывода должна быть не менее {min_payout}.",
       "requisite_id": "Пожалуйста, выберите реквизит для вывода.",
       "withdrawal_amount": "Пожалуйста, укажите сумму вывода больше нуля.",
       "withdrawal_amount_invalid": "Сумма вывода должна быть положительным числом.",

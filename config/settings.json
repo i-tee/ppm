@@ -15,7 +15,7 @@
       "contract_url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
       "coupon_base_url": "'https://avicenna.com.ru/buy?_prcp='",
       "active": true,
-      "min_payout": 500,
+      "min_payout": 30,
       "max_discount": 20,
       "old_std_discount": 20,
       "bonus_koef": 1.2,
