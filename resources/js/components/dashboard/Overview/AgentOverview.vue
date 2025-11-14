@@ -45,6 +45,7 @@
                 </VaButton>
             </div>
         </div>
+
     </div>
 </template>
 
@@ -62,7 +63,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { hasVerifiedRequisite } = useRequisitesHelper()
 
-const isVerified = ref(false)
+const isVerified = ref(true)
 const apiData = ref(null)
 const bData = ref(null)
 
@@ -111,10 +112,7 @@ const fetchAllData = async () => {
 
     } catch (err) {
         error.value = err.message
-        toast.init({
-            message: t('errors.data_loading'),
-            color: 'danger',
-        })
+        console.log('fetchAllData error:', error)
     } finally {
         loading.value = false
     }
@@ -137,18 +135,9 @@ onMounted(async () => {
     try {
         const result = await hasVerifiedRequisite()
         isVerified.value = result
-        if (result) {
-            toast.init({
-                message: t('requisites.verified_success'),
-                color: 'success',
-                timeout: 3000
-            })
-        }
+
     } catch (err) {
-        toast.init({
-            message: t('errors.verification_check'),
-            color: 'danger'
-        })
+        console.log('hasVerifiedRequisite() error:', err)
     }
 })
 </script>

@@ -44,8 +44,8 @@ export function useRequisitesHelper() {
    */
   async function hasVerifiedRequisite() {
     try {
-      // console.log('🔍 Проверка верифицированных реквизитов...');
-      const response = await axios.get("/api/requisites", {
+
+      const response = await axios.get("/api/user/requisites", {
         // Подставь свой эндпоинт, если другой
         headers: { Authorization: `Bearer ${authStore.token}` },
       });
@@ -55,14 +55,9 @@ export function useRequisitesHelper() {
         ? requisites.some((req) => req.is_verified === true)
         : false;
 
-      // console.log('✅ Результат проверки:', hasVerified);
       return hasVerified;
     } catch (err) {
-      // console.error('❌ Ошибка проверки реквизитов:', err);
-      toast.init({
-        message: $t("requisites.checkError"), // Используй ключ из i18n, напр. "Ошибка проверки реквизитов"
-        color: "danger",
-      });
+      console.error('❌ Ошибка проверки реквизитов:', err);
       return false; // На ошибке возвращаем false, чтоб не блокировало UI
     }
   }

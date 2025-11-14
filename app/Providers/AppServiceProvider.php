@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Observers\PartnerApplicationObserver;
 use App\Observers\UserObserver;
 use App\Observers\JoomlaOrderObserver;
+use App\Observers\RequisiteObserver;
+use App\Models\Requisite;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,5 +29,6 @@ class AppServiceProvider extends ServiceProvider
         //
         PartnerApplication::observe(PartnerApplicationObserver::class);
         User::observe(UserObserver::class);
+        Requisite::observe(RequisiteObserver::class);
     }
 }
