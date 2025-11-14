@@ -52,13 +52,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
-import { useToast } from 'vuestic-ui'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useRequisitesHelper } from '@/composables/requisitesHelper'
 import { getBusinessData } from '@/api/coupons'
 
-const toast = useToast()
 const router = useRouter()
 const authStore = useAuthStore()
 const { hasVerifiedRequisite } = useRequisitesHelper()

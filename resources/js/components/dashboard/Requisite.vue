@@ -328,16 +328,30 @@ async function validateAndSubmit() {
     const response = await axios.post('/api/user/requisites', payload, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
-    toast.init({ message: t('success.requisite_created'), color: 'success' });
+    toast.init({ message: t('requisites.requisite_created'), color: 'success' });
     showDialog.value = false;
     await loadRequisites();
     resetForm();
   } catch (e) {
-    // console.error('❌ Ошибка при создании реквизитов:', e);
-    toast.init({ message: e.response?.data?.message || t('errors.submit_error'), color: 'danger' });
+    let errorMessage = t('errors.submit_error'); // Дефолт
+
+    if (e.response) {
+      if (e.response.status === 422) {
+        // Валидация: берём message или первое из errors
+        errorMessage = e.response.data.message ||
+          Object.values(e.response.data.errors || {})[0]?.[0] || errorMessage;
+      } else {
+        // Любая другая ошибка: берём message от сервера
+        errorMessage = e.response.data.message || errorMessage;
+      }
+    }
+
+    toast.init({ message: t('requisites.unierror'), color: 'danger' });
+
   } finally {
     submitting.value = false;
   }
+
 }
 
 /**
