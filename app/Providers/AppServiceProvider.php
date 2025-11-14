@@ -5,11 +5,11 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Models\PartnerApplication;
 use App\Models\User;
+use App\Models\Requisite;
 use App\Observers\PartnerApplicationObserver;
 use App\Observers\UserObserver;
-use App\Observers\JoomlaOrderObserver;
 use App\Observers\RequisiteObserver;
-use App\Models\Requisite;
+
 
 class AppServiceProvider extends ServiceProvider
 {

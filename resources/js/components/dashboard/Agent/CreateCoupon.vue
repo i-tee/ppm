@@ -44,7 +44,11 @@
           {{ $t('coupons.create_button') }}
         </VaButton>
       </div>
+
+      <VaProgressBar v-if="submitting" indeterminate color="primary" class="my-2" />
+
     </template>
+
   </VaModal>
 
 </template>
@@ -72,6 +76,8 @@ const discountObject = ref({ name: '', value: 15 }) // Данные формы �
 const bonusObject = ref({ name: '', value: 0 }) // Данные формы бонусного купона
 const couponModal = ref(false) // Состояние видимости модального окна
 const activeTab = ref('discountForm') // Текущая активная вкладка (по умолчанию скидка)
+
+const submitting = ref(false);
 
 // Объявляем и получаем пропсы
 const { apiData, bData } = defineProps({
@@ -116,6 +122,9 @@ async function createCoupon() {
   }
 
   try {
+
+    submitting.value = true;
+
     // Выполняем POST-запрос для создания купона (абсолютный путь с ведущим слешем)
     const response = await axios.post('/api/user/coupon/create', creatCouponData, {
       headers: {
@@ -149,6 +158,13 @@ async function createCoupon() {
     })
     // console.error('Ошибка создания купона:', err)
     // console.log('Полный ответ сервера:', err.response) // Для отладки: полный объект ошибки
+
+    submitting.value = false;
+
+  } finally {
+
+    submitting.value = false;
+
   }
 }
 

@@ -6,7 +6,7 @@
       <p>{{ $t('dashboard.requisites_descr') }}</p>
       <VaDivider class="my-4" />
     </div>
-
+    
     <div class="my-3">
 
       <div v-if="requisites && requisites.length">

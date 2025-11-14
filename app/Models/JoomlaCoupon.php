@@ -9,7 +9,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\Partners;
+use App\Helpers\ErrorNotifier;
+use App\Notifications\NewPercentCouponToCompanyNotification;
+use App\Notifications\NewBonusCouponToCompanyNotification;
+use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 
 class JoomlaCoupon extends Model
 {
@@ -959,6 +964,16 @@ class JoomlaCoupon extends Model
             return ['success' => false, 'error' => 'coupon_insert_failed'];
         }
 
+        $couponNotify = static::find($newCouponId);
+        // Отправляем уведомление по типу
+        if ($couponNotify->coupon_type === 0) {
+            static::sendPercentCouponToCompany($couponNotify);
+        } elseif ($couponNotify->coupon_type === 1) {
+            static::sendBonusCouponToCompany($couponNotify);
+        } else {
+            Log::warning("[JoomlaCoupon] Неизвестный тип купона {$couponNotify->coupon_type} для ID {$couponNotify->coupon_id}. Уведомление не отправлено.");
+        }
+
         // Связь с пользователем в jm_avicenna_user_coupons
         try {
             // Проверяем, существует ли запись для пользователя
@@ -1258,5 +1273,62 @@ class JoomlaCoupon extends Model
 
         // Преобразуем массив обратно в коллекцию для совместимости
         return collect($orders);
+    }
+
+    /* Уведомления ------------------------------------------------------------------------------------------------------------------------------------ */
+    /**
+     * Отправляет уведомление о процентном купоне (type=0)
+     */
+    protected static function sendPercentCouponToCompany(JoomlaCoupon $coupon): void
+    {
+        try {
+            // Получаем email из настроек (как в observer)
+            $globalSettings = Partners::getSettings('global');
+            $email = Arr::get($globalSettings, 'responsible_partnersmail') ?: Arr::get($globalSettings, 'global.responsible_partnersmail');
+
+            if (!$email) {
+                ErrorNotifier::notify('Почта компании не найдена для уведомления о процентном купоне');
+                Log::error("[JoomlaCoupon] Email не найден для купона {$coupon->coupon_id}.");
+                return;
+            }
+
+            Log::info("[JoomlaCoupon] Отправка процентного уведомления на $email для купона {$coupon->coupon_id}.");
+
+            Notification::route('mail', $email)->notify(new NewPercentCouponToCompanyNotification($coupon));
+
+            Log::info("[JoomlaCoupon] Уведомление о процентном купоне отправлено на $email.");
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            ErrorNotifier::notify('Ошибка отправки уведомления о процентном купоне: ' . $errorMsg);
+            Log::error("[JoomlaCoupon] Исключение: $errorMsg.");
+        }
+    }
+
+    /**
+     * Отправляет уведомление о бонусном купоне (type=1)
+     */
+    protected static function sendBonusCouponToCompany(JoomlaCoupon $coupon): void
+    {
+        try {
+            // Аналогично для бонусного
+            $globalSettings = Partners::getSettings('global');
+            $email = Arr::get($globalSettings, 'responsible_partnersmail') ?: Arr::get($globalSettings, 'global.responsible_partnersmail');
+
+            if (!$email) {
+                ErrorNotifier::notify('Почта компании не найдена для уведомления о бонусном купоне');
+                Log::error("[JoomlaCoupon] Email не найден для купона {$coupon->coupon_id}.");
+                return;
+            }
+
+            Log::info("[JoomlaCoupon] Отправка бонусного уведомления на $email для купона {$coupon->coupon_id}.");
+
+            Notification::route('mail', $email)->notify(new NewBonusCouponToCompanyNotification($coupon));
+
+            Log::info("[JoomlaCoupon] Уведомление о бонусном купоне отправлено на $email.");
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            ErrorNotifier::notify('Ошибка отправки уведомления о бонусном купоне: ' . $errorMsg);
+            Log::error("[JoomlaCoupon] Исключение: $errorMsg.");
+        }
     }
 }
