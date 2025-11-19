@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Requisite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use App\Helpers\Requisites; // <-- крутой хелпер
+use App\Helpers\Partners;
+use Illuminate\Support\Facades\Validator;
 
 class RequisiteController extends Controller
 {
@@ -65,23 +69,62 @@ class RequisiteController extends Controller
         ]);
     }
 
-    /**
-     * Создать новые реквизиты для пользователя.
-     */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'partner_type_id' => 'required|integer',
-            'inn' => 'nullable|string|max:20' // если хотите сохранить только эту валидацию
-        ]);
+        $partnerTypeId = $request->integer('partner_type_id');
 
-        $data['user_id'] = Auth::id();
+        if (!$partnerTypeId) {
+            abort(422, __('requisites.validation_failed'));
+        }
 
-        // Добавляем все остальные поля
-        $allData = array_merge($data, $request->except(['partner_type_id', 'inn']));
+        $rules = Requisites::getValidationRules($partnerTypeId);
 
-        $requisite = new Requisite($allData);
-        $requisite->save();
+        // Разрешённые типы партнёров
+        $allowedTypes = collect(Partners::getSettings('partner_types') ?? [])
+            ->pluck('id')
+            ->filter()
+            ->values()
+            ->toArray() ?: [1, 2, 3, 4];
+
+        $rules['partner_type_id'] = ['required', 'integer', 'in:' . implode(',', $allowedTypes)];
+
+        // Человекочитаемые названия полей — берём label из конфига и переводим правильно
+        $attributes = collect(Requisites::getFieldsForPartnerType($partnerTypeId))
+            ->pluck('label', 'name')  // ключ — name поля, значение — label из конфига ('requisites.birth_date')
+            ->map(fn($label) => __($label))  // переводим каждый label
+            ->toArray();
+
+        $attributes['partner_type_id'] = __('requisites.partner_type');
+
+        // Сообщения об ошибках — только через __()
+        $messages = [
+            'partner_type_id.in' => __('requisites.invalid_partner_type'),
+
+            'required' => __('requisites.required'), // Поле «:label» обязательно для заполнения.
+            'email'    => __('requisites.email'),
+            'numeric'  => __('requisites.numeric'),
+            'date'     => __('requisites.date'),
+            'regex'    => __('requisites.regex'),
+        ];
+
+        // Если в конфиге поля есть validation_message — тоже через __()
+        foreach (Requisites::getFieldsForPartnerType($partnerTypeId) as $field) {
+            if (!empty($field['validation_message'])) {
+                $messages["{$field['name']}.regex"] = __($field['validation_message']);
+            }
+        }
+
+        $validator = Validator::make($request->all(), $rules, $messages, $attributes);
+
+        if ($validator->fails()) {
+            throw ValidationException::withMessages($validator->errors()->toArray());
+        }
+
+        $cleanData = Requisites::filterDataForPartnerType($request->all(), $partnerTypeId);
+        $cleanData['user_id'] = Auth::id();
+        $cleanData['partner_type_id'] = $partnerTypeId;
+
+        $requisite = Requisite::create($cleanData);
 
         return response()->json($requisite, 201);
     }

@@ -6,7 +6,7 @@
       <p>{{ $t('dashboard.requisites_descr') }}</p>
       <VaDivider class="my-4" />
     </div>
-    
+
     <div class="my-3">
 
       <div v-if="requisites && requisites.length">
@@ -332,23 +332,37 @@ async function validateAndSubmit() {
     showDialog.value = false;
     await loadRequisites();
     resetForm();
-  } catch (e) {
-    let errorMessage = t('errors.submit_error'); // Дефолт
+  }
+  catch (e) {
+    submitting.value = false;
 
-    if (e.response) {
-      if (e.response.status === 422) {
-        // Валидация: берём message или первое из errors
-        errorMessage = e.response.data.message ||
-          Object.values(e.response.data.errors || {})[0]?.[0] || errorMessage;
-      } else {
-        // Любая другая ошибка: берём message от сервера
-        errorMessage = e.response.data.message || errorMessage;
+    if (e.response?.status === 422) {
+      const errors = e.response.data.errors || {};
+
+      // Собираем все ошибки в один список
+      const errorList = Object.values(errors).flat(); // все сообщения в массив
+
+      // Основное сообщение
+      toast.init({
+        message: t('requisites.validation_failed'),
+        color: 'danger',
+        duration: 5000,
+      });
+
+      // Детальный список ошибок
+      if (errorList.length > 0) {
+        const detailed = errorList.map(err => `• ${err}`).join('\n');
+        toast.init({
+          message: detailed,
+          color: 'danger',
+          duration: 10000,
+        });
       }
+    } else {
+      toast.init({ message: t('requisites.unierror'), color: 'danger' });
     }
-
-    toast.init({ message: t('requisites.unierror'), color: 'danger' });
-
-  } finally {
+  }
+  finally {
     submitting.value = false;
   }
 
