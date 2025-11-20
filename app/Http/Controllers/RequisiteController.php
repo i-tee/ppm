@@ -134,13 +134,23 @@ class RequisiteController extends Controller
      */
     public function destroy($id)
     {
-        $requisite = Requisite::where('user_id', Auth::id())->findOrFail($id);
+        $user = Auth::user();
+        $isAdmin = $user->hasAccessLevel(1) || $user->hasAccessLevel(2);
 
-        // Устанавливаем is_active = false и сохраняем
+        $query = Requisite::query();
+
+        // Если не админ — жёстко фильтруем по своему user_id
+        if (!$isAdmin) {
+            $query->where('user_id', $user->id);
+        }
+
+        // Теперь ищем с учётом фильтра (или без, если админ)
+        $requisite = $query->findOrFail($id);
+
+        // Деактивация + мягкое удаление
         $requisite->is_active = false;
         $requisite->save();
-
-        $requisite->delete(); // Это установит deleted_at благодаря SoftDeletes
+        $requisite->delete();
 
         return response()->json([
             'message' => 'Requisite deleted successfully',

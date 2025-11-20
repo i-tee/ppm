@@ -215,7 +215,10 @@ const deleteRequisite = async (id) => {
   if (!confirm(t('requisites.confirm_delete'))) return;
 
   try {
-    await axios.delete(`/api/user/requisites/${id}`);
+    await axios.delete(`/api/user/requisites/${id}`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
+
     if (showModal.value && selectedRequisite.value?.id === id) {
       showModal.value = false;
       selectedRequisite.value = null;
