@@ -158,21 +158,43 @@ class Requisites
      * @param int $partnerTypeId
      * @return array
      */
+    // В классе Requisites, обновим метод getValidationRules:
+
     public static function getValidationRules(int $partnerTypeId): array
     {
         $rules = [];
+        $customRules = [
+            // Паспортные данные
+            'passport_series' => ['regex:/^\d{4}$/'],
+            // 'passport_number' => ['regex:/^\d{6}$/'],
+            'passport_issued_by_code' => ['regex:/^\d{3}-\d{3}$/'],
+            // 'passport_snils' => ['regex:/^\d{3}-\d{3}-\d{3} \d{2}$/'],
+
+            // Банковские данные
+            'bank_card_number' => ['regex:/^\d{16}$/'],
+            'bank_bik' => ['regex:/^\d{9}$/'],
+            // 'bank_phone_for_sbp' => ['regex:/^\+7\d{10}$/'],
+
+            // Организационные данные
+            'org_ogrn' => ['regex:/^\d{13}$/'],
+            'org_ogrnip' => ['regex:/^\d{15}$/'],
+            'org_kpp' => ['regex:/^\d{9}$/'],
+
+            // Email с кастомной проверкой
+            'org_email' => ['email:rfc,dns'],
+        ];
 
         foreach (self::getFieldsForPartnerType($partnerTypeId) as $field) {
             $fieldRules = [];
 
-            // Добавляем правило обязательности
+            // Обязательность
             if ($field['required']) {
                 $fieldRules[] = 'required';
             } else {
                 $fieldRules[] = 'nullable';
             }
 
-            // Добавляем тип поля
+            // Базовые типы
             switch ($field['type']) {
                 case 'number':
                     $fieldRules[] = 'numeric';
@@ -187,9 +209,19 @@ class Requisites
                     $fieldRules[] = 'string';
             }
 
-            // Добавляем кастомные правила валидации если есть
-            if (isset($field['validation'])) {
-                $fieldRules[] = $field['validation'];
+            // Кастомные правила для конкретных полей
+            if (isset($customRules[$field['name']])) {
+                $fieldRules = array_merge($fieldRules, $customRules[$field['name']]);
+            }
+
+            // Минимальная/максимальная длина для текстовых полей
+            if (in_array($field['type'], ['text', 'textarea'])) {
+                $fieldRules[] = 'max:500';
+            }
+
+            // Для числовых полей - максимальное значение
+            if ($field['type'] === 'number') {
+                $fieldRules[] = 'max:9999999999';
             }
 
             $rules[$field['name']] = $fieldRules;

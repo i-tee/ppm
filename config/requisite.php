@@ -142,7 +142,7 @@ return [
             'name' => 'org_inn',
             'required' => true,
             'visible' => [1, 2, 3, 4],
-            'type' => 'number',
+            'type' => 'text',
             'label' => 'requisites.org_inn',
             'group' => 'organization',
             'order' => 130
@@ -178,7 +178,7 @@ return [
             'name' => 'org_ogrnip',
             'required' => true,
             'visible' => [3, 4],
-            'type' => 'number',
+            'type' => 'text',
             'label' => 'requisites.org_ogrnip',
             'group' => 'organization',
             'order' => 170

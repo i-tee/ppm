@@ -96,18 +96,36 @@ class RequisiteController extends Controller
 
         $attributes['partner_type_id'] = __('requisites.partner_type');
 
-        // Сообщения об ошибках — только через __()
         $messages = [
             'partner_type_id.in' => __('requisites.invalid_partner_type'),
 
-            'required' => __('requisites.required'), // Поле «:label» обязательно для заполнения.
-            'email'    => __('requisites.email'),
-            'numeric'  => __('requisites.numeric'),
-            'date'     => __('requisites.date'),
-            'regex'    => __('requisites.regex'),
+            // Общие сообщения
+            'required' => __('requisites.field_required'),
+            'email' => __('requisites.invalid_email'),
+            'numeric' => __('requisites.must_be_numeric'),
+            'date' => __('requisites.invalid_date'),
+            'regex' => __('requisites.invalid_format'),
+            'max' => __('requisites.too_long'),
         ];
 
-        // Если в конфиге поля есть validation_message — тоже через __()
+        // Добавим специфичные сообщения для каждого поля
+        $fieldSpecificMessages = [
+            'passport_series.regex' => __('requisites.passport_series_format'),
+            'passport_number.regex' => __('requisites.passport_number_format'),
+            'passport_issued_by_code.regex' => __('requisites.issue_code_format'),
+            'passport_snils.regex' => __('requisites.snils_format'),
+            'bank_card_number.regex' => __('requisites.card_number_format'),
+            'bank_bik.regex' => __('requisites.bik_format'),
+            'bank_phone_for_sbp.regex' => __('requisites.phone_format'),
+            'org_inn.regex' => __('requisites.inn_format'),
+            'org_ogrn.regex' => __('requisites.ogrn_format'),
+            'org_ogrnip.regex' => __('requisites.ogrnip_format'),
+            'org_kpp.regex' => __('requisites.kpp_format'),
+        ];
+
+        $messages = array_merge($messages, $fieldSpecificMessages);
+
+        // Добавим сообщения из конфига
         foreach (Requisites::getFieldsForPartnerType($partnerTypeId) as $field) {
             if (!empty($field['validation_message'])) {
                 $messages["{$field['name']}.regex"] = __($field['validation_message']);
@@ -117,6 +135,13 @@ class RequisiteController extends Controller
         $validator = Validator::make($request->all(), $rules, $messages, $attributes);
 
         if ($validator->fails()) {
+            \Log::error('[valid] :: Requisite validation failed', [
+                'user_id' => Auth::id(),
+                'partner_type_id' => $partnerTypeId,
+                'errors' => $validator->errors()->toArray(),
+                'data' => $request->except(['password', 'token']) // Безопасное логирование
+            ]);
+
             throw ValidationException::withMessages($validator->errors()->toArray());
         }
 

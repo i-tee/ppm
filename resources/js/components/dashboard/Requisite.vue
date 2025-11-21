@@ -229,19 +229,32 @@ const canSubmit = computed(() => {
  */
 const getFieldRules = (field) => {
   const rules = [];
+  const { t } = useI18n();
 
   if (field.required) {
-    // Для разных типов полей разные правила обязательности
     if (field.type === 'checkbox') {
-      // Для чекбоксов проверяем что значение true
       rules.push((v) => v === true || t('validation.required'));
     } else if (field.type === 'select') {
-      // Для селектов проверяем что значение не пустое
       rules.push((v) => !!v || t('validation.required'));
     } else {
-      // Для остальных полей стандартная проверка
       rules.push((v) => !!v || t('validation.required'));
     }
+  }
+
+  // Добавим специфичные правила для разных типов полей
+  switch (field.name) {
+    case 'org_inn':
+      rules.push((v) => !v || (v.length === 10 || v.length === 12) || t('requisites.inn_format'));
+      break;
+    case 'bank_card_number':
+      rules.push((v) => !v || /^\d{16}$/.test(v) || t('requisites.card_number_format'));
+      break;
+    case 'passport_series':
+      rules.push((v) => !v || /^\d{4}$/.test(v) || t('requisites.passport_series_format'));
+      break;
+    case 'passport_number':
+      rules.push((v) => !v || /^\d{6}$/.test(v) || t('requisites.passport_number_format'));
+      break;
   }
 
   return rules;
