@@ -146,7 +146,6 @@ class PayoutRequestController extends Controller
                 'data' => $payoutRequest,  // Заявка с отношениями и status_text
                 'message' => trans('payoutRequest.create.success'), // Локализованное сообщение успеха
             ], 201);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Обработка ошибок валидации (422 Unprocessable Entity)
             return response()->json([
@@ -187,5 +186,28 @@ class PayoutRequestController extends Controller
     public function destroy(PayoutRequest $payoutRequest)
     {
         // TODO: Деактивация (is_active = false, status=99)
+    }
+
+    /** Это раздел методов для Админа **/
+
+    public function adminIndex(Request $request)
+    {
+        $query = PayoutRequest::active();
+
+        // Фильтр по статусу (если передан)
+        $statusId = $request->get('status_id');
+        if ($statusId !== null) {
+            $query->where('status', $statusId);
+        }
+
+        // Получаем данные с пагинацией
+        $payoutRequests = $query->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 100));
+
+        return response()->json([
+            'success' => true,
+            'data' => $payoutRequests,
+            'message' => trans('payoutRequest.admin_list.success'),
+        ]);
     }
 }

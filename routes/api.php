@@ -32,6 +32,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/payout-requests', [PayoutRequestController::class, 'store']);
 
+    Route::get('/admin/payout-requests', [PayoutRequestController::class, 'adminIndex']);  // Новый метод для админа
+    Route::get('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminShow']);  // Новый метод для деталей
+    Route::put('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminUpdate']);  // Обновление статуса
+    Route::delete('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminDestroy']);  // Удаление
+
     Route::get('/user/requisites', [RequisiteController::class, 'index']);
     Route::get('/user/requisites-all', [RequisiteController::class, 'all']);
     Route::put('/user/requisites/{id}/verify', [RequisiteController::class, 'verify']);
