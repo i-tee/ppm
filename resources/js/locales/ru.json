@@ -81,6 +81,10 @@
   "logout": "Выход",
   "requisites": {
     "add": "Добавить",
+    "passport_series_format": "Серия паспорта должна быть в формате XXXX (4 цифры)",
+    "passport_number_format": "Номер паспорта должен быть в формате XXXXXX (6 цифр)",
+    "inn_format": "ИНН должен состоять из 10 или 12 цифр",
+    "card_number_format": "Номер карты должен быть 16-значным числом",
     "validation_failed": "Такие данные не могут быть приняты",
     "fix_errors": "Исправьте ошибки:",
     "myrequisites": "Мои реквизиты",

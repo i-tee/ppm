@@ -8,8 +8,8 @@ import { useAuthStore } from '@/stores/auth';
  * Composable для работы с заявками партнёра
  */
 export function usePartnerApplications() {
-  const authStore = useAuthStore();
 
+  const authStore = useAuthStore();
   // Локальное хранилище заявок (если нужно отдельно от user)
   const applications = ref([]);
 
