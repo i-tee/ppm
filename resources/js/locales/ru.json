@@ -232,6 +232,7 @@
     "tax_system_patent": "Патентная система"
   },
   "dashboard": {
+    "payout_resolve": "Выплаты",
     "current_balance": "Текущий баланс",
     "total_accruals": "Общие начисления",
     "orders_count": "Количество заказов",

@@ -42,10 +42,19 @@
     </va-sidebar-item-content>
   </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'RequisiteVerification' }" :active="$route.name === 'RequisiteVerification'" v-if="isAdmin">
+  <va-sidebar-item :to="{ name: 'RequisiteVerification' }" :active="$route.name === 'RequisiteVerification'"
+    v-if="isAdmin">
     <va-sidebar-item-content>
       <va-icon name="business" />
       <va-sidebar-item-title>{{ $t('dashboard.requisite_verification') }}</va-sidebar-item-title>
+    </va-sidebar-item-content>
+  </va-sidebar-item>
+
+  <va-sidebar-item :to="{ name: 'PayoutResolve' }" :active="$route.name === 'PayoutResolve'"
+    v-if="isAdmin">
+    <va-sidebar-item-content>
+      <va-icon name="business" />
+      <va-sidebar-item-title>{{ $t('dashboard.payout_resolve') }}</va-sidebar-item-title>
     </va-sidebar-item-content>
   </va-sidebar-item>
 
@@ -57,7 +66,8 @@
   </va-sidebar-item> -->
 
   <div v-for="type in apiData?.cooperation_types" :key="type.id">
-    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }" :active="$route.name === type.route">
+    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }"
+      :active="$route.name === type.route">
       <va-sidebar-item-content>
         <!-- <va-icon name="work" /> -->
         <va-sidebar-item-title>
@@ -68,8 +78,9 @@
   </div>
 
   <VaDivider v-if="isActive && hasApprovedApplications" class="my-4" />
-  
-  <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'" v-if="isActive && hasApprovedApplications">
+
+  <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'"
+    v-if="isActive && hasApprovedApplications">
     <va-sidebar-item-content>
       <va-icon name="note" />
       <va-sidebar-item-title>{{ $t('dashboard.requisite') }}</va-sidebar-item-title>

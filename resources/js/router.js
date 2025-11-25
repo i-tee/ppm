@@ -4,7 +4,6 @@ import Register from "./components/Register.vue";
 import Dashboard from "./components/Dashboard.vue";
 import Overview from "./components/dashboard/Overview.vue";
 import Promocodes from "./components/dashboard/Promocodes.vue";
-// import Dev from "./components/dashboard/Dev.vue";
 import Influencer from "./components/dashboard/Influencer.vue";
 import Agent from "./components/dashboard/Agent.vue";
 import Requisite from "./components/dashboard/Requisite.vue";
@@ -12,12 +11,14 @@ import Wholesale from "./components/dashboard/Wholesale.vue";
 import Distributor from "./components/dashboard/Distributor.vue";
 import PartnerApplications from "./components/dashboard/PartnerApplications.vue";
 import RequisiteVerification from "./components/dashboard/RequisiteVerification.vue";
+import PayoutResolve from "./components/dashboard/PayoutResolve.vue";
 import Types from "./components/dashboard/Types.vue";
 import ReferralLinks from "./components/dashboard/ReferralLinks.vue";
 import Account from "./components/dashboard/Account.vue";
 import ResetPassword from "./components/ResetPassword.vue";
 import NotFound from "./components/NotFound.vue";
 import { useAuthStore } from "./stores/auth";
+// import Dev from "./components/dashboard/Dev.vue";
 
 const routes = [
   {
@@ -92,6 +93,11 @@ const routes = [
         path: "requisite-verification",
         name: "RequisiteVerification",
         component: RequisiteVerification,
+      },
+      {
+        path: "payout-resolve",
+        name: "PayoutResolve",
+        component: PayoutResolve,
       },
       {
         path: "partner-applications",
