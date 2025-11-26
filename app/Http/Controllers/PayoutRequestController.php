@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\Partners;
 use App\Models\Requisite;
+use App\Models\User;
 use App\Http\Controllers\UserCouponController;
 use Illuminate\Http\JsonResponse;
 
@@ -209,5 +210,98 @@ class PayoutRequestController extends Controller
             'data' => $payoutRequests,
             'message' => trans('payoutRequest.admin_list.success'),
         ]);
+    }
+    /** Это раздел методов для Админа **/
+
+    public function adminIndexPrepared(Request $request)
+    {
+        abort_unless(
+            auth()->user()->hasAccessLevel(1) ||
+                auth()->user()->hasAccessLevel(2),
+            403,
+            'Permission denied – no access rights'
+        );
+
+        $query = PayoutRequest::active()
+            ->with(['user', 'requisite']);   // <-- жадная загрузка
+
+        if ($request->filled('status_id')) {
+            $query->where('status', $request->status_id);
+        }
+
+        $payoutRequests = $query
+            ->latest()
+            ->paginate($request->get('per_page', 100));
+
+        $partnerTypes = $partnerTypes = Partners::getSettings('partner_types');
+
+        /*  теперь в каждом элементе коллекции уже есть
+        $payout->user  и  $payout->requisite
+        можно сразу вернуть коллекцию, а можно
+        отдать только нужные поля через API-ресурс */
+        return response()->json([
+            'success' => true,
+            'data'    => $payoutRequests,
+            'partnerTypes'    => $partnerTypes,
+            'message' => trans('payoutRequest.admin_list.success'),
+        ]);
+    }
+
+    /**
+     * Обновляет заявку на вывод: подтверждает выплату (status=PAID).
+     * Устанавливает approver_id (ID текущего админа), proof_link (ссылка на чек),
+     * note (комментарий). Только для админов (уровни 1-2).
+     * Требует: proof_link (строка), note (опционально, max:1000).
+     *
+     * @param Request $request
+     * @param PayoutRequest $payoutRequest
+     * @return JsonResponse
+     */
+    public function adminReceived(Request $request, PayoutRequest $payoutRequest)
+    {
+        // Проверяем права: только админы (уровни 1 или 2)
+        abort_unless(
+            auth()->user()->hasAccessLevel(1) || auth()->user()->hasAccessLevel(2),
+            403,
+            trans('payoutRequest.permission_denied') // Добавь ключ в локализацию, если нет
+        );
+
+        $validated = $request->validate([
+            'proof_link' => 'required|url|max:500', // Ссылка на чек (URL, max 500 символов)
+            'note' => 'nullable|string|max:1000', // Комментарий (опционально)
+        ]);
+
+        try {
+            // Обновляем запись
+            $payoutRequest->update([
+                'status' => PayoutRequest::STATUS_PAID,
+                'approver_id' => Auth::id(), // ID текущего админа
+                'proof_link' => $validated['proof_link'],
+                'note' => $validated['note'] ?? null,
+            ]);
+
+            // Перезагружаем с отношениями для ответа
+            $payoutRequest->load(['user', 'approver', 'requisite']);
+            $payoutRequest->append('status_text');
+
+            return response()->json([
+                'success' => true,
+                'data' => $payoutRequest,
+                'message' => trans('payoutRequest.received.success'), // Добавь ключ: "Выплата подтверждена"
+            ], 200);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.validate.failed'), // "Ошибка валидации"
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.error.internal'), // "Внутренняя ошибка сервера"
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

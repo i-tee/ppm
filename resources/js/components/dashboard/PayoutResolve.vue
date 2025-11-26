@@ -1,38 +1,64 @@
 <template>
   <div class="va-table-responsive">
-    <table class="va-table">
+    <table class="va-table va-table-payoutRequest">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Name</th>
-          <th>Name</th>
-          <th>Name</th>
-          <th>Name</th>
-          <th>Name</th>
-          <th>Name</th>
+          <th>{{ $t('payoutRequest.amount') }}</th> <!-- Сумма к выводу -->
+          <th>{{ $t('payoutRequest.user_name') }}</th> <!-- Имя пользователя -->
+          <th>{{ $t('payoutRequest.commission') }}</th> <!-- Комиссия -->
+          <th>{{ $t('payoutRequest.date') }}</th> <!-- Дата создания -->
+          <th>{{ $t('payout') }}</th> <!-- Тип партнера -->
         </tr>
       </thead>
       <tbody>
         <tr v-for="payout in payouts" :key="payout.id">
-          <td>{{ payout.user_id }}</td>
-          <td>{{ payout.requisite_id }}</td>
-          <td>{{ formatPrice(payout.withdrawal_amount) }}</td>
           <td>{{ formatPrice(payout.received_amount) }}</td>
-          <td>{{ formatPrice(payout.commission_amount) }}</td>
-          <td>{{ payout.commission_percentage }}%</td>
+          <td>
+            <VaAvatar :src="payout.user.avatar"></VaAvatar>
+            <span>{{ payout.user.name }}</span>
+          </td>
+          <td>
+            <VaBadge color="secondary" :offset="[16, 0]" text-color="#fff" overlap
+              :title="formatPrice(payout.commission_amount)"
+              :text="'-' + Math.round(payout.commission_percentage) + '%'">
+              <span>{{ formatPrice(payout.withdrawal_amount) }}</span>
+            </VaBadge>
+          </td>
           <td>{{ formatDate(payout.created_at) }}</td>
+          <td>
+            <div>
+              <VaButton icon="assignment" icon-color="#ffffff50" @click="openRequisitFullModal(payout)">
+                <span>{{t('partners.partner_types.' + partnerTypes.find(item => item.id ===
+                  payout.requisite?.partner_type_id)?.name || 'error')}}</span>
+              </VaButton>
+            </div>
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
   <hr>
   <pre>
+    {{ partnerTypes }}
+  </pre>
+  <pre>
     {{ payouts }}
   </pre>
+
+  <VaModal v-model="showRequisitFullModal" :hide-default-actions="true" :close-button="true" size="medium">
+    <RequisitFullModal :checkedPayout="checkedPayout" />
+    <template #footer>
+      <div class="flex justify-end space-x-4">
+        <VaButton @click="showRequisitFullModal = false" preset="secondary" color="secondary">{{ $t('modal.cancel') }}
+        </VaButton>
+      </div>
+    </template>
+  </VaModal>
 
 </template>
 
 <script setup>
+import RequisitFullModal from '@/components/parts/RequisitFullModal.vue';
 import { useBase } from '@/composables/useBase';
 import { useAuthStore } from '@/stores/auth';
 import { ref, computed, onMounted } from 'vue';
@@ -40,7 +66,13 @@ import { useToast } from 'vuestic-ui';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 
-const {formatPrice, formatDate} = useBase();
+function openRequisitFullModal(payout) {
+
+  checkedPayout.value = payout;
+  showRequisitFullModal.value = true;
+}
+
+const { formatPrice, formatDate } = useBase();
 
 const props = defineProps({
   user: {
@@ -57,8 +89,11 @@ const isAdmin = computed(() => {
   return props.user.effective_access_levels && (props.user.effective_access_levels.includes(1) || props.user.effective_access_levels.includes(2));
 });
 
+const checkedPayout = ref(false);
+const showRequisitFullModal = ref(false);
 const payoutRequests = ref([]);
 const payouts = ref([]);
+const partnerTypes = ref([]);
 
 const fetchPayoutRequests = async () => {
   if (!isAdmin.value) return;
@@ -68,7 +103,7 @@ const fetchPayoutRequests = async () => {
       statu_id: ''
     };
 
-    const response = await axios.get('/api/admin/payout-requests', {
+    const response = await axios.get('/api/admin/payout-requests-prepared', {
       headers: {
         Authorization: `Bearer ${authStore.token}`
       },
@@ -76,8 +111,9 @@ const fetchPayoutRequests = async () => {
     });
 
     payoutRequests.value = response.data
+    partnerTypes.value = response.data?.partnerTypes
     toast.init({ message: 'Complate', color: 'danger' })
-    payouts.value = payoutRequests.value.data.data
+    payouts.value = payoutRequests.value.data?.data
 
   } catch (error) {
     toast.init({ message: t('errors.fetch_failed'), color: 'danger' });
@@ -92,3 +128,9 @@ onMounted(async () => {
 });
 
 </script>
+
+<style>
+table.va-table.va-table-payoutRequest td {
+  padding: 16px 20px;
+}
+</style>

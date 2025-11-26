@@ -440,6 +440,7 @@
       "selfemployed_desc": "Самозанятый",
       "entrepreneur_desc": "Индивидуальный предприниматель",
       "company_desc": "Юридическое лицо",
+      "undefined": "Неопознан",
       "individual": "Физическое лицо",
       "self-employed": "Самозанятый",
       "entrepreneur": "Предприниматель",
@@ -450,7 +451,8 @@
     "submit": "Отправить",
     "cancel": "Отмена",
     "brake": "Отмена",
-    "save": "Сохранить"
+    "save": "Сохранить",
+    "save_received": "Сохранить и отчитаться о выплате"
   },
   "form": {
     "full_name": "ФИО",
@@ -646,7 +648,21 @@
     "close": "Закрыть"
   },
   "payoutRequest": {
-    "validateFail": { 
+    "confirm_payout": "Подтвердить выплату",
+    "need_proof": "Нужен чек!",
+    "user_name": "Пользователь",
+    "date": "Дата",
+    "amount": "Сумма",
+    "received": "Получено",
+    "partner_type": "Тип партнера",
+    "actions": "Действия",
+    "proof_description": "Документ об операции (платёжное поручение, чек, справка и т.п.). Разместите в корпоративном облачном хранилище (Яндекс.Диск)",
+    "proof_link_instruction": "Ссылку на документ укажите тут:",
+    "proof_link_label": "Ссылка на чек:",
+    "proof_link_placeholder": "https://disk.yandex.ru/...",
+    "note_label": "Тут можно написать комментарий к платежу:",
+    "note_placeholder": "Комментарий к выплате...",
+    "validateFail": {
       "min_payout": "Сумма вывода должна быть не менее {min_payout}.",
       "requisite_id": "Пожалуйста, выберите реквизит для вывода.",
       "withdrawal_amount": "Пожалуйста, укажите сумму вывода больше нуля.",
