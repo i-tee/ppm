@@ -177,7 +177,7 @@ return [
         [
             'name' => 'org_ogrnip',
             'required' => true,
-            'visible' => [3, 4],
+            'visible' => [3],
             'type' => 'text',
             'label' => 'requisites.org_ogrnip',
             'group' => 'organization',
@@ -187,7 +187,7 @@ return [
             'name' => 'org_ogrn',
             'required' => true,
             'visible' => [4],
-            'type' => 'number',
+            'type' => 'text',
             'label' => 'requisites.org_ogrn',
             'group' => 'organization',
             'order' => 180

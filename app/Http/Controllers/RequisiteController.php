@@ -98,7 +98,6 @@ class RequisiteController extends Controller
 
         $messages = [
             'partner_type_id.in' => __('requisites.invalid_partner_type'),
-
             // Общие сообщения
             'required' => __('requisites.field_required'),
             'email' => __('requisites.invalid_email'),
