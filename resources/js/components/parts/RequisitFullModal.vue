@@ -1,4 +1,5 @@
 <template>
+
   <p class="va-h4">{{ $t('payout') }}</p>
   <p class="va-h2 my-3">{{ formatPrice(props.checkedPayout.received_amount) }}</p>
 
@@ -28,21 +29,24 @@
   <VaModal v-model="showReceived" :hide-default-actions="true" :close-button="true" size="small">
     <template #header>
       <p class="va-h4">{{ $t('payoutRequest.need_proof') }}</p> <!-- "Нужен чек!" -->
-      <p>{{ $t('payoutRequest.proof_description') }}</p> <!-- "Документ от операции... Яндекс.Диск" -->
+      <p>{{ $t('payoutRequest.proof_description') }} <b>«{{ $t('payoutRequest.receipt_path_folder') }}»</b></p> <!-- "Документ от операции... Яндекс.Диск" -->
+      <div class="va-text-block mt-2">{{ $t('payoutRequest.receipt_path') }}<b>{{ $t('payoutRequest.receipt_path_folder') }}</b></div>
     </template>
     <div>
       <div class="my-3">
-        <p>{{ $t('payoutRequest.proof_link_label') }}</p> <!-- "Ссылка на чек:" -->
+        <p class="font-bold">{{ $t('payoutRequest.proof_link_label') }}</p> <!-- "Ссылка на чек:" -->
         <VaInput
           v-model="proofLink"
           :placeholder="$t('payoutRequest.proof_link_placeholder')"
           type="url"
+          class="w-full"
         />
-        <p class="mt-2">{{ $t('payoutRequest.note_label') }}</p> <!-- "Тут можно написать комментарий к платежу:" -->
+        <p class="mt-2 font-bold">{{ $t('payoutRequest.note_label') }}</p> <!-- "Тут можно написать комментарий к платежу:" -->
         <VaInput
           v-model="note"
           :placeholder="$t('payoutRequest.note_placeholder')"
           type="textarea"
+          class="w-full"
         />
       </div>
     </div>
@@ -99,29 +103,36 @@ const filledFields = computed(() => {
 })
 
 const handleSaveProof = async () => {
-
-    console.log('step 1:: ', proofLink.value)
+  // console.log('step 1:: ', proofLink.value)
 
   if (!proofLink.value) {
-    toast.init({ message: t('payoutRequest.validate.proof_link_required'), color: 'danger' })
-    console.log('step 2:: ', proofLink.value)
+    toast.init({ message: t('payoutRequest.proof_link_required'), color: 'danger' })
+    // console.log('step 2:: ', proofLink.value)
     return
   }
 
-  console.log('step 3:: ', proofLink.value)
+  // console.log('step 3:: ', proofLink.value)
 
   try {
-    const response = await axios.put(`/api/admin/payout-requests-received/${props.checkedPayout.id}`, {
+    // Собираем данные в отдельную переменную для дебага
+    const data = {
       proof_link: proofLink.value,
       note: note.value || null
-    }, {
+    }
+
+    // console.log('Sending data:', data); // Лог для проверки, что улетает
+    // console.log('props.checkedPayout.id:', props.checkedPayout.id); // Лог для проверки, что улетает
+
+    const response = await axios.put(`/api/admin/payout-requests-received/${props.checkedPayout.id}`, data, {
       headers: {
         Authorization: `Bearer ${authStore.token}`
       }
     })
 
+    // console.log('Response from server:', response); // Лог ответа (как у тебя)
+
     if (response.data.success) {
-      toast.init({ message: t('payoutRequest.received.success'), color: 'success' })
+      toast.init({ message: t('payoutRequest.received_success'), color: 'success' })
       emit('payoutUpdated') // Уведомляем родителя об обновлении
       showReceived.value = false
       proofLink.value = ''
@@ -130,6 +141,7 @@ const handleSaveProof = async () => {
       toast.init({ message: response.data.message || t('errors.update_failed'), color: 'danger' })
     }
   } catch (error) {
+    // console.error('Error details:', error); // Добавил лог ошибки для дебага
     toast.init({ message: t('errors.update_failed'), color: 'danger' })
   }
 }

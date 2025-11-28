@@ -12,6 +12,7 @@ use App\Models\Requisite;
 use App\Models\User;
 use App\Http\Controllers\UserCouponController;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Контроллер для управления заявками на вывод средств (PayoutRequest).
@@ -223,7 +224,7 @@ class PayoutRequestController extends Controller
         );
 
         $query = PayoutRequest::active()
-            ->with(['user', 'requisite']);   // <-- жадная загрузка
+            ->with(['user', 'requisite'])->where('status', PayoutRequest::STATUS_CREATED);   // <-- жадная загрузка
 
         if ($request->filled('status_id')) {
             $query->where('status', $request->status_id);
@@ -257,7 +258,7 @@ class PayoutRequestController extends Controller
      * @param PayoutRequest $payoutRequest
      * @return JsonResponse
      */
-    public function adminReceived(Request $request, PayoutRequest $payoutRequest)
+    public function adminReceived(Request $request, $id)
     {
         // Проверяем права: только админы (уровни 1 или 2)
         abort_unless(
@@ -266,12 +267,28 @@ class PayoutRequestController extends Controller
             trans('payoutRequest.permission_denied') // Добавь ключ в локализацию, если нет
         );
 
+        $payoutRequest = PayoutRequest::findOrFail($id);  // Кидает 404, если не найдено
+
+        // Лог для дебага: что пришло в запросе
+        // Log::info('Payout received request payout', [
+        //     'payout_id' => $payoutRequest->id,
+        //     'approver_id' => Auth::id(),
+        //     'input_data' => $request->all()
+        // ]);
+
         $validated = $request->validate([
             'proof_link' => 'required|url|max:500', // Ссылка на чек (URL, max 500 символов)
             'note' => 'nullable|string|max:1000', // Комментарий (опционально)
         ]);
 
         try {
+            // Лог для дебага: валидированные данные
+            // Log::info('Validated payout data', [
+            //     'payout_id' => $payoutRequest->id,
+            //     'proof_link' => $validated['proof_link'],
+            //     'note' => $validated['note'] ?? null
+            // ]);
+
             // Обновляем запись
             $payoutRequest->update([
                 'status' => PayoutRequest::STATUS_PAID,
@@ -280,6 +297,9 @@ class PayoutRequestController extends Controller
                 'note' => $validated['note'] ?? null,
             ]);
 
+            // Лог для дебага: обновление прошло
+            // Log::info('Payout updated successfully payout', ['payout_id' => $payoutRequest->id]);
+
             // Перезагружаем с отношениями для ответа
             $payoutRequest->load(['user', 'approver', 'requisite']);
             $payoutRequest->append('status_text');
@@ -287,16 +307,24 @@ class PayoutRequestController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $payoutRequest,
-                'message' => trans('payoutRequest.received.success'), // Добавь ключ: "Выплата подтверждена"
+                'message' => trans('payoutRequest.received_success'), // Добавь ключ: "Выплата подтверждена"
             ], 200);
-            
         } catch (\Illuminate\Validation\ValidationException $e) {
+            // Log::error('Validation failed for payout', [
+            //     'payout_id' => $payoutRequest->id,
+            //     'errors' => $e->errors()
+            // ]);
             return response()->json([
                 'success' => false,
                 'message' => trans('payoutRequest.validate.failed'), // "Ошибка валидации"
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            // Log::error('Exception in payout received', [
+            //     'payout_id' => $payoutRequest->id,
+            //     'error' => $e->getMessage(),
+            //     'trace' => $e->getTraceAsString()
+            // ]);
             return response()->json([
                 'success' => false,
                 'message' => trans('payoutRequest.error.internal'), // "Внутренняя ошибка сервера"

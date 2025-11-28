@@ -1,20 +1,20 @@
 <template>
   <div class="va-table-responsive">
-    <table class="va-table va-table-payoutRequest">
+    <table v-if="!LoadindTable" class="va-table va-table-payoutRequest">
       <thead>
         <tr>
-          <th>{{ $t('payoutRequest.amount') }}</th> <!-- Сумма к выводу -->
+          <th>{{ $t('payoutRequest.amount_receiv') }}</th> <!-- Сумма к выводу -->
           <th>{{ $t('payoutRequest.user_name') }}</th> <!-- Имя пользователя -->
-          <th>{{ $t('payoutRequest.commission') }}</th> <!-- Комиссия -->
+          <th>{{ $t('payoutRequest.amount_bonus_withdrawal') }}</th> <!-- Сумма к списанию -->
           <th>{{ $t('payoutRequest.date') }}</th> <!-- Дата создания -->
-          <th>{{ $t('payout') }}</th> <!-- Тип партнера -->
+          <th>{{ $t('payoutRequest.requisit_and_go') }}</th> <!-- Тип партнера -->
         </tr>
       </thead>
       <tbody>
-        <tr v-for="payout in payouts" :key="payout.id">
+        <tr v-for="payout in payouts" :key="payout.id" class="align-middle">
           <td>{{ formatPrice(payout.received_amount) }}</td>
           <td>
-            <VaAvatar :src="payout.user.avatar"></VaAvatar>
+            <VaAvatar :src="payout.user.avatar" class="mr-1 bg-gray-200" size="small"></VaAvatar>
             <span>{{ payout.user.name }}</span>
           </td>
           <td>
@@ -27,7 +27,8 @@
           <td>{{ formatDate(payout.created_at) }}</td>
           <td>
             <div>
-              <VaButton icon="assignment" icon-color="#ffffff50" @click="openRequisitFullModal(payout)">
+              <VaButton icon="assignment" icon-color="#ffffff50"
+                @click="openRequisitFullModal(payout);">
                 <span>{{t('partners.partner_types.' + partnerTypes.find(item => item.id ===
                   payout.requisite?.partner_type_id)?.name || 'error')}}</span>
               </VaButton>
@@ -36,17 +37,13 @@
         </tr>
       </tbody>
     </table>
+
+    <VaSkeleton v-else />
+
   </div>
-  <hr>
-  <pre>
-    {{ partnerTypes }}
-  </pre>
-  <pre>
-    {{ payouts }}
-  </pre>
 
   <VaModal v-model="showRequisitFullModal" :hide-default-actions="true" :close-button="true" size="medium">
-    <RequisitFullModal :checkedPayout="checkedPayout" />
+    <RequisitFullModal :checkedPayout="checkedPayout" @payoutUpdated="showRequisitFullModal = false; fetchPayoutRequests()" />
     <template #footer>
       <div class="flex justify-end space-x-4">
         <VaButton @click="showRequisitFullModal = false" preset="secondary" color="secondary">{{ $t('modal.cancel') }}
@@ -94,10 +91,15 @@ const showRequisitFullModal = ref(false);
 const payoutRequests = ref([]);
 const payouts = ref([]);
 const partnerTypes = ref([]);
+const LoadindTable = ref(true);
 
 const fetchPayoutRequests = async () => {
+
   if (!isAdmin.value) return;
+
   try {
+
+    LoadindTable.value = true
 
     const params = {
       statu_id: ''
@@ -112,8 +114,9 @@ const fetchPayoutRequests = async () => {
 
     payoutRequests.value = response.data
     partnerTypes.value = response.data?.partnerTypes
-    toast.init({ message: 'Complate', color: 'danger' })
     payouts.value = payoutRequests.value.data?.data
+
+    LoadindTable.value = false;
 
   } catch (error) {
     toast.init({ message: t('errors.fetch_failed'), color: 'danger' });
