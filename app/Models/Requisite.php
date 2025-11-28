@@ -20,7 +20,7 @@ class Requisite extends Model
         'is_active',                // Актуальность реквизитов (вместо удаления)
         'additional_info',          // Дополнительная информация (произвольные заметки)
         'tax_check_required',       // Требуется ли чек из приложения "Мой налог" (для самозанятых)
-        
+
         // === ПАСПОРТНЫЕ ДАННЫЕ ===
         'passport_series',          // Серия паспорта (4 цифры)
         'passport_number',          // Номер паспорта (6 цифр)
@@ -32,7 +32,7 @@ class Requisite extends Model
         'birth_date',               // Дата рождения
         'birth_place',              // Место рождения
         'passport_snils',           // СНИЛС - страховой номер индивидуального лицевого счета
-        
+
         // === БАНКОВСКИЕ РЕКВИЗИТЫ ===
         'bank_name',                // Наименование банка
         'bank_bik',                 // БИК - банковский идентификационный код
@@ -47,7 +47,7 @@ class Requisite extends Model
         'bank_city',                // Город нахождения банка
         'bank_inn',                 // ИНН банка
         'bank_kpp',                 // КПП банка
-        
+
         // === КАРТОЧКА ОРГАНИЗАЦИИ ===
         'org_full_name',            // Полное наименование организации
         'org_short_name',           // Сокращенное наименование организации
@@ -72,7 +72,7 @@ class Requisite extends Model
         'org_director_position',    // Должность руководителя
         'org_director_basis',       // Основание полномочий (Устав, Доверенность)
         'org_tax_system',           // Система налогообложения: ОСН, УСН, ЕНВД, Патент
-        
+
         // === ДОКУМЕНТЫ ===
         'doc_egrul',                // Выписка из ЕГРЮЛ/ЕГРИП
         'doc_inn',                  // Свидетельство ИНН
@@ -91,14 +91,14 @@ class Requisite extends Model
         'is_verified' => 'boolean',
         'is_active' => 'boolean',
         'tax_check_required' => 'boolean',
-        
+
         // Даты
         'passport_issued_date' => 'date',
         'birth_date' => 'date',
-        
+
         // JSON
         'doc_other' => 'array',
-        
+
         // Тимстемпы
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -176,11 +176,11 @@ class Requisite extends Model
     public function getOrgFullNameWithLegalFormAttribute()
     {
         if (!$this->org_full_name) return null;
-        
+
         if ($this->org_legal_form && !str_starts_with($this->org_full_name, $this->org_legal_form)) {
             return "{$this->org_legal_form} «{$this->org_full_name}»";
         }
-        
+
         return $this->org_full_name;
     }
 
@@ -194,7 +194,7 @@ class Requisite extends Model
         if ($this->bank_bik) $details[] = "БИК: {$this->bank_bik}";
         if ($this->bank_payment_account) $details[] = "Счет: {$this->bank_payment_account}";
         if ($this->bank_account_number) $details[] = "Счет: {$this->bank_account_number}";
-        
+
         return implode(', ', $details);
     }
 
@@ -207,7 +207,7 @@ class Requisite extends Model
         if ($this->org_director_name) $parts[] = $this->org_director_name;
         if ($this->org_director_position) $parts[] = $this->org_director_position;
         if ($this->org_director_basis) $parts[] = "на основании {$this->org_director_basis}";
-        
+
         return implode(', ', $parts);
     }
 
@@ -224,8 +224,8 @@ class Requisite extends Model
      */
     public function getHasBankDetailsAttribute()
     {
-        return !empty($this->bank_name) && 
-               (!empty($this->bank_payment_account) || !empty($this->bank_account_number) || !empty($this->bank_card_number));
+        return !empty($this->bank_name) &&
+            (!empty($this->bank_payment_account) || !empty($this->bank_account_number) || !empty($this->bank_card_number));
     }
 
     /**
@@ -265,7 +265,7 @@ class Requisite extends Model
             'url' => $url,
             'uploaded_at' => $uploadedAt ?? now()->toDateTimeString(),
         ];
-        
+
         $this->doc_other = $documents;
         return $this;
     }
@@ -322,5 +322,17 @@ class Requisite extends Model
     public static function getByUserId($userId)
     {
         return self::getActiveByUserId($userId);
+    }
+
+    /**
+     * Мягко деактивировать и отменить верификацию реквизитов
+     * Обновляет только: deleted_at = now(), is_verified = false, is_active = false
+     */
+    public function softDeactivateAndUnverify()
+    {
+        $this->deleted_at = now();
+        $this->is_verified = false;
+        $this->is_active = false;
+        return $this->save();
     }
 }

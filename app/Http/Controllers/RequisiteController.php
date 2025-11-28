@@ -154,9 +154,9 @@ class RequisiteController extends Controller
     }
 
     /**
-     * Удалить реквизиты (мягкое удаление через SoftDeletes).
+     * Удалить реквизиты
      */
-    public function destroy($id)
+    public function dalete($id)
     {
         $user = Auth::user();
         $isAdmin = $user->hasAccessLevel(1) || $user->hasAccessLevel(2);
@@ -178,6 +178,33 @@ class RequisiteController extends Controller
 
         return response()->json([
             'message' => 'Requisite deleted successfully',
+            'deleted_at' => $requisite->deleted_at
+        ]);
+    }
+
+    /**
+     * Удалить реквизиты (мягкое удаление через SoftDeletes).
+     */
+    public function destroy($id)
+    {
+        $user = Auth::user();
+        $isAdmin = $user->hasAccessLevel(1) || $user->hasAccessLevel(2);
+
+        $query = Requisite::query();
+
+        // Если не админ — жёстко фильтруем по своему user_id
+        if (!$isAdmin) {
+            $query->where('user_id', $user->id);
+        }
+
+        // Теперь ищем с учётом фильтра (или без, если админ)
+        $requisite = $query->findOrFail($id);
+
+        // Мягкая деактивация + отмена верификации + мягкое удаление
+        $requisite->softDeactivateAndUnverify();
+
+        return response()->json([
+            'message' => __('requisites.deleted_successfully'), // i18n-ключ для "Реквизиты успешно удалены"
             'deleted_at' => $requisite->deleted_at
         ]);
     }
