@@ -103,7 +103,7 @@ return [
         ],
         [
             'name' => 'bank_card_number',
-            'required' => true,
+            'required' => false,
             'visible' => [1, 2],
             'type' => 'text',
             'label' => 'requisites.bank_card_number',
@@ -239,7 +239,7 @@ return [
         ],
         [
             'name' => 'org_email',
-            'required' => true,
+            'required' => false,
             'visible' => [3, 4],
             'type' => 'email',
             'label' => 'requisites.org_email',

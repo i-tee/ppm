@@ -3,7 +3,7 @@
 
     <p class="va-h1">{{ $t('payoutRequest.title') }}</p>
     <p>{{ $t('payoutRequest.description') }}</p>
-    <p class="va-h5">{{ $t('total') }}: <b>{{ formatPrice(bData.data?.payoutRequests?.totalAmount || 0) }}</b></p>
+    <p class="va-h5">{{ $t('total') }}: <b>{{ formatPrice(bData.data?.payoutRequests?.debit || 0) }}</b></p>
     <hr class="mt-4">
 
     <VaDataTable ref="tableRef" :key="`table-${filteredPayoutRequests.length}-${currentPage}`"
@@ -93,11 +93,6 @@ const filteredPayoutRequests = computed(() => {
   return data
 })
 
-// Общая сумма (для отфильтрованных)
-const totalAmount = computed(() =>
-  filteredPayoutRequests.value.reduce((sum, pr) => sum + (pr.received_amount || 0), 0)
-)
-
 // Пагинация
 const pagedPayoutRequests = computed(() => {
   const start = (currentPage.value - 1) * perPage.value
@@ -113,15 +108,15 @@ const columns = computed(() => [
   { key: 'received_amount', label: t('payoutRequest.columns.received'), sortable: true },
   { key: 'status', label: t('payoutRequest.columns.status'), sortable: true },
   { key: 'created_at', label: t('payoutRequest.columns.created'), sortable: true },
-  { key: 'bank_name', label: t('payoutRequest.columns.bank'), sortable: true }, // Новая колонка
+  { key: 'bank_name', label: t('payoutRequest.bank_name'), sortable: true }, // Новая колонка
 ])
 
 // Статусы (синхронизировано с модалкой)
 const getStatusText = (status) => {
   const statuses = {
     0: t('payoutRequest.status.created'),
-    1: t('payoutRequest.status.approved'),
-    2: t('payoutRequest.status.paid'),
+    10: t('payoutRequest.status.approved'),
+    20: t('payoutRequest.status.paid'),
     99: t('payoutRequest.status.deleted'),
   }
   return statuses[status] || t('payoutRequest.status.unknown')
@@ -129,7 +124,7 @@ const getStatusText = (status) => {
 
 const getStatusColor = (status) => {
   const colors = { 0: 'warning', 1: 'info', 2: 'success', 99: 'danger' }
-  return colors[status] || 'gray'
+  return colors[status] || 'primary'
 }
 
 const maintainScrollPosition = () => {

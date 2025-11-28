@@ -101,8 +101,14 @@ class PayoutRequest extends Model
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Только created (0) в балансе; approved (10) уже списано
-        $debit = $payoutRequests->where('status', self::STATUS_CREATED)->sum('withdrawal_amount');
+        // Теперь учитываем created (0), approved (10) и paid (20) в балансе
+        $debit = $payoutRequests
+            ->whereIn('status', [
+                self::STATUS_CREATED,
+                self::STATUS_APPROVED,
+                self::STATUS_PAID
+            ])
+            ->sum('withdrawal_amount');
 
         return [
             'debit' => $debit,

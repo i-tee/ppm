@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    
+
     <VaProgressBar v-if="loadingRequisites" indeterminate color="primary" class="my-2" />
 
     <!-- Заголовок модального окна -->
@@ -20,9 +20,9 @@
       <!-- Выбор реквизита для вывода -->
       <div class="my-3">
         <p class="my-3">{{ $t('payoutRequest.create.description_1') }}</p>
-        <VaSelect class="w-full text-primary font-bold" v-model="form.requisite_id" :label="$t('payoutRequest.fields.requisite')"
-          :options="requisiteOptions" :disabled="isSubmitting || loadingRequisites"
-          text-attribute="text" value-attribute="value" />
+        <VaSelect class="w-full text-primary font-bold" v-model="form.requisite_id"
+          :label="$t('payoutRequest.fields.requisite')" :options="requisiteOptions"
+          :disabled="isSubmitting || loadingRequisites" text-attribute="text" value-attribute="value" />
       </div>
 
       <!-- Отображение типов партнёров и соответствующих налогов -->
@@ -45,8 +45,7 @@
         <p class="my-3">{{ $t('payoutRequest.fields.amount') }}</p>
         <div class="flex flex-nowrap items-center gap-2 w-full">
           <div class="w-1/4">
-            <VaInput v-model="form.withdrawal_amount" type="number"
-              :disabled="isSubmitting" />
+            <VaInput v-model="form.withdrawal_amount" type="number" :disabled="isSubmitting" />
           </div>
           <div class="w-3/4 px-2">
             <VaSlider v-model="form.withdrawal_amount" :min="0" :max="props.bData.data.balance" :step="50" />
@@ -133,10 +132,12 @@ const selectedType = ref(null)
 const computedBalance = computed(() => props.bData.data?.balance || 0)
 
 const requisiteOptions = computed(() =>
-  requisites.value.map(r => ({
-    value: r.id,
-    text: `${r.full_name || r.organization_name} (${r.bank_name || 'N/A Bank'})`,
-  }))
+  requisites.value
+    .filter(r => r.is_verified == 1) // Только активные (is_verified == 1)
+    .map(r => ({
+      value: r.id,
+      text: `${r.full_name || r.org_short_name || t('requisites.no_name')} (${r.bank_name || t('requisites.no_bank')})`, // Добавил i18n для 'N/A' — ключи из locale
+    }))
 )
 
 // Налог (процент комиссии) для выбранного типа партнёра
