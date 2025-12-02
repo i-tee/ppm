@@ -123,7 +123,7 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
-  const colors = { 0: 'warning', 1: 'info', 2: 'success', 99: 'danger' }
+  const colors = { 0: 'warning', 10: 'info', 20: 'success', 99: 'danger' }
   return colors[status] || 'primary'
 }
 

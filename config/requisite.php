@@ -314,7 +314,7 @@ return [
             'name' => 'bank_payment_account',
             'required' => false,
             'visible' => [],
-            'type' => 'number',
+            'type' => 'text',
             'label' => 'requisites.bank_payment_account',
             'group' => 'bank',
             'order' => 270
@@ -323,7 +323,7 @@ return [
             'name' => 'bank_correspondent_account',
             'required' => false,
             'visible' => [],
-            'type' => 'number',
+            'type' => 'text',
             'label' => 'requisites.bank_correspondent_account',
             'group' => 'bank',
             'order' => 280

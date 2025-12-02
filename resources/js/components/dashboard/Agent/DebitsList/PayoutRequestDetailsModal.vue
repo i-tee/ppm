@@ -7,16 +7,26 @@
     <!-- Основные суммы и статус -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
       <div class="space-y-2">
-        <div><span class="text-gray-500">{{ $t('payoutRequest.amount') }}: </span> {{ formatPrice(payoutRequest.withdrawal_amount) }}</div>
-        <div><span class="text-gray-500">{{ $t('payoutRequest.received') }}: </span> {{ formatPrice(payoutRequest.received_amount || 0) }}</div>
-        <div><span class="text-gray-500">{{ $t('payoutRequest.commission_amount') }}: </span> {{ formatPrice(payoutRequest.commission_amount || 0) }}</div>
-        <div><span class="text-gray-500">{{ $t('payoutRequest.commission_percentage') }}: </span> {{ payoutRequest.commission_percentage || 0 }}%</div>
+        <div><span class="text-gray-500">{{ $t('payoutRequest.amount') }}: </span> {{
+          formatPrice(payoutRequest.withdrawal_amount) }}</div>
+        <div><span class="text-gray-500">{{ $t('payoutRequest.received') }}: </span> {{
+          formatPrice(payoutRequest.received_amount || 0) }}</div>
+        <div><span class="text-gray-500">{{ $t('payoutRequest.commission_amount') }}: </span> {{
+          formatPrice(payoutRequest.commission_amount || 0) }}</div>
+        <div><span class="text-gray-500">{{ $t('payoutRequest.commission_percentage') }}: </span> {{
+          payoutRequest.commission_percentage || 0 }}%</div>
       </div>
       <div class="space-y-2">
-        <div><span class="text-gray-500">{{ $t('payoutRequest.status.status') }}: </span> <VaBadge :color="getStatusColor(payoutRequest.status)" small rounded>{{ getStatusText(payoutRequest.status) }}</VaBadge></div>
-        <div><span class="text-gray-500">{{ $t('date.created') }}: </span> {{ formatDate(payoutRequest.created_at) }}</div>
-        <div><span class="text-gray-500">{{ $t('payoutRequest.updated') }}: </span> {{ formatDate(payoutRequest.updated_at) }}</div>
-        <div v-if="payoutRequest.approver"><span class="text-gray-500">{{ $t('payoutRequest.approver') }}: </span> {{ payoutRequest.approver.name || $t('common.n_a') }}</div>
+        <div>
+          <span class="text-gray-500">{{ $t('payoutRequest.status.status') }}: </span>
+          <VaBadge :text="getStatusText(payoutRequest.status)" :color="getStatusColor(payoutRequest.status)" class="mr-2" />
+        </div>
+        <div><span class="text-gray-500">{{ $t('date.created') }}: </span> {{ formatDate(payoutRequest.created_at) }}
+        </div>
+        <div><span class="text-gray-500">{{ $t('payoutRequest.updated') }}: </span> {{
+          formatDate(payoutRequest.updated_at) }}</div>
+        <div v-if="payoutRequest.approver"><span class="text-gray-500">{{ $t('payoutRequest.approver') }}: </span> {{
+          payoutRequest.approver.name || $t('common.n_a') }}</div>
       </div>
     </div>
 
@@ -26,19 +36,22 @@
       <h6 class="font-medium mb-2">{{ $t('dashboard.requisite') }}</h6>
       <div class="text-sm space-y-1">
         <div>{{ $t('payoutRequest.bank_name') }}: {{ payoutRequest.requisite?.bank_name || $t('common.n_a') }}</div>
-        <div v-if="payoutRequest.requisite?.bank_account_number">{{ $t('payoutRequest.account') }}: {{ payoutRequest.requisite.bank_account_number }}</div>
-        <div v-if="payoutRequest.requisite?.full_name">{{ $t('payoutRequest.full_name') }}: {{ payoutRequest.requisite.full_name }}</div>
+        <div v-if="payoutRequest.requisite?.bank_account_number">{{ $t('payoutRequest.account') }}: {{
+          payoutRequest.requisite.bank_account_number }}</div>
+        <div v-if="payoutRequest.requisite?.full_name">{{ $t('payoutRequest.full_name') }}: {{
+          payoutRequest.requisite.full_name }}</div>
       </div>
     </div>
 
     <!-- Заметка и чек -->
     <VaDivider v-if="payoutRequest.note || payoutRequest.proof_link" />
     <div v-if="payoutRequest.note || payoutRequest.proof_link" class="space-y-2">
-      <div v-if="payoutRequest.note"><span class="text-gray-500">{{ $t('payoutRequest.note') }}: </span> {{ payoutRequest.note }}</div>
+      <div v-if="payoutRequest.note"><span class="text-gray-500">{{ $t('payoutRequest.note') }}: </span> {{
+        payoutRequest.note }}</div>
       <div v-if="payoutRequest.proof_link">
-        <span class="text-gray-500">{{ $t('payoutRequest.proof') }}: </span>
+        <span class="text-gray-500">{{ $t('payoutRequest.view_proof') }}: </span>
         <a :href="payoutRequest.proof_link" target="_blank" class="text-blue-500 underline hover:text-blue-700">
-          {{ $t('payoutRequest.actions.view_proof') }}
+          {{ $t('payoutRequest.proof_link_label') }}
         </a>
       </div>
     </div>
@@ -69,8 +82,8 @@ defineEmits(['close'])
 const getStatusText = (status) => {
   const statuses = {
     0: t('payoutRequest.status.created'),
-    1: t('payoutRequest.status.approved'),
-    2: t('payoutRequest.status.paid'),
+    10: t('payoutRequest.status.approved'),
+    20: t('payoutRequest.status.paid'),
     99: t('payoutRequest.status.deleted'),
   }
   return statuses[status] || t('payoutRequest.status.unknown')
@@ -79,8 +92,8 @@ const getStatusText = (status) => {
 const getStatusColor = (status) => {
   const colors = {
     0: 'warning',
-    1: 'info',
-    2: 'success',
+    10: 'info',
+    20: 'success',
     99: 'danger',
   }
   return colors[status] || 'gray'
