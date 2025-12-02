@@ -51,7 +51,7 @@
                     </p>
                     <p v-else>
                       <strong>{{ $t(`requisites.${key}`) }}:</strong>
-                      <span class="ml-1">{{ value }}</span>
+                      <span class="ml-1">{{ key.includes('date') ? formatDate(value) : value }}</span>
                     </p>
                   </div>
                 </template>
@@ -166,11 +166,13 @@ import { useToast } from 'vuestic-ui';
 import { useAuthStore } from '@/stores/auth';
 import { usePartnersHelper } from '@/composables/partnersHelper';
 import { useRequisitesHelper } from '@/composables/requisitesHelper';
+import { useBase } from '@/composables/useBase';
 
 const { t } = useI18n();
 const toast = useToast();
 const authStore = useAuthStore();
 const { partnerSettings } = usePartnersHelper();
+const { formatDate } = useBase();
 
 // Получаем ВСЕ данные из хелпера реквизитов
 const {
