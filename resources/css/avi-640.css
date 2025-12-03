@@ -1,19 +1,23 @@
 /* Принудительно включаем отступы для мобильных */
 @media (max-width: 640px) {
+  .agent-layout {
+    padding: 0px;
+    min-width: 100%;
+  }
   .my-2 {
     margin-top: 0.5rem !important;
     margin-bottom: 0.5rem !important;
   }
-  
+
   .my-6 {
     margin-top: 1.5rem !important;
     margin-bottom: 1.5rem !important;
   }
-  
+
   .mb-2 {
     margin-bottom: 0.5rem !important;
   }
-  
+
   .mt-4 {
     margin-top: 1rem !important;
   }

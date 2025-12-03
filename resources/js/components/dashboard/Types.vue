@@ -15,7 +15,7 @@
             class="grid grid-cols-1 sm:grid-cols-2">
 
             <div v-for="type in sortedTypes(apiData.cooperation_types)" :key="'coop-' + type.id"
-              class="mr-4 my-3">
+              class="mr-4 my-3 sm:p-3 sm:bg-slate-50">
 
               <div class="h-full">
 

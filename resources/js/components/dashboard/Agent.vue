@@ -227,11 +227,6 @@ onMounted(fetchAllData)
 </script>
 
 <style scoped>
-.agent-layout {
-  padding: 20px;
-  min-width: 100%;
-}
-
 /* Стили для контейнера табов */
 .tabs-container {
   display: inline-block;

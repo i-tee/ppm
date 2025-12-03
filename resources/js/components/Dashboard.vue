@@ -11,9 +11,9 @@
             @click="isSidebarVisible = !isSidebarVisible" />
         </template>
         <template #center>
-          <router-link to="/dashboard" class="flex items-center cursor-pointer">
+          <a href="/dashboard" class="flex items-center cursor-pointer">
             <Logo class="max-h-6" />
-          </router-link>
+          </a>
         </template>
         <template #right>
           <User v-if="!isLoading" :user="currentUser" />
@@ -22,8 +22,8 @@
     </template>
 
     <template #left>
-      <VaSidebar v-model="isSidebarVisible">
-        <Sidebar :user="currentUser" />
+      <VaSidebar v-model="isSidebarVisible" :isSidebarVisible="isSidebarVisible">
+        <Sidebar :user="currentUser" @close="breakpoints.smDown && (isSidebarVisible = false)" />
       </VaSidebar>
     </template>
 
@@ -40,57 +40,43 @@
   </VaLayout>
 </template>
 
-<script>
-import { defineComponent, onMounted, computed, ref, watchEffect } from 'vue';
-import { useBreakpoint } from 'vuestic-ui';
-import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
-import Sidebar from './dashboard/Sidebar.vue';
-import User from './parts/User.vue';
-import Logo from './parts/Logo.vue';
+<script setup>
+import { ref, computed, onMounted, watchEffect } from 'vue'
+import { useBreakpoint } from 'vuestic-ui'
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 
-export default defineComponent({
-  name: 'Dashboard',
-  components: {
-    Sidebar,
-    User,
-    Logo,
-  },
-  setup() {
-    const breakpoints = useBreakpoint();
-    const isSidebarVisible = ref(breakpoints.smUp);
+import Sidebar from './dashboard/Sidebar.vue'
+import User from './parts/User.vue'
+import Logo from './parts/Logo.vue'
 
-    watchEffect(() => {
-      isSidebarVisible.value = breakpoints.smUp;
-    });
+// Breakpoints
+const breakpoints = useBreakpoint()
 
-    const authStore = useAuthStore();
-    const router = useRouter();
-    const isLoading = ref(true);
+// Sidebar visibility
+const isSidebarVisible = ref(breakpoints.smUp)
+watchEffect(() => {
+  isSidebarVisible.value = breakpoints.smUp
+})
 
-    const currentUser = computed(() => authStore.currentUser);
+// Auth + Router
+const authStore = useAuthStore()
+const router = useRouter()
 
-    onMounted(async () => {
-      if (authStore.isAuthenticated && !authStore.currentUser) {
-        await authStore.fetchUser();
-      }
-      if (!authStore.isAuthenticated) {
-        router.push('/login');
-      }
-      isLoading.value = false;
+const isLoading = ref(true)
+const currentUser = computed(() => authStore.currentUser)
 
-      //console.log('Dashboard mounted, current user:', currentUser.value);
+onMounted(async () => {
+  if (authStore.isAuthenticated && !authStore.currentUser) {
+    await authStore.fetchUser()
+  }
 
-    });
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+  }
 
-    return {
-      currentUser,
-      isLoading,
-      isSidebarVisible,
-      breakpoints,
-    };
-  },
-});
+  isLoading.value = false
+})
 </script>
 
 <style scoped>

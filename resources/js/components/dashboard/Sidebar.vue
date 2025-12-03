@@ -1,13 +1,14 @@
 <template>
 
-  <va-sidebar-item :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'">
+  <va-sidebar-item :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'" @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="dashboard" />
       <va-sidebar-item-title>{{ $t('_dashboard') }}</va-sidebar-item-title>
     </va-sidebar-item-content>
   </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive">
+  <va-sidebar-item :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive"
+    @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="work" />
       <va-sidebar-item-title>{{ $t('dashboard.types') }}</va-sidebar-item-title>
@@ -35,7 +36,8 @@
     </va-sidebar-item-content>
   </va-sidebar-item> -->
 
-  <va-sidebar-item :to="{ name: 'PartnerApplications' }" :active="$route.name === 'PartnerApplications'" v-if="isAdmin">
+  <va-sidebar-item :to="{ name: 'PartnerApplications' }" :active="$route.name === 'PartnerApplications'" v-if="isAdmin"
+    @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="business" />
       <va-sidebar-item-title>{{ $t('dashboard.partner_applications') }}</va-sidebar-item-title>
@@ -43,15 +45,15 @@
   </va-sidebar-item>
 
   <va-sidebar-item :to="{ name: 'RequisiteVerification' }" :active="$route.name === 'RequisiteVerification'"
-    v-if="isAdmin">
+    @click="emit('close')" v-if="isAdmin">
     <va-sidebar-item-content>
       <va-icon name="business" />
       <va-sidebar-item-title>{{ $t('dashboard.requisite_verification') }}</va-sidebar-item-title>
     </va-sidebar-item-content>
   </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'PayoutResolve' }" :active="$route.name === 'PayoutResolve'"
-    v-if="isAdmin">
+  <va-sidebar-item :to="{ name: 'PayoutResolve' }" :active="$route.name === 'PayoutResolve'" v-if="isAdmin"
+    @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="business" />
       <va-sidebar-item-title>{{ $t('dashboard.payout_resolve') }}</va-sidebar-item-title>
@@ -66,7 +68,7 @@
   </va-sidebar-item> -->
 
   <div v-for="type in apiData?.cooperation_types" :key="type.id">
-    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }"
+    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }" @click="emit('close')"
       :active="$route.name === type.route">
       <va-sidebar-item-content>
         <!-- <va-icon name="work" /> -->
@@ -79,7 +81,7 @@
 
   <VaDivider v-if="isActive && hasApprovedApplications" class="my-4" />
 
-  <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'"
+  <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'" @click="emit('close')"
     v-if="isActive && hasApprovedApplications">
     <va-sidebar-item-content>
       <va-icon name="note" />
@@ -98,6 +100,8 @@ import { computed } from 'vue';
 import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
+
+const emit = defineEmits(['close'])
 
 const hasApprovedApplications = hasApplicationsWithStatus(2);
 

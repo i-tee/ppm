@@ -1,0 +1,26 @@
+/* globals.css или в <style> App.vue */
+html {
+  font-size: 16px; /* Десктоп */
+}
+
+@media (max-width: 640px) { /* smDown */
+  html {
+    font-size: 14px; /* Мобильные: шрифты/отступы станут меньше на ~12.5% */
+  }
+}
+
+@media (max-width: 480px) { /* xs, если нужно */
+  html {
+    font-size: 13px;
+  }
+}
+
+:root {
+  --va-grid-spacing-base: 1rem; /* Десктоп */
+}
+
+@media (max-width: 640px) {
+  :root {
+    --va-grid-spacing-base: 0.75rem; /* Мобильные: отступы .my-4 станут ~1.5rem вместо 2rem */
+  }
+}
