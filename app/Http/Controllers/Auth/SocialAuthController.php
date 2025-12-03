@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\JoomlaCoupon;
+use App\Models\PartnerApplication;
 use Laravel\Socialite\Two\ProviderInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -31,11 +33,11 @@ class SocialAuthController extends Controller
             $redirectUri
         );
 
-        \Log::info('Yandex Redirect Params', [
-            'client_id' => config('services.yandex.client_id'),
-            'redirect_uri' => $redirectUri,
-            'scopes' => $provider->getScopes(),
-        ]);
+        // \Log::info('Yandex Redirect Params', [
+        //     'client_id' => config('services.yandex.client_id'),
+        //     'redirect_uri' => $redirectUri,
+        //     'scopes' => $provider->getScopes(),
+        // ]);
 
         return $provider->redirect();
     }
@@ -56,7 +58,7 @@ class SocialAuthController extends Controller
             $redirectUri
         );
 
-        \Log::info('Yandex Callback Request', $request->all());
+        // \Log::info('Yandex Callback Request', $request->all());
 
         try {
             $socialUser = $provider->user();
@@ -68,15 +70,16 @@ class SocialAuthController extends Controller
                 'avatar' => $socialUser->getAvatar(),
             ];
 
-            \Log::info('Yandex User Data', $userData);
+            // \Log::info('Yandex User Data', $userData);
 
             $request->session()->put('social_user', $userData);
 
             return redirect('/auth');
         } catch (\Exception $e) {
-            dd($e->getMessage());
 
-            \Log::error('Yandex Callback Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            //dd($e->getMessage());
+
+            // \Log::error('Yandex Callback Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return redirect('/')->with('error', 'Error during Yandex authentication: ' . $e->getMessage());
         }
     }
@@ -98,11 +101,11 @@ class SocialAuthController extends Controller
                 'email' => $socialUser->getEmail(),
                 'avatar' => $socialUser->getAvatar(),
             ];
-            Log::channel('socialite')->info('Google User Data', $userData);
+            // Log::channel('socialite')->info('Google User Data', $userData);
             $request->session()->put('social_user', $userData);
             return redirect('/auth');
         } catch (\Exception $e) {
-            Log::channel('socialite')->error('Google Auth Error', ['error' => $e->getMessage()]);
+            // Log::channel('socialite')->error('Google Auth Error', ['error' => $e->getMessage()]);
             return redirect('/')->with('error', 'Error during Google authentication: ' . $e->getMessage());
         }
     }
@@ -135,6 +138,19 @@ class SocialAuthController extends Controller
                 'password' => Hash::make(\Str::random(16)),
                 'avatar' => $socialUser['avatar'] ?? null,
             ]);
+
+            // Тут надо добавитть новый метод на проверку, существует ли уже этот юзер в Joomla и является ли он партнером
+            // Проверяем, является ли новый пользователь партнёром в Joomla
+            $isJoomlaPartner = JoomlaCoupon::isJoomlaPartner($socialUser['email']);
+            Log::info("[SocialAuth] Новый пользователь {$socialUser['email']} является Joomla-партнёром: " . ($isJoomlaPartner ? 'да' : 'нет'));
+
+            if ($isJoomlaPartner) {
+                // Если пользователь — партнёр из Joomla, создаём автоматическую заявку
+                if ($isJoomlaPartner) {
+                    $application = PartnerApplication::createApprovedDefaultPartnerApplication($user);
+                    Log::info("[SocialAuth] Автоматическая заявка создана для партнёра ID {$user->id}, заявка ID {$application->id}");
+                }
+            }
         }
 
         // Отмечаем email как верифицированный, если ещё не сделано
@@ -148,6 +164,5 @@ class SocialAuthController extends Controller
 
         // Перенаправляем на страницу приветствия
         return redirect()->to('/welcome?token=' . urlencode($token) . '&email=' . urlencode($socialUser['email']) . '&email_verified=1');
-        
     }
 }

@@ -44,7 +44,7 @@
 
                   <div v-else-if="hasApplication(2, type.id)" class="row">
                     <div class="col">
-                      <VaButton :to="{ name: type.route }" color="success" class="w-40"
+                      <VaButton :to="{ name: type.route }" color="primary" class="w-40"
                         @click="iAlert($t('partners.actived_alert'))">
                         {{ $t('partners.actived') }}
                       </VaButton>

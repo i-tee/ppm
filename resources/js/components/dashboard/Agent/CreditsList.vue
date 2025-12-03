@@ -1,8 +1,7 @@
 <template>
-
   <div v-if="bData.data?.oldPromocodBalance?.be" class="rounded-md p-4 avi-bg-sb">
-    <p>{{ t('coupons.oldbalance') }} {{ formatPrice(bData.data?.oldPromocodBalance?.summ) }}</p>
-    <p class="text-gray-400 text-light-sm">{{ t('coupons.oldbalance_descr') }}</p>
+    <p>{{ $t('coupons.oldbalance') }} {{ formatPrice(bData.data?.oldPromocodBalance?.summ) }}</p>
+    <p class="text-gray-400 text-light-sm">{{ $t('coupons.oldbalance_descr') }}</p>
   </div>
 
   <div>
@@ -15,16 +14,23 @@
       {{ error }}
     </div>
     <!-- Показываем таблицу заказов, если они есть -->
-    <div v-else-if="orders.length" class="mt-4">
-
-      <p class="va-h1">{{ t('coupons.credits') }}</p>
-      <p>{{ t('coupons.credits_descr') }}</p>
-      <p class="va-h5">{{ t('total') }}: <b>{{ formatPrice(bData.data?.credits?.total_accruals) }}</b></p>
+    <div v-else-if="filteredOrders.length" class="mt-4">
+      <p class="va-h1">{{ $t('coupons.credits') }}</p>
+      <p>{{ $t('coupons.credits_descr') }}</p>
+      <p class="va-h5">{{ $t('total') }}: <b>{{ formatPrice(bData.data?.credits?.total_accruals) }}</b></p>
       <hr class="mt-4">
 
-      <VaDataTable ref="tableRef" :key="`table-${orders.length}-${currentPage}`" :items="pagedOrders" :columns="columns"
-        :hoverable="true" :sortable="true" :no-data-html="t('coupons.credits-no_orders')"
-        class="cursor-pointer va-table--modern" @row:click="({ item }) => openModal(item)">
+      <VaDataTable
+        ref="tableRef"
+        :key="`table-${filteredOrders.length}-${currentPage}`"
+        :items="pagedOrders"
+        :columns="columns"
+        :hoverable="true"
+        :sortable="true"
+        :no-data-html="$t('coupons.credits-no_orders')"
+        class="cursor-pointer va-table--modern"
+        @row:click="({ item }) => openModal(item)"
+      >
         <!-- Кастомный слот для кешбека -->
         <template #cell(cashback)="{ rowData }">
           {{ formatPrice(rowData.cashback) }}
@@ -41,19 +47,17 @@
           </div>
         </template>
       </VaDataTable>
-
     </div>
     <!-- Показываем сообщение, если заказов нет -->
     <div v-else class="mt-4">
-      {{ t('coupons.credits-no_orders') }}
+      {{ $t('coupons.credits-no_orders') }}
     </div>
   </div>
 
   <!-- Модалка -->
-  <VaModal v-model="showModal" :title="t('orders.details')" close-button hide-default-actions max-width="700px">
+  <VaModal v-model="showModal" :title="$t('orders.details')" close-button hide-default-actions max-width="700px">
     <OrderDetailsModal :bData="bData" :order="selectedOrder" @close="showModal = false" />
   </VaModal>
-
 </template>
 
 <script setup>
@@ -64,12 +68,12 @@ import { useBase } from '@/composables/useBase'
 import OrderDetailsModal from './CreditsList/OrderDetailsModal.vue'
 import { VaDataTable, VaSkeleton, VaPagination } from 'vuestic-ui'
 
-const { formatPrice, formatDate } = useBase();
+const { formatPrice, formatDate } = useBase()
 
 const showModal = ref(false)
 const selectedOrder = ref(null)
 
-const openModal = order => {
+const openModal = (order) => {
   selectedOrder.value = order
   showModal.value = true
 }
@@ -77,8 +81,6 @@ const openModal = order => {
 // Инициализация локализации и уведомлений
 const { t } = useI18n()
 const { init: initToast } = useToast()
-
-// console.log('Кликнули по заказу:', order)
 
 // Объявляем и получаем пропсы
 const props = defineProps({
@@ -104,15 +106,23 @@ const perPage = ref(10) // Фиксированное количество ст�
 const currentPage = ref(1) // Текущая страница
 const tableRef = ref(null) // Ref для таблицы, чтобы управлять скроллом
 
-// Вычисляемый массив с пагинцией
+// Фильтруем ордера: пропускаем cashback < 0
+const filteredOrders = computed(() => {
+  return orders.value.filter((order) => {
+    const cashback = Number(order.cashback) // Безопасное приведение к числу
+    return cashback >= 0 // Или > 0, если строго больше нуля
+  })
+})
+
+// Вычисляемый массив с пагинцией на основе отфильтрованных данных
 const pagedOrders = computed(() => {
   const start = (currentPage.value - 1) * perPage.value
   const end = start + perPage.value
-  return orders.value.slice(start, end)
+  return filteredOrders.value.slice(start, end)
 })
 
-// Общее количество страниц
-const totalPages = computed(() => Math.ceil(orders.value.length / perPage.value))
+// Общее количество страниц на основе отфильтрованных данных
+const totalPages = computed(() => Math.ceil(filteredOrders.value.length / perPage.value))
 
 // Определение колонок для таблицы
 const columns = computed(() => [

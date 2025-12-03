@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\PartnerApplication;
+use App\Models\JoomlaCoupon;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Support\Facades\Log;
 
 class VerificationController extends Controller
 {
@@ -32,6 +35,19 @@ class VerificationController extends Controller
 
         // Обновляем пользователя и возвращаем успешный ответ с редиректом
         $user->refresh();
+
+        // Проверяем, есть ли этот юзер в джумла, и партнер ли он уже
+        $isJoomlaPartner = JoomlaCoupon::isJoomlaPartner($user['email']);
+        Log::info("[ManualAuth] Новый пользователь {$user['email']} является Joomla-партнёром: " . ($user ? 'да' : 'нет'));
+
+        if ($isJoomlaPartner) {
+            // Если пользователь — партнёр из Joomla, создаём автоматическую заявку
+            if ($isJoomlaPartner) {
+                $application = PartnerApplication::createApprovedDefaultPartnerApplication($user);
+                Log::info("[ManualAuth] Автоматическая заявка создана для партнёра ID {$user->id}, заявка ID {$application->id}");
+            }
+        }
+
         return response()->json([
             'data' => $data,
             'user' => $user,

@@ -13,6 +13,11 @@ use App\Models\User;
 use App\Http\Controllers\UserCouponController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\PayoutPaidNotification; // Новый импорт
+use App\Notifications\PayoutPaidToCompanyNotification; // Новый импорт
+use App\Helpers\ErrorNotifier; // Для ошибок
+use Illuminate\Support\Arr; // Для Arr::get
 
 /**
  * Контроллер для управления заявками на вывод средств (PayoutRequest).
@@ -270,11 +275,11 @@ class PayoutRequestController extends Controller
         $payoutRequest = PayoutRequest::findOrFail($id);  // Кидает 404, если не найдено
 
         // Лог для дебага: что пришло в запросе
-        // Log::info('Payout received request payout', [
-        //     'payout_id' => $payoutRequest->id,
-        //     'approver_id' => Auth::id(),
-        //     'input_data' => $request->all()
-        // ]);
+        Log::info('Payout received request payout', [
+            'payout_id' => $payoutRequest->id,
+            'approver_id' => Auth::id(),
+            'input_data' => $request->all()
+        ]);
 
         $validated = $request->validate([
             'proof_link' => 'required|url|max:500', // Ссылка на чек (URL, max 500 символов)
@@ -283,11 +288,11 @@ class PayoutRequestController extends Controller
 
         try {
             // Лог для дебага: валидированные данные
-            // Log::info('Validated payout data', [
-            //     'payout_id' => $payoutRequest->id,
-            //     'proof_link' => $validated['proof_link'],
-            //     'note' => $validated['note'] ?? null
-            // ]);
+            Log::info('Validated payout data', [
+                'payout_id' => $payoutRequest->id,
+                'proof_link' => $validated['proof_link'],
+                'note' => $validated['note'] ?? null
+            ]);
 
             // Обновляем запись
             $payoutRequest->update([
@@ -298,11 +303,14 @@ class PayoutRequestController extends Controller
             ]);
 
             // Лог для дебага: обновление прошло
-            // Log::info('Payout updated successfully payout', ['payout_id' => $payoutRequest->id]);
+            Log::info('Payout updated successfully payout', ['payout_id' => $payoutRequest->id]);
 
             // Перезагружаем с отношениями для ответа
             $payoutRequest->load(['user', 'approver', 'requisite']);
             $payoutRequest->append('status_text');
+
+            // Отправляем уведомления юзеру и компании
+            $this->sendPayoutPaidNotifications($payoutRequest);
 
             return response()->json([
                 'success' => true,
@@ -310,26 +318,71 @@ class PayoutRequestController extends Controller
                 'message' => trans('payoutRequest.received_success'), // Добавь ключ: "Выплата подтверждена"
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Log::error('Validation failed for payout', [
-            //     'payout_id' => $payoutRequest->id,
-            //     'errors' => $e->errors()
-            // ]);
+            Log::error('Validation failed for payout', [
+                'payout_id' => $payoutRequest->id,
+                'errors' => $e->errors()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => trans('payoutRequest.validate.failed'), // "Ошибка валидации"
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            // Log::error('Exception in payout received', [
-            //     'payout_id' => $payoutRequest->id,
-            //     'error' => $e->getMessage(),
-            //     'trace' => $e->getTraceAsString()
-            // ]);
+            Log::error('Exception in payout received', [
+                'payout_id' => $payoutRequest->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => trans('payoutRequest.error.internal'), // "Внутренняя ошибка сервера"
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Метод: Отправляет уведомления о успешной выплате юзеру и компании
+     */
+    protected function sendPayoutPaidNotifications(PayoutRequest $payoutRequest): void
+    {
+        try {
+            Log::info("[PayoutRequest] Начало отправки уведомлений о успешной выплате для заявки {$payoutRequest->id}.");
+
+            $user = User::find($payoutRequest->user_id); // Поиск по ID, как просил
+
+            if (! $user) {
+                ErrorNotifier::notify('Не найден пользователь для отправки уведомления о успешной выплате');
+                Log::error("[PayoutRequest] User не найден для уведомления о выплате заявки {$payoutRequest->id}.");
+                return;
+            }
+
+            // Уведомление юзеру (send с моделью User — для $notifiable->name в toMail)
+            Notification::send($user, new PayoutPaidNotification($payoutRequest));
+            Log::info("[PayoutRequest] Уведомление юзеру успешно отправлено для заявки {$payoutRequest->id}.");
+
+            // Уведомление компании (route для email, toMail не использует $notifiable->name)
+            $globalSettings = Partners::getSettings('global');
+            $email = Arr::get($globalSettings, 'responsible_partnersmail');
+
+            if (!$email) {
+                $email = Arr::get($globalSettings, 'global.responsible_partnersmail');
+            }
+
+            if (!$email) {
+                ErrorNotifier::notify('Почта компании не найдена для уведомления о успешной выплате');
+                Log::error("[PayoutRequest] Email компании не найден для заявки {$payoutRequest->id}.");
+                return;
+            }
+
+            Notification::route('mail', $email)
+                ->notify(new PayoutPaidToCompanyNotification($payoutRequest));
+
+            Log::info("[PayoutRequest] Уведомление компании успешно отправлено на $email для заявки {$payoutRequest->id}.");
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            ErrorNotifier::notify('Ошибка при отправке уведомлений о успешной выплате: ' . $errorMsg);
+            Log::error("[PayoutRequest] Исключение при отправке уведомлений о выплате заявки {$payoutRequest->id}: $errorMsg. Stack: " . $e->getTraceAsString());
         }
     }
 }

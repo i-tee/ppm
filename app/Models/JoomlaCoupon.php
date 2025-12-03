@@ -771,12 +771,12 @@ class JoomlaCoupon extends Model
             }
 
             // Логируем данные купона для отладки
-            Log::info("Checking coupon conditions", [
-                'coupon_id' => $couponId,
-                'coupon_type' => $coupon->coupon_type,
-                'cashback' => $coupon->cashback,
-                'coupon_value' => $coupon->coupon_value,
-            ]);
+            // Log::info("Checking coupon conditions", [
+            //     'coupon_id' => $couponId,
+            //     'coupon_type' => $coupon->coupon_type,
+            //     'cashback' => $coupon->cashback,
+            //     'coupon_value' => $coupon->coupon_value,
+            // ]);
 
             // Получаем заказы
             $orders = DB::connection('mysql_joomla')
@@ -785,15 +785,24 @@ class JoomlaCoupon extends Model
                 ->whereIn('order_status', [6, 7])
                 ->get();
 
+            // Log::info("Получаем заказы", [$orders]);
+
             // Проверяем условия: coupon_type=0, cashback=0, coupon_value=10
             if ($coupon->coupon_type == 0 && (float) $coupon->cashback == 0.0 && (float) $coupon->coupon_value == 10.0) {
-                Log::info("Coupon conditions met, checking orders for cashback update", [
-                    'coupon_id' => $couponId,
-                ]);
+
+                // Log::info("Coupon conditions met, checking orders for cashback update", [
+                //     'coupon_id' => $couponId,
+                // ]);
+
+                // Log::info('Приводим cashback и order_discount к числу для точного сравнения - 0');
                 $orders = $orders->map(function ($order) {
+
+                    // Log::info('Приводим cashback и order_discount к числу для точного сравнения - 1');
                     // Приводим cashback и order_discount к числу для точного сравнения
                     $orderCashback = (float) $order->cashback;
                     $orderDiscount = (float) $order->order_discount;
+
+                    // Log::info('Приводим cashback и order_discount к числу для точного сравнения - 2');
 
                     if ($orderCashback == 0.0 && $orderDiscount > 0) {
                         $order->cashback = number_format($orderDiscount, 2, '.', '');
@@ -814,12 +823,14 @@ class JoomlaCoupon extends Model
                 ]);
             }
 
+            // Log::info('$orders->toArray()', [$orders->toArray()]);
+
             return $orders->toArray();
         } catch (\Exception $e) {
-            Log::error("Failed to get PP orders", [
-                'coupon_id' => $couponId,
-                'error' => $e->getMessage(),
-            ]);
+            // Log::error("Failed to get PP orders", [
+            //     'coupon_id' => $couponId,
+            //     'error' => $e->getMessage(),
+            // ]);
             return [];
         }
     }
@@ -1116,6 +1127,18 @@ class JoomlaCoupon extends Model
                 // Пропускаем cashback <= 0, так как getPpOrders уже обработал cashback
             }
 
+            // Фильтруем массив, удаляя ордера с cashback <= 0
+            // $orders = array_filter($orders, function ($order) {
+            //     return (float) $order->cashback > 0;
+            // });
+
+            // // Рассчитываем сумму начислений
+            // $totalAccruals = 0.0;
+            // foreach ($orders as $order) {
+            //     $cashback = (float) $order->cashback;
+            //     $totalAccruals += $cashback;  // Теперь все элементы в цикле имеют cashback > 0, continue не нужен
+            // }
+
             // Логируем результат для отладки
             Log::info("Calculated credits", [
                 'orders_count' => count($orders),
@@ -1329,6 +1352,58 @@ class JoomlaCoupon extends Model
             $errorMsg = $e->getMessage();
             ErrorNotifier::notify('Ошибка отправки уведомления о бонусном купоне: ' . $errorMsg);
             Log::error("[JoomlaCoupon] Исключение: $errorMsg.");
+        }
+    }
+
+    /**
+     * Проверяет, является ли пользователь из Joomla партнёром (не заблокированным)
+     * Возвращает true, если пользователь существует, не заблокирован (block = 0)
+     * и принадлежит группе 'Partner' (id = 10)
+     * 
+     * @param string $email Email для проверки
+     * @return bool
+     */
+    public static function isJoomlaPartner(string $email): bool
+    {
+        try {
+            // Шаг 1: Ищем пользователя в таблице jm_users по email
+            // Проверяем, что block = 0 (не заблокирован)
+            $joomlaUser = DB::connection('mysql_joomla')
+                ->table('users')
+                ->where('email', $email)
+                ->where('block', 0)
+                ->select('id') // Нам нужен только ID для следующего шага
+                ->first();
+
+            Log::info("[JoomlaCoupon] Пользователь {$email} ::", [$joomlaUser]);
+
+            if (!$joomlaUser) {
+                Log::info("[JoomlaCoupon] Пользователь с email {$email} не найден или заблокирован в Joomla.");
+                return false;
+            }
+
+            $userId = $joomlaUser->id;
+
+            // Шаг 2: Проверяем связь с группой "Partner" (id = 10) в jm_user_usergroup_map
+            // Используем exists() для проверки наличия записи
+            $isPartner = DB::connection('mysql_joomla')
+                ->table('user_usergroup_map')
+                ->where('user_id', $userId)
+                ->where('group_id', 10) // ID группы "Partner" из дампа jm_usergroups
+                ->exists();
+
+            if ($isPartner) {
+                Log::info("[JoomlaCoupon] Пользователь {$email} (ID {$userId}) является партнёром в Joomla.");
+            } else {
+                Log::info("[JoomlaCoupon] Пользователь {$email} (ID {$userId}) не является партнёром в Joomla.");
+            }
+
+            return $isPartner;
+        } catch (\Exception $e) {
+            // Обрабатываем ошибки, чтобы метод не крашил приложение
+            $errorMsg = $e->getMessage();
+            Log::error("[JoomlaCoupon] Ошибка при проверке партнёра {$email}: {$errorMsg}");
+            return false;
         }
     }
 }

@@ -120,6 +120,9 @@
     }
   ],
   "global": {
-    "responsible_partnersmail": "it@avicenna.com.ru"
+    "responsible_partnersmail": "it@avicenna.com.ru",
+    "responsible_phone": "74997055969",
+    "developer_mail": "it@avicenna.com.ru",
+    "reveloper_phone": "79584050441"
   }
 }

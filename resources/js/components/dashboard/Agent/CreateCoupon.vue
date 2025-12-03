@@ -151,7 +151,7 @@ async function createCoupon() {
 
   } catch (err) {
     // Обрабатываем ошибку и показываем уведомление (с fallback на локализацию)
-    const errorMessage = err.response?.data?.message || t('errors.coupon_creation')
+    const errorMessage = err.response?.data?.message || t('errors.coupon_creation_failed')
     initToast({
       message: t(errorMessage),
       color: 'danger'
