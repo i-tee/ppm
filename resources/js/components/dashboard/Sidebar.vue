@@ -1,13 +1,13 @@
 <template>
 
-  <va-sidebar-item :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'" @click="emit('close')">
+  <va-sidebar-item v-if="!isAdmin" :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'" @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="dashboard" />
       <va-sidebar-item-title>{{ $t('_dashboard') }}</va-sidebar-item-title>
     </va-sidebar-item-content>
   </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive"
+  <va-sidebar-item v-if="!isAdmin" :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive"
     @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="work" />
@@ -73,7 +73,7 @@
       <va-sidebar-item-content>
         <!-- <va-icon name="work" /> -->
         <va-sidebar-item-title>
-          {{ $t('partners.cooperation_types.' + type.name + '.title') }}
+           — {{ $t('partners.cooperation_types.' + type.name + '.title') }}
         </va-sidebar-item-title>
       </va-sidebar-item-content>
     </va-sidebar-item>

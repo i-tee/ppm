@@ -1233,14 +1233,25 @@ class JoomlaCoupon extends Model
                 $cashback = (float) $order->cashback;
                 $discount = (float) $order->order_discount;
 
-                if ($cashback < 0) {
-                    continue; // Пропускаем отрицательный cashback (бонусный промокод)
-                } elseif ($cashback == 0 && $discount > 0) {
-                    $cashback = $discount; // Если 0 и есть discount, то cashback = discount
-                } elseif ($cashback > 0) {
-                    // Используем указанный cashback
-                } else {
-                    continue; // Если cashback == 0 и discount <=0, пропускаем (бесполезный заказ)
+                $discountRatio = ($totalSubtotal > 0) ? $discount / $totalSubtotal : 0;
+
+                switch (true) {
+                    case ($cashback < 0):
+                        // Пропускаем отрицательный cashback (бонусный промокод)
+                        continue;
+
+                    case ($cashback == 0 && $discount > 0 && $discountRatio >= 0.09 && $discountRatio <= 0.11):
+                        // Если cashback = 0, есть скидка, и она составляет 9–11% от суммы заказа
+                        $cashback = $discount;
+                        break;
+
+                    case ($cashback > 0):
+                        // Используем указанный cashback — ничего не делаем
+                        break;
+
+                    default:
+                        // Если cashback == 0 и скидка не подходит под условие (или <= 0) — пропускаем
+                        continue;
                 }
 
                 // Агрегируем метрики

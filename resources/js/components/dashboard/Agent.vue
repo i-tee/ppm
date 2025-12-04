@@ -7,14 +7,24 @@
     <div v-if="apiData && bData">
 
       <!-- Заголовок с локализацией для типа сотрудничества "агент" -->
-      <h1 class="va-h4 my-1">{{ bData.data?.user?.name }} | <span @click="openPayoutModal" class="master-color">{{
-        formatPrice(bData.data?.balance) ?? $t('common.no_data') }}</span></h1> <!-- ← $t вместо t -->
+      <div class="va-h5 my-1">
+        <RouterLink :to="{ name: 'Account' }">
+          <span>
+            <VaAvatar class="w-10 h-10" :src="props.user.avatar_url" /> 
+          </span>
+        </RouterLink>
+        <span @click="openPayoutModal" class="master-color" :title="$t('balance')">
+          {{ formatPrice(bData.data?.balance) ?? $t('common.no_data') }}
+        </span>
+        <VaButton class="ml-2" preset="secondary" icon="chevron_right" @click="openPayoutModal">{{ t('coupons.pullMoney') }}</VaButton>
+      </div>
+
 
       <!-- Описание пользовательского соглашения с ссылкой на контракт -->
       <p class="text-gray-400">
-        <i>{{ $t('user_agreement.description') }} <!-- ← $t -->
+        <i>{{ $t('user_agreement.description') }}
           <a class="avi-link avi-link-out" target="_blank" :href="selectedCooperationType?.contract_url">
-            {{ $t('user_agreement.link_name') }} <!-- ← $t -->
+            {{ $t('user_agreement.link_name') }}
           </a>
         </i>
       </p>
@@ -22,9 +32,9 @@
       <!-- Контейнер для табов, прижат к левому краю -->
       <div class="tabs-container">
         <VaTabs v-model="activeTab">
-          <VaTab name="coupons">{{ $t('coupons.coupons') }}</VaTab> <!-- ← $t -->
-          <VaTab name="credits">{{ $t('coupons.credits') }}</VaTab> <!-- ← $t -->
-          <VaTab name="debits">{{ $t('coupons.debits') }}</VaTab> <!-- ← $t -->
+          <VaTab name="coupons">{{ $t('coupons.coupons') }}</VaTab>
+          <VaTab name="credits">{{ $t('coupons.credits') }}</VaTab>
+          <VaTab name="debits">{{ $t('coupons.debits') }}</VaTab>
         </VaTabs>
       </div>
 
@@ -55,20 +65,20 @@
     <!-- Показываем предупреждение, пока данные загружаются -->
     <div v-else-if="loading">
       <div class="w-full">
-          <VaSkeletonGroup>
-              <VaSkeleton variant="squared" height="120px" />
-              <VaCardContent class="flex items-center">
-                <VaSkeleton variant="circle" width="1rem" height="48px" />
-                <VaSkeleton variant="text" class="ml-2" :lines="2" />
-              </VaCardContent>
-              <VaCardContent>
-                <VaSkeleton variant="text" :lines="4" text-width="50%" />
-              </VaCardContent>
-              <VaCardActions class="flex justify-end">
-                <VaSkeleton class="mr-2" variant="rounded" inline width="64px" height="32px" />
-                <VaSkeleton variant="rounded" inline width="64px" height="32px" />
-              </VaCardActions>
-          </VaSkeletonGroup>
+        <VaSkeletonGroup>
+          <VaSkeleton variant="squared" height="120px" />
+          <VaCardContent class="flex items-center">
+            <VaSkeleton variant="circle" width="1rem" height="48px" />
+            <VaSkeleton variant="text" class="ml-2" :lines="2" />
+          </VaCardContent>
+          <VaCardContent>
+            <VaSkeleton variant="text" :lines="4" text-width="50%" />
+          </VaCardContent>
+          <VaCardActions class="flex justify-end">
+            <VaSkeleton class="mr-2" variant="rounded" inline width="64px" height="32px" />
+            <VaSkeleton variant="rounded" inline width="64px" height="32px" />
+          </VaCardActions>
+        </VaSkeletonGroup>
       </div>
     </div>
 
