@@ -16,13 +16,14 @@
         <span @click="openPayoutModal" class="master-color" :title="$t('balance')">
           {{ formatPrice(bData.data?.balance) ?? $t('common.no_data') }}
         </span>
-        <VaButton class="ml-2" preset="secondary" icon="chevron_right" @click="openPayoutModal">{{ t('coupons.pullMoney') }}</VaButton>
+        <VaButton class="ml-2" preset="secondary" icon="chevron_right" @click="openPayoutModal">{{ $t('coupons.pullMoney') }}</VaButton>
       </div>
-
 
       <!-- Описание пользовательского соглашения с ссылкой на контракт -->
       <p class="text-gray-400">
-        <i>{{ $t('user_agreement.description') }}
+        <i>
+          <a class="ml-1 avi-link avi-link-out" preset="secondary" @click="showConditions_Agent = true">{{ $t('rules') }}</a> | 
+          {{ $t('user_agreement.description') }}
           <a class="avi-link avi-link-out" target="_blank" :href="selectedCooperationType?.contract_url">
             {{ $t('user_agreement.link_name') }}
           </a>
@@ -64,28 +65,20 @@
 
     <!-- Показываем предупреждение, пока данные загружаются -->
     <div v-else-if="loading">
+      <div class="flex">
+        <VaSkeleton variant="circle" height="4rem" />
+        <VaSkeleton tag="h1" variant="text" class="va-h1 ml-4" />
+      </div>
       <div class="w-full">
-        <VaSkeletonGroup>
-          <VaSkeleton variant="squared" height="120px" />
-          <VaCardContent class="flex items-center">
-            <VaSkeleton variant="circle" width="1rem" height="48px" />
-            <VaSkeleton variant="text" class="ml-2" :lines="2" />
-          </VaCardContent>
-          <VaCardContent>
-            <VaSkeleton variant="text" :lines="4" text-width="50%" />
-          </VaCardContent>
-          <VaCardActions class="flex justify-end">
-            <VaSkeleton class="mr-2" variant="rounded" inline width="64px" height="32px" />
-            <VaSkeleton variant="rounded" inline width="64px" height="32px" />
-          </VaCardActions>
-        </VaSkeletonGroup>
+        <!-- Показываем индикатор загрузки, если loading = true -->
+        <div v-if="loading" class="mt-4 pb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <VaSkeleton v-for="i in 3" :key="i" variant="rounded" height="200px" />
+        </div>
       </div>
     </div>
 
     <!-- Показываем ошибку, если загрузка не удалась -->
-    <div v-else-if="error">
-      {{ error }}
-    </div>
+    <div v-else-if="error">{{ error }}</div>
 
   </div>
 
@@ -102,6 +95,13 @@
     <PayoutModal :bData="bData" :apiData="apiData" @close="showPayoutModal = false" @created="handlePayoutCreated" />
   </VaModal>
 
+  <VaModal v-model="showConditions_Agent" :close-button="true" :hide-default-actions="true">
+    <Conditions_Agent :apiData="apiData" />
+    <template #footer>
+      <VaButton @click="showConditions_Agent = false">OK</VaButton>
+    </template>
+  </VaModal>
+
 </template>
 
 <script setup>
@@ -114,6 +114,7 @@ import CreateCoupon from './Agent/CreateCoupon.vue'
 import CreditsList from './Agent/CreditsList.vue'
 import DebitsList from './Agent/DebitsList.vue'
 import PayoutModal from './Agent/PayoutModal.vue'
+import Conditions_Agent from '@/components/parts/Conditions/Agent.vue';
 import { getBusinessData } from '@/api/coupons'
 import { useBase } from '@/composables/useBase';
 import { useI18n } from 'vue-i18n'
@@ -127,6 +128,7 @@ const { t } = useI18n()  // ← t для скрипта
 const apiData = ref(null)
 const bData = ref(null)
 const loading = ref(true)
+const showConditions_Agent = ref(false)
 const error = ref(null)
 const refreshKey = ref(0)
 const activeTab = ref('coupons')

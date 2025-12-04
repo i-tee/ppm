@@ -27,8 +27,8 @@
 
                 <div class="va-card-content">
                   <p>{{ $t('partners.cooperation_types.' + type.name + '.' + type.description) }}</p>
-                  <p><a @click="showConditions(type.id)" href="#" class="va-link">{{ $t('more') }}</a></p>
                 </div>
+
                 <div class="va-card-actions mt-4 flex justify-between">
 
                   <div v-if="hasApplication(0, type.id) || hasApplication(1, type.id)" class="row">
@@ -44,10 +44,11 @@
 
                   <div v-else-if="hasApplication(2, type.id)" class="row">
                     <div class="col">
-                      <VaButton :to="{ name: type.route }" color="primary" class="w-40"
+                      <VaButton :to="{ name: type.route }" color="primary" class="w-40 mr-1"
                         @click="iAlert($t('partners.actived_alert'))">
                         {{ $t('partners.actived') }}
                       </VaButton>
+                      <VaButton preset="secondary" @click="showConditions(type.id)">{{ $t('rules') }}</VaButton>
                     </div>
                   </div>
 
@@ -81,7 +82,7 @@
 
       </div>
 
-      <div v-else>
+      <div v-else class="grid grid-cols-2 gap-4">
         <p class="text-gray-400">{{ $t('loading_data') }}</p>
         <br>
         <VaSkeleton tag="h1" variant="text" class="va-h1" />
@@ -91,7 +92,6 @@
       </div>
 
     </div>
-
 
     <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" :close-button="true">
 
@@ -180,8 +180,6 @@
     </VaModal>
 
     <div>
-      <!-- ... остальная разметка ... -->
-
       <!-- Модальные окна условий -->
       <VaModal v-model="showConditions_Agent" :close-button="true" :hide-default-actions="true">
         <Conditions_Agent :apiData="apiData" />
@@ -239,11 +237,6 @@ const {
   loadApplications,
   // hasApplicationsWithStatus
 } = usePartnerApplications();
-
-// console.log('hasAnyApplications:', hasAnyApplications.value);
-// console.log('applicationsCount:', applicationsCount.value);
-// console.log('partnerApplications:', partnerApplications.value);
-// console.log('hasActiveApplications:', hasActiveApplications.value);
 
 const { t } = useI18n();
 const toast = useToast();

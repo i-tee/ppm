@@ -20,9 +20,7 @@
       </template>
       <!-- Слот для статуса с цветом -->
       <template #cell(status)="{ rowData }">
-        <VaBadge :color="getStatusColor(rowData.status)" small rounded>
-          {{ getStatusText(rowData.status) }}
-        </VaBadge>
+        {{ getStatusText(rowData.status) }}
       </template>
       <!-- Слот для даты создания -->
       <template #cell(created_at)="{ rowData }">
@@ -105,10 +103,10 @@ const totalPages = computed(() => Math.ceil(filteredPayoutRequests.value.length 
 // Колонки (добавил банк)
 const columns = computed(() => [
   { key: 'withdrawal_amount', label: t('payoutRequest.columns.amount'), sortable: true },
-  { key: 'received_amount', label: t('payoutRequest.columns.received'), sortable: true },
+  // { key: 'received_amount', label: t('payoutRequest.columns.received'), sortable: true },
   { key: 'status', label: t('payoutRequest.columns.status'), sortable: true },
-  { key: 'created_at', label: t('payoutRequest.columns.created'), sortable: true },
-  { key: 'bank_name', label: t('payoutRequest.bank_name'), sortable: true }, // Новая колонка
+  // { key: 'created_at', label: t('payoutRequest.columns.created'), sortable: true },
+  // { key: 'bank_name', label: t('payoutRequest.bank_name'), sortable: true },
 ])
 
 // Статусы (синхронизировано с модалкой)

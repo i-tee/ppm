@@ -3,7 +3,11 @@
 
     <div class="d-head">
       <p class="va-h4 my-2 mt-4">{{ $t('dashboard.requisites') }}</p>
-      <p>{{ $t('dashboard.requisites_descr') }}</p>
+      <p>{{ $t('dashboard.requisites_descr') }} | <a :href="partnerSettings?.cooperation_types[1].contract_url"
+          target="_blank">
+          <span class="text-secondary">{{ $t('requisites.contract_offerta') }}</span>
+        </a>
+      </p>
       <VaDivider class="my-4" />
     </div>
 
@@ -29,7 +33,9 @@
                   <VaBadge :text="$t('requisites.active')" color="primary" />
                 </div>
                 <div>
-                  <span class="text-secondary">{{ $t('requisites.contract') }} #{{ req.id }}</span>
+                  <a :href="partnerSettings?.cooperation_types[1].contract_url" target="_blank">
+                    <span class="text-secondary">{{ $t('requisites.offerta') }} #{{ req.id }}</span>
+                  </a>
                 </div>
               </div>
               <div v-else>

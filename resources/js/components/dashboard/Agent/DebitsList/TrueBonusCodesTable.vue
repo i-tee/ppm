@@ -98,9 +98,9 @@ const totalPages = computed(() => Math.ceil(trueBonusCodes.value.length / perPag
 // Определение колонок для таблицы
 const columns = computed(() => [
     { key: 'bonus_code_cost', label: t('coupons.bonus_code_cost'), sortable: true },
-    { key: 'bonus_code_value', label: t('coupons.bonus_code_value'), sortable: true },
+    // { key: 'bonus_code_value', label: t('coupons.bonus_code_value'), sortable: true },
     { key: 'bonus_code_id', label: t('coupons.name'), sortable: true },
-    { key: 'created_at', label: t('coupons.created_at'), sortable: true },
+    // { key: 'created_at', label: t('coupons.created_at'), sortable: true },
 ])
 
 // Сохранение позиции скролла при смене страницы

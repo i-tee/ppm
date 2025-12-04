@@ -65,6 +65,7 @@
   "welcome": "Добро пожаловать в партнерский кабинет Avicenna®",
   "description": "Это ваш личный кабинет для управления партнерской программой Avicenna®.",
   "login": "Вход",
+  "rules": "Правила",
   "email": "Email",
   "password": "Пароль",
   "register": "Регистрация",
@@ -86,6 +87,7 @@
   "logout": "Выход",
   "requisites": {
     "add": "Добавить",
+    "contract_offerta": "Договор-оферта",
     "passport_series_format": "Серия паспорта должна быть в формате XXXX (4 цифры)",
     "passport_number_format": "Номер паспорта должен быть в формате XXXXXX (6 цифр)",
     "inn_format": "ИНН должен состоять из 10 или 12 цифр",
@@ -108,6 +110,7 @@
     "contract": "Договор",
     "active": "Активен",
     "prepare_contract": "Договор готовится, ожидайте",
+    "offerta": "Оферта",
     "validate_requisites": "Реквизиты на проверке...",
     "no_requisites": "Нет реквизитов",
     "create_title": "Создать реквизит",

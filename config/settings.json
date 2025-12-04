@@ -12,7 +12,7 @@
       "name": "agent",
       "route": "Agent",
       "description": "agent_desc",
-      "contract_url": "https://avicenna.com.ru/DOCS/ppm/dp.pdf",
+      "contract_url": "https://avicenna.com.ru/DOCS/ppm/agent_offerta.pdf",
       "coupon_base_url": "https://avicenna.com.ru/buy?_prcp=",
       "active": true,
       "min_payout": 100,
