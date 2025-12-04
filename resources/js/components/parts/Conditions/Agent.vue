@@ -132,8 +132,16 @@
             счёта</li>
           <li>Выгоднее использовать бонусы получения продуктов, а не выводить средства</li>
         </ul>
+
         <div class="bg-gray-50 border-l-4 border-gray-300 p-4 my-4">
           <p><strong>Пример:</strong> {{ bonusExample }}</p>
+          <p class="mt-2 text-sm">
+            Это выгоднее любого вывода денег: вы тратите {{ formatPrice(bonusBase) }}
+            «внутренними» бонусами, а покупаете товары на {{ formatPrice(bonusValue) }}
+            — мгновенная экономия {{ formatPrice(bonusProfit) }} без комиссий и налогов.
+            Используйте такие промокоды для себя, родных или постоянных клиентов —
+            это способ <strong class="text-yellow-600">покупать на сайте с максимальной выгодой</strong>.
+          </p>
         </div>
 
         <h3 class="text-xl font-semibold mt-6 mb-2">7. Вывод средств</h3>
@@ -284,10 +292,14 @@ const partnerDiscount = computed(() => totalDiscount.value - clientDiscount.valu
 const partnerDiscountPercent = computed(() => maxDiscountPercent.value - clientDiscountPercent.value)
 
 const bonusExample = computed(() => {
-  const baseAmount = 10000;
+  const baseAmount = productPrice;
   const bonusAmount = Math.round(baseAmount * bonusKoef.value);
   return `Вы списываете ${baseAmount} ₽ со своего счёта. Клиент получает промокод на ${bonusAmount} ₽.`;
 });
+
+const bonusBase   = computed(() => productPrice);              
+const bonusValue  = computed(() => Math.round(bonusBase.value * bonusKoef.value))
+const bonusProfit = computed(() => bonusValue.value - bonusBase.value);
 
 const payoutDescription = computed(() => {
   return `Вы можете подать заявку на вывод средств с бонусного счёта на свои реквизиты. Минимальная сумма для вывода: ${minPayout.value} ₽. Комиссия при выводе зависит от вашего статуса:`;
