@@ -40,7 +40,7 @@
 
   <!-- Модалка -->
   <VaModal v-model="showModal" :title="$t('payoutRequest.details.title')" close-button hide-default-actions
-    max-width="700px">
+    max-width="700px" :mobile-fullscreen="false">
     <PayoutRequestDetailsModal :bData="bData" :payoutRequest="selectedPayoutRequest" @close="showModal = false" />
   </VaModal>
 </template>

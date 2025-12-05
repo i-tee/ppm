@@ -36,7 +36,7 @@
   </template>
 
   <!-- МОДАЛЬНОЕ ОКНО ПРОСМОТРА РЕКВИЗИТА -->
-  <VaModal v-model="showModal" :title="modalTitle" :hide-default-actions="true" size="large">
+  <VaModal v-model="showModal" :title="modalTitle" :hide-default-actions="true" size="large" :mobile-fullscreen="false">
     <div v-if="selectedRequisite" class="p-4">
       <!-- ЗАГОЛОВОК -->
       <div class="va-card-title mb-2 va-h2 mt-4">

@@ -55,7 +55,7 @@
   </div>
 
   <!-- Модалка -->
-  <VaModal v-model="showModal" :title="$t('orders.details')" close-button hide-default-actions max-width="700px">
+  <VaModal v-model="showModal" :title="$t('orders.details')" close-button hide-default-actions max-width="700px" :mobile-fullscreen="false">
     <OrderDetailsModal :bData="bData" :order="selectedOrder" @close="showModal = false" />
   </VaModal>
 </template>

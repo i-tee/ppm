@@ -91,11 +91,11 @@
   </div>
 
   <!-- Модалка для создания заявки -->
-  <VaModal v-model="showPayoutModal" close-button hide-default-actions max-width="600px">
+  <VaModal v-model="showPayoutModal" close-button hide-default-actions max-width="600px" :mobile-fullscreen="false">
     <PayoutModal :bData="bData" :apiData="apiData" @close="showPayoutModal = false" @created="handlePayoutCreated" />
   </VaModal>
 
-  <VaModal v-model="showConditions_Agent" :close-button="true" :hide-default-actions="true">
+  <VaModal v-model="showConditions_Agent" :close-button="true" :hide-default-actions="true" :mobile-fullscreen="false">
     <Conditions_Agent :apiData="apiData" />
     <template #footer>
       <VaButton @click="showConditions_Agent = false">OK</VaButton>

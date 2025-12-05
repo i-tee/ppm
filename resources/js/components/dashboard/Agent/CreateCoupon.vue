@@ -9,7 +9,7 @@
   </div>
 
   <!-- Модальное окно Vuestic UI для создания купона -->
-  <VaModal v-model="couponModal" size="small" close-button :hide-default-actions="true">
+  <VaModal v-model="couponModal" size="small" close-button :hide-default-actions="true" :mobile-fullscreen="false">
     <!-- Содержимое модального окна -->
     <template #default>
       <!-- Заголовок модального окна с локализацией -->

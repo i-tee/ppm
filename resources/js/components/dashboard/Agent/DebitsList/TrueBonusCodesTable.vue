@@ -33,7 +33,7 @@
         </VaDataTable>
 
         <!-- Модалка -->
-        <VaModal v-model="showModal" :title="t('coupons.bonus_code_details')" close-button hide-default-actions max-width="700px">
+        <VaModal v-model="showModal" :title="t('coupons.bonus_code_details')" close-button hide-default-actions max-width="700px" :mobile-fullscreen="false">
             <TrueBonusCodeDetailsModal :bData="bData" :bonusCode="selectedBonusCode" @close="showModal = false" />
         </VaModal>
     </div>

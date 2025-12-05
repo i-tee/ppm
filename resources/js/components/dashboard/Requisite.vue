@@ -93,7 +93,7 @@
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ РЕКВИЗИТОВ -->
-    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" :close-button="true" size="medium">
+    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" :close-button="true" size="medium" :mobile-fullscreen="false">
       <VaProgressBar v-if="submitting" indeterminate color="primary" class="mb-4" />
 
       <VaForm ref="formRef" class="p-4 space-y-4">

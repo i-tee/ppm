@@ -90,7 +90,7 @@
   </div>
 
   <!-- Модальное окно для загрузки аватара -->
-  <VaModal v-model="showAvatarModal" size="small" close-button :hide-default-actions="true">
+  <VaModal v-model="showAvatarModal" size="small" close-button :hide-default-actions="true" :mobile-fullscreen="false">
     <template #default>
       <h3 class="va-h3 mb-4">{{ t('vuestic.profile.upload_avatar') }}</h3>
       <div class="flex flex-col">
@@ -114,7 +114,7 @@
   </VaModal>
 
   <!-- Модальное окно для изменения пароля -->
-  <VaModal v-model="showPasswordModal" size="small" close-button :hide-default-actions="true">
+  <VaModal v-model="showPasswordModal" size="small" close-button :hide-default-actions="true" :mobile-fullscreen="false">
     <template #default>
       <h3 class="va-h3 mb-4">{{ t('vuestic.profile.change_password') }}</h3>
       <form @submit.prevent="changePassword" class="flex flex-col gap-4 mb-4">

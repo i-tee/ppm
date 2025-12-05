@@ -44,7 +44,7 @@
     </div>
 
     <!-- Модалка -->
-    <VaModal v-model="showModal" :title="t('coupons.orders')" hide-default-actions max-width="700px" close-button>
+    <VaModal v-model="showModal" :title="t('coupons.orders')" hide-default-actions max-width="700px" close-button :mobile-fullscreen="false">
       <OrderInfoModal :coupon="selectedCoupon" @close="showModal = false" />
     </VaModal>
   </div>

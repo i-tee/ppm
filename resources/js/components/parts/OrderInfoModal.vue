@@ -131,10 +131,10 @@ const fetchOrderInfo = async () => {
                     color: 'warning',
                 });
             } else {
-                toast({
-                    message: t('orders.retrieved_successfully'),
-                    color: 'success',
-                });
+                // toast({
+                //     message: t('orders.retrieved_successfully'),
+                //     color: 'success'
+                // });
             }
         } else {
             throw new Error(t(response.data.message));

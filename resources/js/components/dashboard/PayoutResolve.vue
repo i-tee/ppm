@@ -42,7 +42,7 @@
 
   </div>
 
-  <VaModal v-model="showRequisitFullModal" :hide-default-actions="true" :close-button="true" size="medium">
+  <VaModal v-model="showRequisitFullModal" :hide-default-actions="true" :close-button="true" size="medium" :mobile-fullscreen="false">
     <RequisitFullModal :checkedPayout="checkedPayout" @payoutUpdated="showRequisitFullModal = false; fetchPayoutRequests()" />
     <template #footer>
       <div class="flex justify-end space-x-4">

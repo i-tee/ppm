@@ -57,7 +57,7 @@
       <VaButton @click="openCreateModal" class="mt-4">{{ $t('partnerApplications.create') }}</VaButton>
 
       <!-- Модальное окно -->
-      <VaModal v-model="showModal" :title="modalTitle" :hide-default-actions="true">
+      <VaModal v-model="showModal" :title="modalTitle" :hide-default-actions="true" :mobile-fullscreen="false">
         <VaForm ref="formRef" class="p-4 space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

@@ -93,7 +93,7 @@
 
     </div>
 
-    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" :close-button="true">
+    <VaModal v-model="showDialog" :loading="submitting" :hide-default-actions="true" :close-button="true" :mobile-fullscreen="false">
 
       <VaProgressBar v-if="submitting" indeterminate color="primary" class="mb-4" />
 
@@ -181,28 +181,28 @@
 
     <div>
       <!-- Модальные окна условий -->
-      <VaModal v-model="showConditions_Agent" :close-button="true" :hide-default-actions="true">
+      <VaModal v-model="showConditions_Agent" :close-button="true" :hide-default-actions="true" :mobile-fullscreen="false">
         <Conditions_Agent :apiData="apiData" />
         <template #footer>
           <VaButton @click="showConditions_Agent = false">OK</VaButton>
         </template>
       </VaModal>
 
-      <VaModal v-model="showConditions_Influencer" :close-button="true" :hide-default-actions="true">
+      <VaModal v-model="showConditions_Influencer" :close-button="true" :hide-default-actions="true" :mobile-fullscreen="false">
         <Conditions_Influencer :apiData="apiData" />
         <template #footer>
           <VaButton @click="showConditions_Influencer = false">OK</VaButton>
         </template>
       </VaModal>
 
-      <VaModal v-model="showConditions_Wholesale" :close-button="true" :hide-default-actions="true">
+      <VaModal v-model="showConditions_Wholesale" :close-button="true" :hide-default-actions="true" :mobile-fullscreen="false">
         <Conditions_Wholesale :apiData="apiData" />
         <template #footer>
           <VaButton @click="showConditions_Wholesale = false">OK</VaButton>
         </template>
       </VaModal>
 
-      <VaModal v-model="showConditions_Distributor" :close-button="true" :hide-default-actions="true">
+      <VaModal v-model="showConditions_Distributor" :close-button="true" :hide-default-actions="true" :mobile-fullscreen="false">
         <Conditions_Distributor :apiData="apiData" />
         <template #footer>
           <VaButton @click="showConditions_Distributor = false">OK</VaButton>

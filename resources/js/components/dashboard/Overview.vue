@@ -35,11 +35,12 @@
 
     <!-- For Approved Application --------------------------------------------------------------------------------------->
     <div v-if="hasApprovedApplications">
-      <div class="d-head">
+
+      <!-- <div class="d-head">
         <p class="va-h4 my-2 mt-4">{{ $t('welcomes.head') }}</p>
         <p>{{ $t('partnerApplications.appstatus') }}: {{ $t('status.' + partnerApplications[0]?.status_name) }}</p>
         <VaDivider class="my-4" />
-      </div>
+      </div> -->
 
       <AgentOverview/>
 

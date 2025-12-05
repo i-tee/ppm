@@ -95,7 +95,7 @@
 
           <!-- Попап для сброса пароля -->
           <VaModal v-model="showResetModal" :close-button="true" title="Сброс пароля" size="small"
-            :hide-default-actions="true">
+            :hide-default-actions="true" :mobile-fullscreen="false">
             <template #default>
               <p>{{ $t('register_reset_description') }}</p>
               <br>
