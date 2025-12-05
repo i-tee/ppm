@@ -37,6 +37,8 @@
 
 <body>
     <div id="app"></div>
+    @include('parts.yandexmetrika')
+    @include('parts.chatsupport')
 </body>
 
 </html>
