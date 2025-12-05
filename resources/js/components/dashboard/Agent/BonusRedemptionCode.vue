@@ -12,18 +12,17 @@
     <!-- контейнер-ряд -->
     <div class="flex flex-row gap-4 my-4">
       <!-- колонка 1/2 -->
-      <div>
+      <div class="w-1/2 flex-shrink-0">
         <div class="text-center">
-          <div>
-            <p>{{ $t('coupons.withdrawLabelonBalance') }}</p>
-            <VaInput v-model="formBonusData.value" type="number"
-              :rules="[value => validateValue(value) || t('coupons.errorBalance')]" @input="validateValueInput" />
-          </div>
+          <p>{{ $t('coupons.withdrawLabelonBalance') }}</p>
+          <VaInput v-model="formBonusData.value" type="number"
+            :rules="[value => validateValue(value) || t('coupons.errorBalance')]" @input="validateValueInput" />
         </div>
       </div>
+
       <!-- колонка 1/2 -->
-      <div class="w-1/2 p-4 rounded-md" style="background: var(--va-primary)">
-        <div class="text-center" style="color: #fff">
+      <div class="w-1/2 flex-shrink-0 p-4 rounded-md" style="background: var(--va-primary)">
+        <div class="text-center text-white">
           <div>{{ $t('coupons.creditLabelonCoupon') }}</div>
           <div class="text-lg font-bold mt-1">
             {{ formatPrice(computedBonus) }}

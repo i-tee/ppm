@@ -38,7 +38,7 @@
         <!-- Второй ряд: статистика по промокодам -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Бонусные промокоды (coupon_type: 1) -->
-            <div class="text-center p-4 bg-green-50 rounded-lg shadow-sm">
+            <div class="text-center bg-gray-50 p-4 rounded-lg shadow-sm">
                 <div class="flex items-center justify-center mb-2">
                     <span class="text-green-600 font-semibold">{{ $t('dashboard.bonus_coupons') }}</span>
                 </div>
@@ -51,7 +51,7 @@
             </div>
 
             <!-- Процентные промокоды (coupon_type: 0) -->
-            <div class="text-center p-4 bg-blue-50 rounded-lg shadow-sm">
+            <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
                 <div class="flex items-center justify-center mb-2">
                     <span class="text-blue-600 font-semibold">{{ $t('dashboard.percent_coupons') }}</span>
                 </div>
@@ -64,7 +64,7 @@
             </div>
 
             <!-- Общая статистика промокодов -->
-            <div class="text-center p-4 bg-purple-50 rounded-lg shadow-sm">
+            <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
                 <p class="text-sm text-gray-600 mb-1">{{ $t('dashboard.total_coupons') }}</p>
                 <p class="text-2xl font-bold text-purple-600">{{ totalPromoCodes }}</p>
                 <div class="mt-2 space-y-1">
@@ -75,16 +75,16 @@
             </div>
 
             <!-- Затраты на бонусные коды -->
-            <div class="text-center p-4 bg-amber-50 rounded-lg shadow-sm">
+            <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
                 <p class="text-sm text-gray-600 mb-1">{{ $t('dashboard.bonus_codes_expense') }}</p>
                 <p class="text-2xl font-bold text-amber-600">{{ formatPrice(bonusCodesCost) }}</p>
                 <div class="mt-2 space-y-1">
                     <p class="text-xs text-gray-500">
                         {{ $t('dashboard.bonus_codes_count') }}: {{ bonusCodesCount }}
                     </p>
-                    <p class="text-xs text-gray-500">
+                    <!-- <p class="text-xs text-gray-500">
                         {{ $t('dashboard.avg_cost') }}: {{ formatPrice(averageBonusCodeCost) }}
-                    </p>
+                    </p> -->
                 </div>
             </div>
         </div>
@@ -92,13 +92,13 @@
         <!-- Третий ряд: выводы средств -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Объединённые выводы средств -->
-            <div class="text-center p-4 bg-indigo-50 rounded-lg shadow-sm">
+            <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
                 <p class="text-sm text-gray-600 mb-1">{{ $t('dashboard.withdrawals_total') }}</p>
                 <p class="text-2xl font-bold text-indigo-600">{{ formatPrice(totalWithdrawn) }}</p>
             </div>
 
             <!-- Статистика эффективности -->
-            <div class="text-center p-4 bg-emerald-50 rounded-lg shadow-sm">
+            <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
                 <p class="text-sm text-gray-600 mb-1">{{ $t('dashboard.avg_order_with_coupon') }}</p>
                 <p class="text-2xl font-bold text-emerald-600">{{ formatPrice(averageOrderWithPromoCode) }}</p>
             </div>
@@ -106,14 +106,14 @@
 
         <!-- Четвертый ряд: сумма заказов -->
         <div class="grid grid-cols-1 gap-4">
-            <div class="text-center p-4 bg-purple-50 rounded-lg shadow-sm">
+            <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
                 <p class="text-sm text-gray-600 mb-1">{{ $t('dashboard.total_order_sum') }}</p>
                 <p class="text-2xl font-bold text-purple-600">{{ formatPrice(totalOrderSum) }}</p>
             </div>
         </div>
 
         <!-- Блок с реквизитами (оставляем как есть) -->
-        <div v-if="!isVerified" class="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+        <div v-if="!isVerified" class="mt-6 p-4 bg-gray-50 rounded-lg border border-yellow-200">
             <div class="flex flex-col md:flex-row md:items-center justify-between">
                 <div>
                     <p class="text-yellow-800 font-medium">{{ $t('requisites.no_requisites') }}</p>

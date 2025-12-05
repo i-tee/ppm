@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\SpaController;
 
 Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
@@ -20,6 +21,8 @@ Route::get('/auth', function () {
 
 Route::get('/reset-password', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
 
-Route::get('/{any}', function () {
-    return view('app');
-})->where('any', '.*');
+// Route::get('/{any}', function () {
+//     return view('app');
+// })->where('any', '.*');
+
+Route::get('/{any}', [SpaController::class, 'index'])->where('any', '.*');
