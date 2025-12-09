@@ -10,6 +10,7 @@ use App\Http\Controllers\UserCouponController;
 use App\Http\Controllers\RequisiteController;
 use App\Http\Controllers\RequisitesSettingController;
 use App\Http\Controllers\PayoutRequestController;
+use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\DevController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -38,6 +39,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminUpdate']);  // Обновление статуса
     Route::put('/admin/payout-requests-received/{id}', [PayoutRequestController::class, 'adminReceived']);  // Отчёт(Обновление) о выплате
     Route::delete('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminDestroy']);  // Удаление
+
+    Route::get('/admin/users', [ImpersonateController::class, 'index']);
+    Route::post('/admin/impersonate/{user}', [ImpersonateController::class, 'impersonate']);
+    Route::post('/admin/impersonate/stop', [ImpersonateController::class, 'stop']);
 
     Route::get('/user/requisites', [RequisiteController::class, 'index']);
     Route::get('/user/requisites-all', [RequisiteController::class, 'all']);

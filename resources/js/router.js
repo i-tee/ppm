@@ -13,6 +13,7 @@ import PartnerApplications from "./components/dashboard/PartnerApplications.vue"
 import RequisiteVerification from "./components/dashboard/RequisiteVerification.vue";
 import PayoutResolve from "./components/dashboard/PayoutResolve.vue";
 import Types from "./components/dashboard/Types.vue";
+import Impersonate from "./components/dashboard/Impersonate.vue";
 import ReferralLinks from "./components/dashboard/ReferralLinks.vue";
 import Account from "./components/dashboard/Account.vue";
 import ResetPassword from "./components/ResetPassword.vue";
@@ -98,6 +99,11 @@ const routes = [
         path: "payout-resolve",
         name: "PayoutResolve",
         component: PayoutResolve,
+      },
+      {
+        path: "impersonate",
+        name: "Impersonate",
+        component: Impersonate,
       },
       {
         path: "partner-applications",

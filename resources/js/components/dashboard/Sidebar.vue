@@ -29,6 +29,14 @@
     </va-sidebar-item-content>
   </va-sidebar-item> -->
 
+  <va-sidebar-item :to="{ name: 'Impersonate' }" :active="$route.name === 'Impersonate'" v-if="isAdmin"
+    @click="emit('close')">
+    <va-sidebar-item-content>
+      <va-icon name="person" />
+      <va-sidebar-item-title>{{ $t('dashboard.impersonate') }}</va-sidebar-item-title>
+    </va-sidebar-item-content>
+  </va-sidebar-item>
+
   <va-sidebar-item :to="{ name: 'PartnerApplications' }" :active="$route.name === 'PartnerApplications'" v-if="isAdmin"
     @click="emit('close')">
     <va-sidebar-item-content>
