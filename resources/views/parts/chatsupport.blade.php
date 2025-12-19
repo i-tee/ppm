@@ -1,6 +1,6 @@
 <div class="hidden-print">
     <a href="https://t.me/+G7EoSjJ1N6I3NzIy" target="_blank"
-        style="position: fixed; right: 24px; bottom: 24px; z-index: 1000; background: #229ED9; border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"
+        style="position: fixed; right: 24px; bottom: 24px; z-index: 1; background: #229ED9; border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"
         data-toggle="tooltip"
         title="Самый быстрый способ получить помощь - написать в нашу официальную группу поддержки в Телеграм">
         <svg width="32" height="32" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">

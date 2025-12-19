@@ -331,6 +331,11 @@ class Requisites
             ->pluck('name')
             ->toArray();
 
+        // ❗ Удаляем пробелы из bank_account_number до валидации
+        if (isset($data['bank_account_number'])) {
+            $data['bank_account_number'] = preg_replace('/\s+/', '', $data['bank_account_number']);
+        }
+
         return array_intersect_key($data, array_flip($allowedFields));
     }
 

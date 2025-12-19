@@ -346,6 +346,7 @@ async function validateAndSubmit() {
   submitting.value = true;
 
   try {
+
     const response = await axios.post('/api/user/requisites', payload, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
@@ -353,11 +354,14 @@ async function validateAndSubmit() {
     showDialog.value = false;
     await loadRequisites();
     resetForm();
+    
   }
   catch (e) {
+
     submitting.value = false;
 
     if (e.response?.status === 422) {
+
       const errors = e.response.data.errors || {};
 
       // Собираем все ошибки в один список
@@ -379,9 +383,14 @@ async function validateAndSubmit() {
           duration: 10000,
         });
       }
+
     } else {
+
       toast.init({ message: t('requisites.unierror'), color: 'danger' });
+      console.log('IoErr ^^')
+
     }
+
   }
   finally {
     submitting.value = false;

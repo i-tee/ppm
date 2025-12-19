@@ -390,7 +390,7 @@ class JoomlaCoupon extends Model
                 'email' => $email,
                 'password' => $hashedPassword,
                 'block' => 0,
-                'sendEmail' => 1,
+                'sendEmail' => 0,
                 'registerDate' => now()->toDateTimeString(),
                 'lastvisitDate' => now()->toDateTimeString(),
                 'lastResetTime' => now()->toDateTimeString(),

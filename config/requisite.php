@@ -196,7 +196,7 @@ return [
             'name' => 'org_kpp',
             'required' => true,
             'visible' => [4],
-            'type' => 'number',
+            'type' => 'text',
             'label' => 'requisites.org_kpp',
             'group' => 'organization',
             'order' => 190
@@ -305,7 +305,7 @@ return [
             'name' => 'bank_bik',
             'required' => true,
             'visible' => [1, 2, 3, 4],
-            'type' => 'number',
+            'type' => 'text',
             'label' => 'requisites.bank_bik',
             'group' => 'bank',
             'order' => 260
