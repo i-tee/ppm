@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
 const api = axios.create({
-  baseURL: 'https://partner.avicenna.com.ru/api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
