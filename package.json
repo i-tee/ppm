@@ -3,7 +3,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "dev:local": "vite --config vite.config.local.js",
+        "build:local": "vite build --config vite.config.local.js"
     },
     "devDependencies": {
         "@vuestic/tailwind": "^0.1.5",

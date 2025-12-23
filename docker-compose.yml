@@ -1,0 +1,41 @@
+# docker-compose.yml
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/backend/Dockerfile
+    container_name: ${PROJECT_NAME:-laravel}_backend
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+
+  nginx:
+    image: nginx:alpine
+    container_name: ${PROJECT_NAME:-laravel}_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - backend
+
+  node:
+    build:
+      context: .
+      dockerfile: ./docker/nodejs/Dockerfile
+    container_name: ${PROJECT_NAME:-laravel}_node
+    restart: unless-stopped
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - node_modules:/var/www/node_modules
+    command: npm run dev:local
+
+volumes:
+  dbdata:
+  node_modules:
