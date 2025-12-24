@@ -122,6 +122,8 @@ const getStatusText = (status) => {
     0: t('payoutRequest.status.created'),
     10: t('payoutRequest.status.approved'),
     20: t('payoutRequest.status.paid'),
+    30: t('payoutRequest.status.ticket_uploaded'),
+    40: t('payoutRequest.status.ticket_accepted'),
     99: t('payoutRequest.status.deleted'),
   }
   return statuses[status] || t('payoutRequest.status.unknown')

@@ -1,7 +1,10 @@
 <template>
     <div class="space-y-6">
-        <div class="text-lg font-semibold">{{ $t('payoutRequest.ticket.title') }}</div>
-        <p class="text-sm text-gray-600">{{ $t('payoutRequest.ticket.description') }}</p>
+
+        <div v-if="!hasTicket">
+            <div class="text-lg font-semibold">{{ $t('payoutRequest.ticket.title') }}</div>
+            <p class="text-sm text-gray-600">{{ $t('payoutRequest.ticket.description') }}</p>
+        </div>
 
         <!-- Уже загружен чек -->
         <div v-if="hasTicket">
@@ -29,9 +32,6 @@
             <p class="text-gray-500">{{ $t('payoutRequest.ticket.not_required') }}</p>
         </div>
 
-        <div class="flex justify-end mt-6">
-            <VaButton @click="$emit('close')">{{ $t('common.close') }}</VaButton>
-        </div>
     </div>
 </template>
 
@@ -57,15 +57,15 @@ const canUpload = ref(false)
 
 // Отладочный обработчик — выводит всё, что приходит в v-model
 const onFileChange = (newValue) => {
-    console.log('=== VaFileUpload update:modelValue ===')
-    console.log('newValue:', newValue)
-    console.log('typeof newValue:', typeof newValue)
-    console.log('Array.isArray(newValue):', Array.isArray(newValue))
-    console.log('newValue instanceof File:', newValue instanceof File)
+    // console.log('=== VaFileUpload update:modelValue ===')
+    // console.log('newValue:', newValue)
+    // console.log('typeof newValue:', typeof newValue)
+    // console.log('Array.isArray(newValue):', Array.isArray(newValue))
+    // console.log('newValue instanceof File:', newValue instanceof File)
     if (newValue) {
         if (Array.isArray(newValue)) {
 
-            console.log('Длина массива:', newValue.length)
+            // console.log('Длина массива:', newValue.length)
             if (newValue.length > 0) canUpload.value = newValue[0].size > 0 ? true : false
 
         } else {
@@ -75,7 +75,7 @@ const onFileChange = (newValue) => {
         canUpload.value = false
     }
 
-    console.log('=====================================')
+    // console.log('=====================================')
 
 }
 

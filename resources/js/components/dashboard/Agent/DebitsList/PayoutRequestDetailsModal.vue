@@ -57,13 +57,13 @@
       </div>
     </div>
 
-    <!-- Заметка и чек -->
+    <!-- чек -->
     <VaDivider v-if="payoutRequest.ticket_proof" />
     <div v-if="payoutRequest.ticket_proof" class="space-y-2">
       <div>
         <span class="text-gray-500">{{ $t('payoutRequest.user_ticket') }}: </span>
         <a :href="`/storage/${payoutRequest.ticket_proof}`" target="_blank" class="text-blue-500 underline">
-          {{ $t('payoutRequest.ticket.view_user_proof') }}
+          {{ $t('payoutRequest.view_user_proof') }}
         </a>
       </div>
     </div>
@@ -96,6 +96,8 @@ const getStatusText = (status) => {
     0: t('payoutRequest.status.created'),
     10: t('payoutRequest.status.approved'),
     20: t('payoutRequest.status.paid'),
+    30: t('payoutRequest.status.ticket_uploaded'),
+    40: t('payoutRequest.status.ticket_accepted'),
     99: t('payoutRequest.status.deleted'),
   }
   return statuses[status] || t('payoutRequest.status.unknown')
@@ -106,6 +108,8 @@ const getStatusColor = (status) => {
     0: 'warning',
     10: 'info',
     20: 'success',
+    30: 'success',
+    40: 'success',
     99: 'danger',
   }
   return colors[status] || 'gray'

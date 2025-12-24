@@ -24,6 +24,7 @@
         "10": "approved",
         "20": "paid",
         "30": "ticket_uploaded",
+        "40": "ticket_accepted",
         "50": "cancelled",
         "99": "deleted"
       }
