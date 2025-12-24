@@ -42,6 +42,7 @@
   <VaModal v-model="showModal" :title="$t('payoutRequest.details.title')" close-button hide-default-actions
     max-width="700px" :mobile-fullscreen="false">
 
+    <!-- Показываем TicketModal только когда это актуально -->
     <PayoutRequestTicketModal
       v-if="selectedPayoutRequest && (selectedPayoutRequest.status === 20 || selectedPayoutRequest.ticket_proof)"
       :payoutRequest="selectedPayoutRequest" :bData="bData" @close="showModal = false" />

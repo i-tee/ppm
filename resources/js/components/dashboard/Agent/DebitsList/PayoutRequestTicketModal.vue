@@ -10,13 +10,14 @@
         <img
           v-if="isImage"
           :src="ticketUrl"
-          alt="Чек"
-          class="max-w-full max-h-screen"
+          alt="Чек пользователя"
+          class="max-w-full"
         />
         <iframe
-          v-else-if="fileExtension === 'pdf'"
+          v-else-if="isPdf"
           :src="ticketUrl"
-          class="w-full h-96"
+          class="w-full h-96 border-0"
+          frameborder="0"
         />
         <a
           v-else
@@ -29,18 +30,20 @@
       </div>
     </div>
 
-    <!-- Нужно загрузить (status = 20 и ещё нет чека) -->
+    <!-- Форма загрузки -->
     <div v-else-if="needsUpload">
       <VaFileUpload
         v-model="files"
         type="single"
-        :file-types="['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx']"
+        file-types=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+        :max-size="10240 * 1024"
+        @update:modelValue="onFileChange"
         class="mb-4"
       />
       <VaButton
         @click="upload"
         :loading="uploading"
-        :disabled="files.length === 0"
+        :disabled="!canUpload"
         color="primary"
       >
         {{ $t('payoutRequest.ticket.upload_button') }}
@@ -65,15 +68,43 @@ import axios from 'axios'
 
 const props = defineProps({
   payoutRequest: { type: Object, required: true },
+  bData: { type: Object, default: null },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'updated'])
 
 const toast = useToast()
+
 const files = ref([])
 const uploading = ref(false)
+const canUpload = ref(false)
 
-const needsUpload = computed(() => props.payoutRequest.status === 20)
+// Отладочный обработчик — выводит всё, что приходит в v-model
+const onFileChange = (newValue) => {
+  console.log('=== VaFileUpload update:modelValue ===')
+  console.log('newValue:', newValue)
+  console.log('typeof newValue:', typeof newValue)
+  console.log('Array.isArray(newValue):', Array.isArray(newValue))
+  console.log('newValue instanceof File:', newValue instanceof File)
+  if (newValue) {
+    if (Array.isArray(newValue)) {
+      console.log('Длина массива:', newValue.length)
+      if (newValue.length > 0) console.log('Имя файла:', newValue[0].name, 'Размер:', newValue[0].size)
+    } else {
+      console.log('Имя файла:', newValue.name, 'Размер:', newValue.size)
+    }
+  }
+
+  let x = newValue.size > 0 ? true : false
+
+  console.log('x:', x)
+  console.log('=====================================')
+
+  canUpload.value = newValue.size > 0 ? true : false
+
+}
+
+const needsUpload = computed(() => props.payoutRequest.status === 20 && !props.payoutRequest.ticket_proof)
 const hasTicket = computed(() => !!props.payoutRequest.ticket_proof)
 
 const ticketUrl = computed(() => 
@@ -86,14 +117,17 @@ const fileExtension = computed(() => {
   return parts.length > 1 ? parts.pop().toLowerCase() : ''
 })
 
-const isImage = computed(() => ['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension.value))
+const isImage = computed(() => ['jpg', 'jpeg', 'png'].includes(fileExtension.value))
+const isPdf = computed(() => fileExtension.value === 'pdf')
 
 const upload = async () => {
-  if (files.value.length === 0) return
+  // Если окажется, что files — это не массив, а объект File, поменяй здесь тоже
+  const fileToUpload = Array.isArray(files.value) ? files.value[0] : files.value
+  if (!fileToUpload) return
 
   uploading.value = true
   const formData = new FormData()
-  formData.append('ticket', files.value[0])
+  formData.append('ticket', fileToUpload)
 
   try {
     const { data } = await axios.post(
@@ -103,16 +137,15 @@ const upload = async () => {
     )
 
     if (data.success) {
-      // Обновляем локальный объект — это автоматически обновит таблицу и детали
-      props.payoutRequest.ticket_proof = data.data.ticket_proof
-      props.payoutRequest.status = data.data.status
-      props.payoutRequest.status_text = data.data.status_text
+      Object.assign(props.payoutRequest, data.data)
 
       toast.init({
         message: data.message || $t('payoutRequest.ticket.upload_success'),
         color: 'success',
       })
-      files.value = []
+
+      files.value = []   // или files.value = null — в зависимости от того, что увидишь
+      emit('updated')
     }
   } catch (err) {
     const msg = err.response?.data?.message || $t('errors.unknown')
