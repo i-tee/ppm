@@ -7,7 +7,8 @@
     "retry": "Дата",
     "n_a": "Пусто",
     "loading": "Загрузка...",
-    "refresh": "Обновить"
+    "refresh": "Обновить",
+    "close": "Закрыть"
   },
   "welcomes": {
     "choose_text": "Для старта партнёрства выберите удобный формат взаимодействия и заполните заявку. После рассмотрения (в течение двух рабочих дней) вы получите доступ к персональным инструментам продвижения.",
@@ -136,7 +137,6 @@
     "is_verified": "Верифицирован",
     "is_active": "Активен",
     "tax_check_required": "Требуется чек из 'Мой налог'",
-
     "passport_series": "Серия паспорта",
     "passport_number": "Номер паспорта",
     "passport_issued_date": "Дата выдачи паспорта",
@@ -147,7 +147,6 @@
     "birth_date": "Дата рождения",
     "birth_place": "Место рождения",
     "passport_snils": "СНИЛС",
-
     "bank_account_type": "Тип счета",
     "bank_account_number": "Номер счета",
     "bank_card_holder": "Держатель карты",
@@ -160,7 +159,6 @@
     "bank_bik": "БИК банка",
     "bank_phone_for_sbp": "Телефон для СБП",
     "bank_card_number": "Номер банковской карты",
-
     "org_full_name": "Полное наименование организации",
     "org_short_name": "Сокращенное наименование",
     "org_legal_form": "Организационно-правовая форма",
@@ -184,7 +182,6 @@
     "org_director_position": "Должность руководителя",
     "org_director_basis": "Основание полномочий",
     "org_tax_system": "Система налогообложения",
-
     "doc_egrul": "Выписка из ЕГРЮЛ/ЕГРИП",
     "doc_inn": "Свидетельство ИНН",
     "doc_ogrn": "Свидетельство ОГРН",
@@ -195,13 +192,11 @@
     "doc_bank_account": "Выписка из банка",
     "doc_license": "Лицензии",
     "doc_other": "Прочие документы",
-
     "group_basic": "Основные данные",
     "group_passport": "Паспортные данные",
     "group_bank": "Банковские реквизиты",
     "group_organization": "Карточка организации",
     "group_documents": "Документы",
-
     "status_verified": "Верифицирован",
     "status_not_verified": "Не верифицирован",
     "status_active": "Активен",
@@ -210,14 +205,12 @@
     "unverify": "Снять верификацию",
     "activate": "Активировать",
     "deactivate": "Деактивировать",
-
     "created_success": "Реквизиты успешно созданы",
     "updated_success": "Реквизиты успешно обновлены",
     "deleted_success": "Реквизиты успешно удалены",
     "verified_success": "Реквизиты верифицированы",
     "activated_success": "Реквизиты активированы",
     "deactivated_success": "Реквизиты деактивированы",
-
     "validation_required": "Поле обязательно для заполнения",
     "validation_inn_length": "ИНН должен содержать 10 или 12 цифр",
     "validation_ogrn_length": "ОГРН должен содержать 13 цифр",
@@ -226,7 +219,6 @@
     "validation_bik_length": "БИК должен содержать 9 цифр",
     "validation_passport_series_length": "Серия паспорта должна содержать 4 цифры",
     "validation_passport_number_length": "Номер паспорта должен содержать 6 цифр",
-
     "hint_passport_series": "4 цифры",
     "hint_passport_number": "6 цифр",
     "hint_inn_individual": "12 цифр для физлица",
@@ -237,11 +229,9 @@
     "hint_bik": "9 цифр",
     "hint_snils": "XXX-XXX-XXX XX",
     "hint_card_expiry": "ММ/ГГ",
-
     "account_type_settlement": "Расчетный счет",
     "account_type_card": "Карточный счет",
     "account_type_personal": "Лицевой счет",
-
     "tax_system_osn": "ОСН - Общая система",
     "tax_system_usn": "УСН - Упрощенная система",
     "tax_system_envd": "ЕНВД - Единый налог на вмененный доход",
@@ -706,6 +696,17 @@
     "close": "Закрыть"
   },
   "payoutRequest": {
+    "ticket": {
+      "title": "Прикрепление чека о получении выплаты",
+      "description": "Пожалуйста, загрузите чек или скриншот подтверждения получения средств (обязательно для самозанятых).",
+      "upload_button": "Загрузить чек",
+      "upload_success": "Чек успешно загружен",
+      "already_uploaded": "Чек уже прикреплён",
+      "not_required": "Прикрепление чека не требуется",
+      "view_file": "Просмотреть файл",
+      "not_paid_yet": "Выплата ещё не отмечена как оплаченная",
+      "not_required_for_type": "Для данного типа партнёра чек не требуется"
+    },
     "receipt_path": "Яндекс.Диск -> ООО Авиценна -> Партнерская программа -> Агент -> ",
     "receipt_path_folder": "Чеки-Выплаты",
     "confirm_payout": "Подтвердить выплату",
@@ -778,7 +779,9 @@
       "deleted": "Удалена",
       "status": "Статус"
     },
-    "details": { "title": "Детали заявки" },
+    "details": {
+      "title": "Детали заявки"
+    },
     "fields": {
       "amount": "Сумма вывода",
       "received": "Получено",

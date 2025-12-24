@@ -23,6 +23,7 @@
         "0": "created",
         "10": "approved",
         "20": "paid",
+        "30": "ticket_uploaded",
         "50": "cancelled",
         "99": "deleted"
       }

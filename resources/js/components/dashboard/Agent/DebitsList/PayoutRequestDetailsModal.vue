@@ -19,7 +19,8 @@
       <div class="space-y-2">
         <div>
           <span class="text-gray-500">{{ $t('payoutRequest.status.status') }}: </span>
-          <VaBadge :text="getStatusText(payoutRequest.status)" :color="getStatusColor(payoutRequest.status)" class="mr-2" />
+          <VaBadge :text="getStatusText(payoutRequest.status)" :color="getStatusColor(payoutRequest.status)"
+            class="mr-2" />
         </div>
         <div><span class="text-gray-500">{{ $t('date.created') }}: </span> {{ formatDate(payoutRequest.created_at) }}
         </div>
@@ -43,7 +44,7 @@
       </div>
     </div>
 
-    <!-- Заметка и чек -->
+    <!-- Заметка и пруф -->
     <VaDivider v-if="payoutRequest.note || payoutRequest.proof_link" />
     <div v-if="payoutRequest.note || payoutRequest.proof_link" class="space-y-2">
       <div v-if="payoutRequest.note"><span class="text-gray-500">{{ $t('payoutRequest.note') }}: </span> {{
@@ -52,6 +53,17 @@
         <span class="text-gray-500">{{ $t('payoutRequest.view_proof') }}: </span>
         <a :href="payoutRequest.proof_link" target="_blank" class="text-blue-500 underline hover:text-blue-700">
           {{ $t('payoutRequest.proof_link_label') }}
+        </a>
+      </div>
+    </div>
+
+    <!-- Заметка и чек -->
+    <VaDivider v-if="payoutRequest.ticket_proof" />
+    <div v-if="payoutRequest.ticket_proof" class="space-y-2">
+      <div>
+        <span class="text-gray-500">{{ $t('payoutRequest.user_ticket') }}: </span>
+        <a :href="`/storage/${payoutRequest.ticket_proof}`" target="_blank" class="text-blue-500 underline">
+          {{ $t('payoutRequest.ticket.view_user_proof') }}
         </a>
       </div>
     </div>

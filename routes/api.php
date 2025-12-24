@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dev4', [UserCouponController::class, 'index']);
 
     Route::post('/payout-requests', [PayoutRequestController::class, 'store']);
+    Route::post('/payout-requests/{id}/ticket', [PayoutRequestController::class, 'uploadTicket']);
 
     Route::get('/admin/payout-requests-prepared', [PayoutRequestController::class, 'adminIndexPrepared']);  //  метод для админа
     Route::get('/admin/payout-requests', [PayoutRequestController::class, 'adminIndex']);  //  метод для админа

@@ -41,6 +41,11 @@
   <!-- Модалка -->
   <VaModal v-model="showModal" :title="$t('payoutRequest.details.title')" close-button hide-default-actions
     max-width="700px" :mobile-fullscreen="false">
+
+    <PayoutRequestTicketModal
+      v-if="selectedPayoutRequest && (selectedPayoutRequest.status === 20 || selectedPayoutRequest.ticket_proof)"
+      :payoutRequest="selectedPayoutRequest" :bData="bData" @close="showModal = false" />
+
     <PayoutRequestDetailsModal :bData="bData" :payoutRequest="selectedPayoutRequest" @close="showModal = false" />
   </VaModal>
 </template>
@@ -52,6 +57,7 @@ import { useToast } from 'vuestic-ui'
 import { VaDataTable, VaPagination, VaModal, VaBadge } from 'vuestic-ui'
 import { useBase } from '@/composables/useBase'
 import PayoutRequestDetailsModal from './PayoutRequestDetailsModal.vue'
+import PayoutRequestTicketModal from './PayoutRequestTicketModal.vue'
 
 const { t } = useI18n()
 const { formatPrice, formatDate } = useBase()
@@ -121,7 +127,7 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
-  const colors = { 0: 'warning', 10: 'info', 20: 'success', 99: 'danger' }
+  const colors = { 0: 'warning', 10: 'info', 20: 'success', 30: 'success', 99: 'danger' }
   return colors[status] || 'primary'
 }
 

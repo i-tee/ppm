@@ -385,4 +385,58 @@ class PayoutRequestController extends Controller
             Log::error("[PayoutRequest] Исключение при отправке уведомлений о выплате заявки {$payoutRequest->id}: $errorMsg. Stack: " . $e->getTraceAsString());
         }
     }
+
+    public function uploadTicket(Request $request, $id)
+    {
+        $payoutRequest = PayoutRequest::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($payoutRequest->status !== PayoutRequest::STATUS_PAID) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.ticket.not_paid_yet'),
+            ], 403);
+        }
+
+        // Проверка: только для самозанятого
+        $partnerTypes = Partners::getSettings('partner_types');
+        $partnerType = collect($partnerTypes)->firstWhere('id', $payoutRequest->requisite->partner_type_id);
+
+        // TODO: уточни точное условие (по id, name или отдельному полю)
+        $isSelfEmployed = ($partnerType['id'] ?? null) === 2 // пример, замени на реальный id самозанятого
+            || ($partnerType['is_self_employed'] ?? false);
+
+        if (! $isSelfEmployed) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.ticket.not_required_for_type'),
+            ], 403);
+        }
+
+        if ($payoutRequest->ticket_proof) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.ticket.already_uploaded'),
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'ticket' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240', // до 10 МБ
+        ]);
+
+        // Сохраняем в storage/app/public/payout_tickets/{payout_id}
+        $path = $request->file('ticket')->store('payout_tickets/' . $payoutRequest->id, 'public');
+
+        $payoutRequest->update([
+            'ticket_proof' => $path,
+            'status' => PayoutRequest::STATUS_TICKET_UPLOADED,
+        ]);
+
+        $payoutRequest->load(['user', 'approver', 'requisite'])->append('status_text');
+
+        return response()->json([
+            'success' => true,
+            'data' => $payoutRequest,
+            'message' => trans('payoutRequest.ticket.upload_success'),
+        ]);
+    }
 }

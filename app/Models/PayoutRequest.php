@@ -16,6 +16,7 @@ class PayoutRequest extends Model
     const STATUS_CREATED = 0;     // created
     const STATUS_APPROVED = 10;   // approved
     const STATUS_PAID = 20;       // paid
+    const STATUS_TICKET_UPLOADED = 30; // ticket_uploaded
     const STATUS_CANCELLED = 50;  // cancelled
     const STATUS_DELETED = 99;    // deleted (для деактивации + is_active=false)
 
@@ -41,6 +42,7 @@ class PayoutRequest extends Model
         'note',
         'proof_link',
         'is_active',
+        'ticket_proof',
     ];
 
     protected $casts = [
