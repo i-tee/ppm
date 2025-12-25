@@ -66,7 +66,7 @@ const onFileChange = (newValue) => {
 
 }
 
-const needsUpload = computed(() => props.payoutRequest.status === 20 && !props.payoutRequest.ticket_proof)
+const needsUpload = computed(() => props.payoutRequest.status === 14 && !props.payoutRequest.ticket_proof)
 const hasTicket = computed(() => !!props.payoutRequest.ticket_proof)
 
 const ticketUrl = computed(() =>

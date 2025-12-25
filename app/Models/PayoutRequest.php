@@ -17,7 +17,6 @@ class PayoutRequest extends Model
     const STATUS_APPROVED = 10;   // approved
     const STATUS_PAID_WHAIT_TICKET = 14;       // paid_whait_ticket
     const STATUS_TICKET_UPLOADED = 16; // ticket_uploaded
-    const STATUS_TICKET_ACCEPTED = 18; // ticket_accepted
     const STATUS_PAID = 20;       // paid
     const STATUS_CANCELLED = 50;  // cancelled
     const STATUS_DELETED = 99;    // deleted (для деактивации + is_active=false)
@@ -112,7 +111,6 @@ class PayoutRequest extends Model
                 self::STATUS_APPROVED,
                 self::STATUS_PAID_WHAIT_TICKET,
                 self::STATUS_TICKET_UPLOADED,
-                self::STATUS_TICKET_ACCEPTED,
                 self::STATUS_PAID,
             ])
             ->sum('withdrawal_amount');

@@ -14,8 +14,9 @@ use App\Http\Controllers\UserCouponController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\PayoutPaidNotification; // Новый импорт
-use App\Notifications\PayoutPaidToCompanyNotification; // Новый импорт
+use App\Notifications\PayoutPaidNotification;
+use App\Notifications\PayoutPaidToCompanyNotification;
+use App\Notifications\PayoutTickedUploadToCompanyNotification;
 use App\Helpers\ErrorNotifier; // Для ошибок
 use Illuminate\Support\Arr; // Для Arr::get
 
@@ -286,6 +287,12 @@ class PayoutRequestController extends Controller
             'note' => 'nullable|string|max:1000', // Комментарий (опционально)
         ]);
 
+        // Определяем статус в зависимости от типа партнёра
+        $isSelfEmployed = ($payoutRequest->requisite->partner_type_id == 2); // самозанятый
+        $newStatus = $isSelfEmployed
+            ? PayoutRequest::STATUS_PAID_WHAIT_TICKET // 14 — ждём чек от пользователя
+            : PayoutRequest::STATUS_PAID;
+
         try {
             // Лог для дебага: валидированные данные
             Log::info('Validated payout data', [
@@ -296,7 +303,7 @@ class PayoutRequestController extends Controller
 
             // Обновляем запись
             $payoutRequest->update([
-                'status' => PayoutRequest::STATUS_PAID,
+                'status' => $newStatus,
                 'approver_id' => Auth::id(), // ID текущего админа
                 'proof_link' => $validated['proof_link'],
                 'note' => $validated['note'] ?? null,
@@ -390,25 +397,11 @@ class PayoutRequestController extends Controller
     {
         $payoutRequest = PayoutRequest::where('user_id', Auth::id())->findOrFail($id);
 
-        if ($payoutRequest->status !== PayoutRequest::STATUS_PAID) {
+        // Теперь только если статус именно "ожидание чека"
+        if ($payoutRequest->status !== PayoutRequest::STATUS_PAID_WHAIT_TICKET) {
             return response()->json([
                 'success' => false,
-                'message' => trans('payoutRequest.ticket.not_paid_yet'),
-            ], 403);
-        }
-
-        // Проверка: только для самозанятого
-        $partnerTypes = Partners::getSettings('partner_types');
-        $partnerType = collect($partnerTypes)->firstWhere('id', $payoutRequest->requisite->partner_type_id);
-
-        // TODO: уточни точное условие (по id, name или отдельному полю)
-        $isSelfEmployed = ($partnerType['id'] ?? null) === 2 // пример, замени на реальный id самозанятого
-            || ($partnerType['is_self_employed'] ?? false);
-
-        if (! $isSelfEmployed) {
-            return response()->json([
-                'success' => false,
-                'message' => trans('payoutRequest.ticket.not_required_for_type'),
+                'message' => trans('payoutRequest.ticket.invalid_status'),
             ], 403);
         }
 
@@ -430,6 +423,33 @@ class PayoutRequestController extends Controller
             'ticket_proof' => $path,
             'status' => PayoutRequest::STATUS_TICKET_UPLOADED,
         ]);
+
+
+        // Отправляем уведомление компании о загрузке чека
+        try {
+            Log::info("[PayoutRequest] Пользователь загрузил чек для заявки {$payoutRequest->id}.");
+
+            $globalSettings = Partners::getSettings('global');
+            $email = Arr::get($globalSettings, 'responsible_partnersmail');
+
+            if (!$email) {
+                $email = Arr::get($globalSettings, 'global.responsible_partnersmail');
+            }
+
+            if (!$email) {
+                ErrorNotifier::notify('Почта компании не найдена для уведомления о загрузке чека');
+                Log::error("[PayoutRequest] Email компании не найден для заявки {$payoutRequest->id}.");
+            } else {
+                Notification::route('mail', $email)
+                    ->notify(new PayoutTickedUploadToCompanyNotification($payoutRequest));
+
+                Log::info("[PayoutRequest] Уведомление о загрузке чека отправлено на $email для заявки {$payoutRequest->id}.");
+            }
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            ErrorNotifier::notify('Ошибка при отправке уведомления о загрузке чека: ' . $errorMsg);
+            Log::error("[PayoutRequest] Исключение при уведомлении о чеке заявки {$payoutRequest->id}: $errorMsg.");
+        }
 
         $payoutRequest->load(['user', 'approver', 'requisite'])->append('status_text');
 

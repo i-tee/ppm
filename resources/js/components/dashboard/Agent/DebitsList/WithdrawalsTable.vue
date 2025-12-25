@@ -43,7 +43,7 @@
     max-width="700px" :mobile-fullscreen="false">
 
     <!-- Показываем TicketModal только когда это актуально -->
-    <PayoutRequestTicketModal v-if="selectedPayoutRequest && selectedPayoutRequest.status === 21"
+    <PayoutRequestTicketModal v-if="selectedPayoutRequest.status == 14"
       :payoutRequest="selectedPayoutRequest" :bData="bData" @close="showModal = false" />
 
     <PayoutRequestDetailsModal :bData="bData" :payoutRequest="selectedPayoutRequest" @close="showModal = false" />
@@ -70,7 +70,7 @@ const selectedPayoutRequest = ref(null)
 const openModal = (item) => {
   selectedPayoutRequest.value = item
   showModal.value = true
-  console.log('Открыта модалка для выплаты:', selectedPayoutRequest.value?.requisite?.partner_type_id)
+  console.log('Открыта модалка для выплаты:', selectedPayoutRequest.value)
 }
 
 // Пропсы (добавил userId и userName для мини-режима)
@@ -108,7 +108,7 @@ const pagedPayoutRequests = computed(() => {
 
 const totalPages = computed(() => Math.ceil(filteredPayoutRequests.value.length / perPage.value))
 
-// Колонки (добавил банк)
+// Колонки
 const columns = computed(() => [
   { key: 'withdrawal_amount', label: t('payoutRequest.columns.amount'), sortable: true },
   // { key: 'received_amount', label: t('payoutRequest.columns.received'), sortable: true },
@@ -117,21 +117,30 @@ const columns = computed(() => [
   // { key: 'bank_name', label: t('payoutRequest.bank_name'), sortable: true },
 ])
 
-// Статусы (синхронизировано с модалкой)
+// Статусы
 const getStatusText = (status) => {
   const statuses = {
     0: t('payoutRequest.status.created'),
     10: t('payoutRequest.status.approved'),
+    14: t('payoutRequest.status.paid_whait_ticket'),
+    16: t('payoutRequest.status.ticket_uploaded'),
     20: t('payoutRequest.status.paid'),
-    30: t('payoutRequest.status.ticket_uploaded'),
-    40: t('payoutRequest.status.ticket_accepted'),
+    50: t('payoutRequest.status.cancelled'),
     99: t('payoutRequest.status.deleted'),
   }
   return statuses[status] || t('payoutRequest.status.unknown')
 }
 
 const getStatusColor = (status) => {
-  const colors = { 0: 'warning', 10: 'info', 20: 'success', 30: 'success', 99: 'danger' }
+  const colors = {
+    0: 'warning',
+    10: 'info',
+    14: 'primary',
+    16: 'primary',
+    20: 'success',
+    50: 'danger',
+    99: 'danger',
+  }
   return colors[status] || 'primary'
 }
 

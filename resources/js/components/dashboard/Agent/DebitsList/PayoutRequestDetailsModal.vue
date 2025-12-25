@@ -95,9 +95,10 @@ const getStatusText = (status) => {
   const statuses = {
     0: t('payoutRequest.status.created'),
     10: t('payoutRequest.status.approved'),
+    14: t('payoutRequest.status.paid_whait_ticket'),
+    16: t('payoutRequest.status.ticket_uploaded'),
     20: t('payoutRequest.status.paid'),
-    30: t('payoutRequest.status.ticket_uploaded'),
-    40: t('payoutRequest.status.ticket_accepted'),
+    50: t('payoutRequest.status.cancelled'),
     99: t('payoutRequest.status.deleted'),
   }
   return statuses[status] || t('payoutRequest.status.unknown')
@@ -107,9 +108,10 @@ const getStatusColor = (status) => {
   const colors = {
     0: 'warning',
     10: 'info',
+    14: 'primary',
+    16: 'primary',
     20: 'success',
-    30: 'success',
-    40: 'success',
+    50: 'danger',
     99: 'danger',
   }
   return colors[status] || 'gray'

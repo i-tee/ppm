@@ -776,11 +776,12 @@
     "status": {
       "created": "Создана",
       "approved": "Одобрена",
-      "paid": "Выплачена",
+      "paid_whait_ticket": "Выплачена, ожидание чека",
       "ticket_uploaded": "Чек загружен",
-      "ticket_accepted": "Чек принят",
+      "paid": "Выплачена",
       "cancelled": "Отменена",
       "deleted": "Удалена",
+      "unknown": "Неизвестно",
       "status": "Статус"
     },
     "details": {

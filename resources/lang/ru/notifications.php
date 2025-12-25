@@ -91,5 +91,11 @@ return [
         'payout_paid_to_company_line1' => 'Заявка на выплату от пользователя :name (ID: :request_id, сумма :amount руб.) успешно обработана. Cредства переведены (:received_amount руб.).',
         'payout_paid_to_company_line2' => 'Дата: :date. Чек: :proof_link.',
         'payout_paid_to_company_line3' => 'Проверьте детали в панели.',
+        // Новые ключи для уведомления о загрузке чека пользователем
+        'payout_ticket_upload_subject' => 'Пользователь загрузил чек по заявке на выплату',
+        'payout_ticket_upload_greeting' => 'Здравствуйте, команда!',
+        'payout_ticket_upload_line1' => 'Пользователь :name загрузил чек по заявке ID :request_id (сумма :amount руб.).',
+        'payout_ticket_upload_line2' => 'Ссылка на файл: :ticket_url.',
+        'payout_ticket_upload_line3' => 'Проверьте файл и завершите обработку заявки.',
     ],
 ];
