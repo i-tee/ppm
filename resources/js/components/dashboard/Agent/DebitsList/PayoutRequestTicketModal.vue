@@ -1,38 +1,25 @@
 <template>
-    <div class="space-y-6">
 
-        <div v-if="!hasTicket">
+    <div v-if="!hasTicket && needsUpload" class="space-y-6 bg-gray-100 p-6 rounded-lg max-w-full text-center mb-3">
+
+        <div>
             <div class="text-lg font-semibold">{{ $t('payoutRequest.ticket.title') }}</div>
             <p class="text-sm text-gray-600">{{ $t('payoutRequest.ticket.description') }}</p>
         </div>
 
-        <!-- Уже загружен чек -->
-        <div v-if="hasTicket">
-            <p class="text-success">{{ $t('payoutRequest.ticket.already_uploaded') }}</p>
-            <div class="my-6 border rounded-lg overflow-hidden">
-                <img v-if="isImage" :src="ticketUrl" alt="Чек пользователя" class="max-w-full" />
-                <iframe v-else-if="isPdf" :src="ticketUrl" class="w-full h-96 border-0" frameborder="0" />
-                <a v-else :href="ticketUrl" target="_blank" class="va-button va-button--normal va-button--primary">
-                    {{ $t('payoutRequest.ticket.view_file') }}
-                </a>
-            </div>
-        </div>
-
         <!-- Форма загрузки -->
-        <div v-else-if="needsUpload">
-            <VaFileUpload v-model="files" type="single" file-types=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                :max-size="10240 * 1024" @update:modelValue="onFileChange" class="mb-4" />
+        <div>
+            <div class="bg-gray-200 text-center rounded-md mb-3">
+                <VaFileUpload v-model="files" type="single" file-types=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                    :max-size="10240 * 1024" @update:modelValue="onFileChange" class="mb-4 text-center p-5" />
+            </div>
             <VaButton @click="upload" :loading="uploading" :disabled="!canUpload" color="primary">
                 {{ $t('payoutRequest.ticket.upload_button') }}
             </VaButton>
         </div>
 
-        <!-- Не требуется -->
-        <div v-else>
-            <p class="text-gray-500">{{ $t('payoutRequest.ticket.not_required') }}</p>
-        </div>
-
     </div>
+
 </template>
 
 <script setup>

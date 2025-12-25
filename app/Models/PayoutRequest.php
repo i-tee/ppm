@@ -15,9 +15,10 @@ class PayoutRequest extends Model
     // Константы статусов (из settings.json: cooperation_types[1].payout_statuses)
     const STATUS_CREATED = 0;     // created
     const STATUS_APPROVED = 10;   // approved
+    const STATUS_PAID_WHAIT_TICKET = 14;       // paid_whait_ticket
+    const STATUS_TICKET_UPLOADED = 16; // ticket_uploaded
+    const STATUS_TICKET_ACCEPTED = 18; // ticket_accepted
     const STATUS_PAID = 20;       // paid
-    const STATUS_TICKET_UPLOADED = 30; // ticket_uploaded
-    const STATUS_TICKET_ACCEPTED = 40; // ticket_accepted
     const STATUS_CANCELLED = 50;  // cancelled
     const STATUS_DELETED = 99;    // deleted (для деактивации + is_active=false)
 
@@ -104,14 +105,15 @@ class PayoutRequest extends Model
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Теперь учитываем created (0), approved (10) и paid (20) и ticket_uploaded (30) и ticket_accepted (40) в балансе
+        // Теперь учитываем от created (0) до paid (20) в балансе
         $debit = $payoutRequests
             ->whereIn('status', [
                 self::STATUS_CREATED,
                 self::STATUS_APPROVED,
-                self::STATUS_PAID,
+                self::STATUS_PAID_WHAIT_TICKET,
                 self::STATUS_TICKET_UPLOADED,
-                self::STATUS_TICKET_ACCEPTED
+                self::STATUS_TICKET_ACCEPTED,
+                self::STATUS_PAID,
             ])
             ->sum('withdrawal_amount');
 

@@ -23,8 +23,9 @@
         "0": "created",
         "10": "approved",
         "20": "paid",
-        "30": "ticket_uploaded",
-        "40": "ticket_accepted",
+        "14": "paid_whait_ticket",
+        "16": "ticket_uploaded",
+        "18": "ticket_accepted",
         "50": "cancelled",
         "99": "deleted"
       }
@@ -122,10 +123,10 @@
     }
   ],
   "global": {
-    "responsible_partnersmail": "it@avicenna.com.ru",
+    "responsible_partnersmail": "avicenna.com.ru@gmail.com",
     "responsible_phone": "74997055969",
     "developer_mail": "it@avicenna.com.ru",
-    "reveloper_phone": "79584050441"
+    "developer_phone": "79584050441"
   },
   "meta": {
     "title_key": "meta.title",

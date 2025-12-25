@@ -43,12 +43,12 @@
     max-width="700px" :mobile-fullscreen="false">
 
     <!-- Показываем TicketModal только когда это актуально -->
-    <PayoutRequestTicketModal
-      v-if="selectedPayoutRequest && (selectedPayoutRequest.status === 20 || selectedPayoutRequest.ticket_proof)"
+    <PayoutRequestTicketModal v-if="selectedPayoutRequest && selectedPayoutRequest.status === 21"
       :payoutRequest="selectedPayoutRequest" :bData="bData" @close="showModal = false" />
 
     <PayoutRequestDetailsModal :bData="bData" :payoutRequest="selectedPayoutRequest" @close="showModal = false" />
   </VaModal>
+
 </template>
 
 <script setup>
@@ -70,6 +70,7 @@ const selectedPayoutRequest = ref(null)
 const openModal = (item) => {
   selectedPayoutRequest.value = item
   showModal.value = true
+  console.log('Открыта модалка для выплаты:', selectedPayoutRequest.value?.requisite?.partner_type_id)
 }
 
 // Пропсы (добавил userId и userName для мини-режима)
