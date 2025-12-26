@@ -86,6 +86,38 @@
       </div>
     </VaForm>
   </div>
+
+  <!--  TicketModal для загрузки чеков -->
+  <VaModal v-model="showTicketModal" close-button hide-default-actions>
+    <div>
+      <h3 class="va-h6 mb-3">{{ $t('payoutRequest.pending_ticket_required_full') }}</h3>
+    </div>
+
+    <div class="my-2">
+      <a :href="selectedPayoutRequest.proof_link" target="_blank" class="va-link">
+          <span>{{ $t('payoutRequest.received') }}:</span> 
+          <b>{{ formatPrice(selectedPayoutRequest.received_amount) }}</b><span> </span>
+          <span>{{ $t('date.from') }}: {{ formatDate(selectedPayoutRequest.updated_at) }}</span>
+      </a>
+    </div>
+
+    <div>
+      <br>
+      <div>
+        <a class="va-link" target="_blank"
+          href="https://www.perplexity.ai/search/kak-sdelat-chek-samozaniatomu-Za6waYA4SZubO.M6.CrPOA#0">
+          <p class="text-xs">{{ $t('payoutRequest.selfimployed_tip') }}</p>
+        </a>
+      </div>
+      <br>
+    </div>
+
+    <PayoutRequestTicketModal :payoutRequest="selectedPayoutRequest" :bData="bData" @updated="closeAndClose()" />
+
+    <p class="text-xs">{{ $t('payoutRequest.ticket_modal_description') }}</p>
+
+  </VaModal>
+
 </template>
 
 <script setup>
@@ -97,12 +129,17 @@ import { VaForm, VaInput, VaSelect, VaButton, VaDivider } from 'vuestic-ui'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import { useBase } from '@/composables/useBase'
+import PayoutRequestTicketModal from './DebitsList/PayoutRequestTicketModal.vue'
+
+function closeAndClose() {
+  showTicketModal.value = false
+}
 
 // Инициализация
 const { t } = useI18n()
 const { init: initToast } = useToast()
 const authStore = useAuthStore()
-const { formatPrice } = useBase()
+const { formatPrice, formatDate } = useBase()
 
 // Props и emits
 const props = defineProps({
@@ -126,7 +163,9 @@ const min_payout = props.apiData.cooperation_types[1].min_payout
 
 const requisites = ref([])
 const loadingRequisites = ref(true)
+const showTicketModal = ref(false)
 const selectedType = ref(null)
+const selectedPayoutRequest = ref(null)
 
 // Вычисляемые свойства
 const computedBalance = computed(() => props.bData.data?.balance || 0)
@@ -250,26 +289,44 @@ const handleSubmit = async () => {
   try {
     loadingRequisites.value = true
 
-    console.log(payload)
-
     const response = await axios.post('/api/payout-requests', payload, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
 
     if (response.data.success) {
       initToast({ message: t('payoutRequest.create.success'), color: 'success' })
-      emit('created')  // Триггер refresh в Agent
+      emit('created')  // Рефреш таблицы
       emit('close')
-      form.value = { ...form.value, withdrawal_amount: '', requisite_id: null, note: '' }  // Reset
+      form.value = { ...form.value, withdrawal_amount: '', requisite_id: null, note: '' }  // Reset формы
     }
   } catch (err) {
-    initToast({
-      message: t('payoutRequest.create.error') || err.response?.data?.message || t('errors.unexpected_error'),
-      color: 'danger'
-    })
     loadingRequisites.value = false
-  } finally {
-    loadingRequisites.value = false
+
+    let message = t('errors.unexpected_error') // Фоллбек на самый крайний случай
+
+    // Основной приоритет: если сервер вернул message — показываем его
+    if (err.response?.data?.message) {
+      message = err.response.data.message
+    }
+    // Если валидация (422) и есть errors объект — берём первое сообщение
+    else if (err.response?.data?.errors && typeof err.response.data.errors === 'object') {
+      const errors = err.response.data.errors
+      const firstField = Object.keys(errors)[0]
+      message = errors[firstField][0] || message
+    }
+
+    // Показываем toast с ошибкой
+    initToast({ message, color: 'danger' })
+
+    if (err.response?.data?.pending_payout_id) {
+
+      selectedPayoutRequest.value = err.response.data.pending_payout
+
+      console.log('selectedPayoutRequest.value:', selectedPayoutRequest.value)
+
+      showTicketModal.value = true
+
+    }
   }
 }
 

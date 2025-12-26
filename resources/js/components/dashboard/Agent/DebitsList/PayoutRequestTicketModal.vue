@@ -26,7 +26,10 @@
 import { ref, computed } from 'vue'
 import { useToast } from 'vuestic-ui'
 import axios from 'axios'
-import { useAuthStore } from '@/stores/auth' // Хранилище Pinia для авторизации
+import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
     payoutRequest: { type: Object, required: true },
@@ -93,8 +96,8 @@ const upload = async () => {
 
     try {
 
-        console.log('Uploading file:', fileToUpload)
-        console.log('formData:', formData)
+        // console.log('Uploading file:', fileToUpload)
+        // console.log('formData:', formData)
 
         const { data } = await axios.post(
             `/api/payout-requests/${props.payoutRequest.id}/ticket`,
@@ -113,7 +116,7 @@ const upload = async () => {
             Object.assign(props.payoutRequest, data.data)
 
             toast.init({
-                message: data.message || $t('payoutRequest.ticket.upload_success'),
+                message: t('payoutRequest.ticket.upload_success'),
                 color: 'success',
             })
 
@@ -121,7 +124,7 @@ const upload = async () => {
             emit('updated')
         }
     } catch (err) {
-        const msg = err.response?.data?.message || $t('errors.unknown')
+        const msg = err.response?.data?.message || t('errors.unknown')
         toast.init({ message: msg, color: 'danger' })
     } finally {
         uploading.value = false

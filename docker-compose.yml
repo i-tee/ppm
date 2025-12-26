@@ -36,6 +36,18 @@ services:
       - node_modules:/var/www/node_modules
     command: npm run dev:local
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ${PROJECT_NAME:-laravel}_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP-порт (Laravel будет слать сюда)
+      - "8025:8025"   # Веб-интерфейс Mailpit
+    volumes:
+      - mailpit-data:/data   # чтобы база с письмами сохранялась при перезапуске
+    # networks не нужно указывать — автоматически попадёт в дефолтную сеть compose
+
 volumes:
   dbdata:
   node_modules:
+  mailpit-data:

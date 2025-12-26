@@ -98,6 +98,18 @@ class PayoutRequestController extends Controller
         try {
             $user = Auth::user();
 
+            // Проверяем, есть ли незавершённая заявка с ожиданием чека
+            if ($user->hasPendingTicketPayout()) {
+                $pending = $user->pendingTicketPayout();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => trans('payoutRequest.pending_ticket_required'), // новый ключ в локализации
+                    'pending_payout_id' => $pending->id, // чтобы фронт мог подсветить/открыть модалку
+                    'pending_payout' => $pending, // чтобы фронт мог подсветить/открыть модалку
+                ], 422);
+            }
+
             // Получаем полный баланс агента через UserCouponController::data() (актуальный расчёт)
             $userCouponController = new UserCouponController();
             $balanceResponse = $userCouponController->data($request);  // Вызов метода data()

@@ -136,4 +136,37 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->notify(new ResetPasswordNotification($token));
     }
+
+    /**
+     * Отношение к заявкам на вывод (один пользователь — много заявок)
+     */
+    public function payoutRequests()
+    {
+        return $this->hasMany(PayoutRequest::class, 'user_id');
+    }
+
+    /**
+     * Возвращает первую (самую новую) заявку, требующую загрузки чека от пользователя.
+     * Если таких нет — null.
+     *
+     * @return PayoutRequest|null
+     */
+    public function pendingTicketPayout(): ?PayoutRequest
+    {
+        return $this->payoutRequests()
+            ->where('status', \App\Models\PayoutRequest::STATUS_PAID_WHAIT_TICKET)
+            ->where('is_active', true) // на всякий случай только активные
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    /**
+     * Булева проверка: есть ли такая заявка?
+     *
+     * @return bool
+     */
+    public function hasPendingTicketPayout(): bool
+    {
+        return $this->pendingTicketPayout() !== null;
+    }
 }
