@@ -12,15 +12,18 @@
       @row:click="({ item }) => openModal(item)">
       <!-- Слот для суммы вывода -->
       <template #cell(withdrawal_amount)="{ rowData }">
-        {{ formatPrice(rowData.withdrawal_amount) }}
+        <span :class="'text-' + getStatusColor(rowData.status)">{{ formatPrice(rowData.withdrawal_amount) }}</span>
+        <!-- <VaChip :color="getStatusColor(rowData.status)" size="small">
+          {{ formatPrice(rowData.withdrawal_amount) }}
+        </VaChip> -->
       </template>
       <!-- Слот для полученной суммы -->
       <template #cell(received_amount)="{ rowData }">
         {{ formatPrice(rowData.received_amount || 0) }}
       </template>
-      <!-- Слот для статуса с цветом -->
+      <!-- Слот для статуса с цветом (VaBadge) -->
       <template #cell(status)="{ rowData }">
-        {{ getStatusText(rowData.status) }}
+        <span :class="'text-' + getStatusColor(rowData.status)">{{ getStatusText(rowData.status) }}</span>
       </template>
       <!-- Слот для даты создания -->
       <template #cell(created_at)="{ rowData }">
@@ -43,8 +46,8 @@
     max-width="700px" :mobile-fullscreen="false">
 
     <!-- Показываем TicketModal только когда это актуально -->
-    <PayoutRequestTicketModal v-if="selectedPayoutRequest.status == 14"
-      :payoutRequest="selectedPayoutRequest" :bData="bData" @close="showModal = false" />
+    <PayoutRequestTicketModal v-if="selectedPayoutRequest.status == 14" :payoutRequest="selectedPayoutRequest"
+      :bData="bData" @close="showModal = false" />
 
     <PayoutRequestDetailsModal :bData="bData" :payoutRequest="selectedPayoutRequest" @close="showModal = false" />
   </VaModal>
@@ -57,11 +60,13 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vuestic-ui'
 import { VaDataTable, VaPagination, VaModal, VaBadge } from 'vuestic-ui'
 import { useBase } from '@/composables/useBase'
+import { usePayoutStatus } from '@/composables/usePayoutStatus'
 import PayoutRequestDetailsModal from './PayoutRequestDetailsModal.vue'
 import PayoutRequestTicketModal from './PayoutRequestTicketModal.vue'
 
 const { t } = useI18n()
 const { formatPrice, formatDate } = useBase()
+const { getStatusText, getStatusColor } = usePayoutStatus()
 const toast = useToast()
 
 const showModal = ref(false)
@@ -116,33 +121,6 @@ const columns = computed(() => [
   // { key: 'created_at', label: t('payoutRequest.columns.created'), sortable: true },
   // { key: 'bank_name', label: t('payoutRequest.bank_name'), sortable: true },
 ])
-
-// Статусы
-const getStatusText = (status) => {
-  const statuses = {
-    0: t('payoutRequest.status.created'),
-    10: t('payoutRequest.status.approved'),
-    14: t('payoutRequest.status.paid_whait_ticket'),
-    16: t('payoutRequest.status.ticket_uploaded'),
-    20: t('payoutRequest.status.paid'),
-    50: t('payoutRequest.status.cancelled'),
-    99: t('payoutRequest.status.deleted'),
-  }
-  return statuses[status] || t('payoutRequest.status.unknown')
-}
-
-const getStatusColor = (status) => {
-  const colors = {
-    0: 'warning',
-    10: 'info',
-    14: 'primary',
-    16: 'primary',
-    20: 'success',
-    50: 'danger',
-    99: 'danger',
-  }
-  return colors[status] || 'primary'
-}
 
 const maintainScrollPosition = () => {
   if (tableRef.value) {

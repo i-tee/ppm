@@ -80,9 +80,13 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { VaDivider, VaButton, VaBadge } from 'vuestic-ui'
 import { useBase } from '@/composables/useBase'
+import { usePayoutStatus } from '@/composables/usePayoutStatus'
+
+
 
 const { t } = useI18n()
 const { formatPrice, formatDate } = useBase()
+const { getStatusText, getStatusColor } = usePayoutStatus()
 
 defineProps({
   payoutRequest: { type: Object, required: true },
@@ -91,29 +95,4 @@ defineProps({
 
 defineEmits(['close'])
 
-const getStatusText = (status) => {
-  const statuses = {
-    0: t('payoutRequest.status.created'),
-    10: t('payoutRequest.status.approved'),
-    14: t('payoutRequest.status.paid_whait_ticket'),
-    16: t('payoutRequest.status.ticket_uploaded'),
-    20: t('payoutRequest.status.paid'),
-    50: t('payoutRequest.status.cancelled'),
-    99: t('payoutRequest.status.deleted'),
-  }
-  return statuses[status] || t('payoutRequest.status.unknown')
-}
-
-const getStatusColor = (status) => {
-  const colors = {
-    0: 'warning',
-    10: 'info',
-    14: 'primary',
-    16: 'primary',
-    20: 'success',
-    50: 'danger',
-    99: 'danger',
-  }
-  return colors[status] || 'gray'
-}
 </script>

@@ -11,6 +11,9 @@
 .master-color {
   color: var(--va-primary, #154ec1);
 }
+.text-warning {
+  color: var(--va-yellow, #eab308);
+}
 .truncate {
   white-space: nowrap; /* Запрещаем перенос текста */
   overflow: hidden; /* Скрываем выходящий за границы текст */

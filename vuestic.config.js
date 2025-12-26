@@ -15,6 +15,7 @@ export default {
 		variables: {
 			black: '#000',
 			white: '#fff',
+			'yellow': '#eab308',
 			'slate-50': '#f8fafc',
 			'slate-100': '#f1f5f9',
 			'slate-200': '#e2e8f0',
