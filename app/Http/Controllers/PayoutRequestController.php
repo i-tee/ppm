@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\PayoutPaidNotification;
 use App\Notifications\PayoutPaidToCompanyNotification;
 use App\Notifications\PayoutTickedUploadToCompanyNotification;
+use App\Notifications\PayoutTicketReminderNotification;
 use App\Helpers\ErrorNotifier; // Для ошибок
 use Illuminate\Support\Arr; // Для Arr::get
 
@@ -242,7 +243,12 @@ class PayoutRequestController extends Controller
         );
 
         $query = PayoutRequest::active()
-            ->with(['user', 'requisite'])->where('status', PayoutRequest::STATUS_CREATED);   // <-- жадная загрузка
+            ->with(['user', 'requisite'])
+            ->whereIn('status', [
+                PayoutRequest::STATUS_CREATED,
+                PayoutRequest::STATUS_PAID_WHAIT_TICKET,
+                PayoutRequest::STATUS_TICKET_UPLOADED,
+            ]);
 
         if ($request->filled('status_id')) {
             $query->where('status', $request->status_id);
@@ -330,6 +336,7 @@ class PayoutRequestController extends Controller
 
             // Отправляем уведомления юзеру и компании
             $this->sendPayoutPaidNotifications($payoutRequest);
+            Notification::send($payoutRequest->user, new PayoutTicketReminderNotification($payoutRequest));
 
             return response()->json([
                 'success' => true,
@@ -470,5 +477,61 @@ class PayoutRequestController extends Controller
             'data' => $payoutRequest,
             'message' => trans('payoutRequest.ticket.upload_success'),
         ]);
+    }
+
+    /**
+     * Отправляет напоминание юзеру о загрузке чека после выплаты.
+     * Только для админов (уровни 1-2).
+     * POST /admin/payout-ticked-reminder/{id}
+     *
+     * @param int $id ID PayoutRequest
+     * @return JsonResponse
+     */
+    public function adminTicketReminder($id)
+    {
+        abort_unless(
+            auth()->user()->hasAccessLevel(1) || auth()->user()->hasAccessLevel(2),
+            403,
+            trans('payoutRequest.permission_denied')
+        );
+
+        $payoutRequest = PayoutRequest::findOrFail($id);
+
+        // Проверяем статус: только если ждём чек (PAID_WHAIT_TICKET), но чека нет
+        if (!in_array($payoutRequest->status, [PayoutRequest::STATUS_PAID_WHAIT_TICKET]) || $payoutRequest->ticket_proof) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Напоминание не требуется: статус не подходит или чек уже загружен',
+            ], 422);
+        }
+
+        $user = $payoutRequest->user;
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Пользователь не найден',
+            ], 404);
+        }
+
+        try {
+            Notification::send($user, new PayoutTicketReminderNotification($payoutRequest));
+
+            Log::info("[PayoutRequest] Напоминание о загрузке чека отправлено юзеру для заявки {$payoutRequest->id}.");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Напоминание успешно отправлено',
+            ]);
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            ErrorNotifier::notify('Ошибка при отправке напоминания о загрузке чека: ' . $errorMsg);
+            Log::error("[PayoutRequest] Исключение при напоминании о чеке заявки {$payoutRequest->id}: $errorMsg.");
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка отправки напоминания',
+            ], 500);
+        }
     }
 }

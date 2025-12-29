@@ -97,5 +97,12 @@ return [
         'payout_ticket_upload_line1' => 'Пользователь :name загрузил чек по заявке ID :request_id (сумма :amount руб.).',
         'payout_ticket_upload_line2' => 'Ссылка на файл: :ticket_url.',
         'payout_ticket_upload_line3' => 'Проверьте файл и завершите обработку заявки.',
+        // Новые ключи для напоминания юзеру о загрузке чека после выплаты
+        'payout_ticket_reminder_subject' => 'Напоминание: Загрузите чек подтверждения полученной выплаты',
+        'payout_ticket_reminder_line1' => 'Вы получили выплату по заявке ID :request_id в размере :amount руб. (дата: :date).',
+        'payout_ticket_reminder_line2' => 'Мы прикрепили платёжное поручение о переводе средств: :proof_link. Пожалуйста, проверьте ваш банк и пришлите нам подтверждение (чек).',
+        'payout_ticket_reminder_line3' => 'Для самозанятых партнёров это обязательная часть отчётности. Убедитесь, что чек содержит всю необходимую информацию о получении выплаты.',
+        'payout_ticket_reminder_line4' => 'Спасибо за сотрудничество!',
+        'payout_ticket_reminder_button_dashboard' => 'Загрузить чек в личном кабинете',
     ],
 ];

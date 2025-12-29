@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/admin/payout-requests-prepared', [PayoutRequestController::class, 'adminIndexPrepared']);  //  метод для админа
     Route::get('/admin/payout-requests', [PayoutRequestController::class, 'adminIndex']);  //  метод для админа
+    Route::post('/admin/payout-ticked-reminder/{id}', [PayoutRequestController::class, 'adminTicketReminder']);  //  метод для админа
     Route::get('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminShow']);  //  метод для деталей
     Route::put('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminUpdate']);  // Обновление статуса
     Route::put('/admin/payout-requests-received/{id}', [PayoutRequestController::class, 'adminReceived']);  // Отчёт(Обновление) о выплате

@@ -13,7 +13,7 @@
 
   <div>
     <table class="va-table">
-      <tr v-for="({ key, value }, i) in filledFields" :key="key">
+      <tr v-for="({ key, value }) in filledFields" :key="key">
         <td>
           <span>{{ $t(`requisites.${key}`) }}:</span>
         </td>

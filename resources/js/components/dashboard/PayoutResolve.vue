@@ -26,11 +26,22 @@
           </td>
           <td>{{ formatDate(payout.created_at) }}</td>
           <td>
-            <div>
-              <VaButton icon="assignment" icon-color="#ffffff50"
-                @click="openRequisitFullModal(payout);">
-                <span>{{t('partners.partner_types.' + partnerTypes.find(item => item.id ===
+            <div v-if="payout?.status <= 10">
+              <VaButton icon="assignment" icon-color="#ffffff50" @click="openRequisitFullModal(payout);">
+                <span>{{ t('dashboard.payout_resolve_go') }}: {{t('partners.partner_types.' + partnerTypes.find(item => item.id ===
                   payout.requisite?.partner_type_id)?.name || 'error')}}</span>
+              </VaButton>
+            </div>
+            <div v-else-if="payout?.status == 14">
+              <!-- Выплачено, ждем тикет -->
+              <VaButton :disabled="sendingReminder" color="warning" icon="assignment" @click="adminTicketReminder(payout?.id);">
+                <span>{{ t('payoutRequest.paid_wait_ticket') }}</span>
+              </VaButton>
+            </div>
+            <div v-else-if="payout?.status == 16">
+              <!-- Тикет загружен -->
+              <VaButton color="success" icon="assignment" @click="alert('whait');">
+                <span>{{ t('payoutRequest.ticket_uploaded') }}</span>
               </VaButton>
             </div>
           </td>
@@ -42,8 +53,10 @@
 
   </div>
 
-  <VaModal v-model="showRequisitFullModal" :hide-default-actions="true" :close-button="true" size="medium" :mobile-fullscreen="false">
-    <RequisitFullModal :checkedPayout="checkedPayout" @payoutUpdated="showRequisitFullModal = false; fetchPayoutRequests()" />
+  <VaModal v-model="showRequisitFullModal" :hide-default-actions="true" :close-button="true" size="medium"
+    :mobile-fullscreen="false">
+    <RequisitFullModal :checkedPayout="checkedPayout"
+      @payoutUpdated="showRequisitFullModal = false; fetchPayoutRequests()" />
     <template #footer>
       <div class="flex justify-end space-x-4">
         <VaButton @click="showRequisitFullModal = false" preset="secondary" color="secondary">{{ $t('modal.cancel') }}
@@ -92,6 +105,31 @@ const payoutRequests = ref([]);
 const payouts = ref([]);
 const partnerTypes = ref([]);
 const LoadindTable = ref(true);
+const sendingReminder = ref(false);
+
+const adminTicketReminder = async (payoutId) => {
+
+  sendingReminder.value = true;
+
+  try {
+
+    const response = await axios.post(`/api/admin/payout-ticked-reminder/${payoutId}`, {}, {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`
+      }
+    });
+
+    toast.init({ message: t('payoutRequest.ticket_reminder_sent'), color: 'warning' });
+    sendingReminder.value = false;
+
+  } catch (error) {
+
+    toast.init({ message: t('payoutRequest.ticket_reminder_failed'), color: 'danger' });
+    sendingReminder.value = false;
+    
+  }
+
+};
 
 const fetchPayoutRequests = async () => {
 
