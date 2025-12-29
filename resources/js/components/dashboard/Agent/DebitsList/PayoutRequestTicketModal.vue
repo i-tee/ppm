@@ -1,6 +1,6 @@
 <template>
 
-    <div v-if="!hasTicket && needsUpload" class="space-y-6 bg-gray-100 p-6 rounded-lg max-w-full text-center mb-3">
+    <div v-if="needsUpload" class="space-y-6 bg-gray-100 p-6 rounded-lg max-w-full text-center mb-3">
 
         <div>
             <div class="text-lg font-semibold">{{ $t('payoutRequest.ticket.title') }}</div>
@@ -69,7 +69,7 @@ const onFileChange = (newValue) => {
 
 }
 
-const needsUpload = computed(() => props.payoutRequest.status === 14 && !props.payoutRequest.ticket_proof)
+const needsUpload = computed(() => props.payoutRequest.status == 14)
 const hasTicket = computed(() => !!props.payoutRequest.ticket_proof)
 
 const ticketUrl = computed(() =>

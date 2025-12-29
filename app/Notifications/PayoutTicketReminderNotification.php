@@ -42,7 +42,7 @@ class PayoutTicketReminderNotification extends Notification
      */
     public function toMail($notifiable)
     {
-        $amount = number_format($this->payoutRequest->withdrawal_amount, 2, ',', ' ');
+        $amount = number_format($this->payoutRequest->received_amount, 2, ',', ' ');
         $requestId = $this->payoutRequest->id;
         $date = Carbon::parse($this->payoutRequest->updated_at)->format('d.m.Y');
         $proofLink = $this->payoutRequest->proof_link ?? 'Не указана'; // Текст-url (кликабельно автоматически)

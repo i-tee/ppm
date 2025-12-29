@@ -44,7 +44,7 @@ class PayoutTickedUploadToCompanyNotification extends Notification
     public function toMail($notifiable)
     {
         $userName = $this->payoutRequest->user?->name ?? 'Неизвестный пользователь';
-        $amount = number_format($this->payoutRequest->withdrawal_amount, 2, ',', ' ');
+        $amount = number_format($this->payoutRequest->received_amount, 2, ',', ' ');
         $requestId = $this->payoutRequest->id;
         $ticketPath = $this->payoutRequest->ticket_proof ?? null;
         $ticketUrl = $ticketPath ? url(Storage::url($ticketPath)) : 'Файл не прикреплён';

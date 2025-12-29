@@ -18,6 +18,7 @@ use App\Notifications\PayoutPaidNotification;
 use App\Notifications\PayoutPaidToCompanyNotification;
 use App\Notifications\PayoutTickedUploadToCompanyNotification;
 use App\Notifications\PayoutTicketReminderNotification;
+use Illuminate\Support\Facades\Storage;
 use App\Helpers\ErrorNotifier; // Для ошибок
 use Illuminate\Support\Arr; // Для Arr::get
 
@@ -424,13 +425,6 @@ class PayoutRequestController extends Controller
             ], 403);
         }
 
-        if ($payoutRequest->ticket_proof) {
-            return response()->json([
-                'success' => false,
-                'message' => trans('payoutRequest.ticket.already_uploaded'),
-            ], 403);
-        }
-
         $validated = $request->validate([
             'ticket' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240', // до 10 МБ
         ]);
@@ -531,6 +525,156 @@ class PayoutRequestController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка отправки напоминания',
+            ], 500);
+        }
+    }
+
+    /**
+     * Обновляет статус заявки (для админа).
+     * Используется для быстрого перехода по статусам, в частности — одобрение загруженного чека
+     * (из STATUS_TICKET_UPLOADED → финальный статус, например PAID = 20).
+     * 
+     * PUT /admin/payout-requests/{id}/{status}
+     *
+     * @param Request $request
+     * @param int $id
+     * @param int $status
+     * @return JsonResponse
+     */
+    public function adminStatusUpdate(Request $request, $id, $status)
+    {
+        abort_unless(
+            auth()->user()->hasAccessLevel(1) || auth()->user()->hasAccessLevel(2),
+            403,
+            trans('payoutRequest.permission_denied')
+        );
+
+        $payoutRequest = PayoutRequest::findOrFail($id);
+
+        Log::info('Admin request to update payout status (ticket approve)', [
+            'payout_id' => $payoutRequest->id,
+            'admin_id' => Auth::id(),
+            'requested_status' => $status,
+            'current_status' => $payoutRequest->status,
+        ]);
+
+        // Защищаем от неверного перехода: одобрять чек можно только если он уже загружен
+        if ($payoutRequest->status !== PayoutRequest::STATUS_TICKET_UPLOADED) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.ticket.invalid_status_for_approval'),
+            ], 422);
+        }
+
+        $status = (int) $status;
+
+        try {
+            $payoutRequest->update([
+                'status' => $status,
+                'approver_id' => Auth::id(),
+            ]);
+
+            Log::info('Payout status successfully updated (ticket approved)', [
+                'payout_id' => $payoutRequest->id,
+                'new_status' => $status,
+            ]);
+
+            $payoutRequest->load(['user', 'approver', 'requisite']);
+            $payoutRequest->append('status_text');
+
+            // Если нужно — здесь можно добавить отправку уведомления юзеру о полном завершении выплаты
+            // Notification::send($payoutRequest->user, new PayoutFullyCompletedNotification($payoutRequest));
+
+            return response()->json([
+                'success' => true,
+                'data' => $payoutRequest,
+                'message' => trans('payoutRequest.ticket_approved'), // то же сообщение, что в toast на фронте
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating payout status (ticket approve)', [
+                'payout_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.error.internal'),
+            ], 500);
+        }
+    }
+
+    /**
+     * Отклоняет загруженный чек (для админа).
+     * Очищает поле ticket_proof (удаляет файл из storage),
+     * возвращает статус в STATUS_PAID_WHAIT_TICKET (14).
+     */
+    public function adminTickedAbort(Request $request, $id)
+    {
+        abort_unless(
+            auth()->user()->hasAccessLevel(1) || auth()->user()->hasAccessLevel(2),
+            403,
+            trans('payoutRequest.permission_denied')
+        );
+
+        $payoutRequest = PayoutRequest::findOrFail($id);
+
+        Log::info('Admin request to abort payout ticket', [
+            'payout_id' => $payoutRequest->id,
+            'admin_id' => Auth::id(),
+            'current_status' => $payoutRequest->status,
+            'current_ticket_proof' => $payoutRequest->ticket_proof,
+        ]);
+
+        // Проверка: отклонять можно только если чек загружен (status = 16)
+        if ($payoutRequest->status !== PayoutRequest::STATUS_TICKET_UPLOADED || !$payoutRequest->ticket_proof) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.ticket.invalid_status_for_abort'),
+            ], 422);
+        }
+
+        try {
+            // Удаляем файл из storage
+            if ($payoutRequest->ticket_proof) {
+                Storage::disk('public')->delete($payoutRequest->ticket_proof);
+                Log::info('Ticket file deleted from storage', [
+                    'payout_id' => $payoutRequest->id,
+                    'path' => $payoutRequest->ticket_proof,
+                ]);
+            }
+
+            // Обновляем запись
+            $payoutRequest->update([
+                'ticket_proof' => null,
+                'status' => PayoutRequest::STATUS_PAID_WHAIT_TICKET, // 14
+                'approver_id' => Auth::id(),
+            ]);
+
+            Log::info('Payout ticket successfully aborted', [
+                'payout_id' => $payoutRequest->id,
+                'new_status' => PayoutRequest::STATUS_PAID_WHAIT_TICKET,
+            ]);
+
+            $payoutRequest->load(['user', 'approver', 'requisite'])->append('status_text');
+
+            Notification::send($payoutRequest->user, new PayoutTicketReminderNotification($payoutRequest));
+
+            return response()->json([
+                'success' => true,
+                'data' => $payoutRequest,
+                'message' => trans('payoutRequest.ticket_aborted'),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error aborting payout ticket', [
+                'payout_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.error.internal'),
             ], 500);
         }
     }

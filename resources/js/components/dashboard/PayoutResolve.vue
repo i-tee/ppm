@@ -28,19 +28,21 @@
           <td>
             <div v-if="payout?.status <= 10">
               <VaButton icon="assignment" icon-color="#ffffff50" @click="openRequisitFullModal(payout);">
-                <span>{{ t('dashboard.payout_resolve_go') }}: {{t('partners.partner_types.' + partnerTypes.find(item => item.id ===
+                <span>{{ t('dashboard.payout_resolve_go') }}: {{t('partners.partner_types.' + partnerTypes.find(item =>
+                  item.id ===
                   payout.requisite?.partner_type_id)?.name || 'error')}}</span>
               </VaButton>
             </div>
             <div v-else-if="payout?.status == 14">
               <!-- Выплачено, ждем тикет -->
-              <VaButton :disabled="sendingReminder" color="warning" icon="assignment" @click="adminTicketReminder(payout?.id);">
+              <VaButton :disabled="sendingReminder" color="warning" icon="assignment"
+                @click="adminTicketReminder(payout?.id);">
                 <span>{{ t('payoutRequest.paid_wait_ticket') }}</span>
               </VaButton>
             </div>
             <div v-else-if="payout?.status == 16">
               <!-- Тикет загружен -->
-              <VaButton color="success" icon="assignment" @click="alert('whait');">
+              <VaButton color="success" icon="assignment" @click="approveTicketModal = true; checkedPayout = payout;">
                 <span>{{ t('payoutRequest.ticket_uploaded') }}</span>
               </VaButton>
             </div>
@@ -58,11 +60,39 @@
     <RequisitFullModal :checkedPayout="checkedPayout"
       @payoutUpdated="showRequisitFullModal = false; fetchPayoutRequests()" />
     <template #footer>
-      <div class="flex justify-end space-x-4">
+      <d iv class="flex justify-end space-x-4">
         <VaButton @click="showRequisitFullModal = false" preset="secondary" color="secondary">{{ $t('modal.cancel') }}
         </VaButton>
-      </div>
+      </d>
     </template>
+  </VaModal>
+
+  <VaModal v-model="approveTicketModal" :hide-default-actions="true" :close-button="true" size="medium">
+    <div>
+
+      <h3 class="text-lg font-medium mb-4">{{ $t('payoutRequest.approve_ticket_title') }}</h3>
+
+      <div class="text-center p-6 m-4 rounded-m bg-gray-100">
+        <a class="va-link my-4" target="_blank" :href="checkedPayout?.ticket_proof">
+          <div>
+            <p>{{ $t('payoutRequest.ticket.view_file') }}</p>
+          </div>
+        </a>
+      </div>
+
+      <VaDivider class="my-4" />
+
+      <div class="flex justify-end space-x-4 mt-6">
+        <VaButton @click="abortTicket(checkedPayout?.id)" :disabled="sendingReminder" preset="secondary"
+          color="secondary">{{
+            $t('payoutRequest.abortTicket') }}
+        </VaButton>
+        <VaButton @click="approveTicketSend(checkedPayout?.id)" :disabled="sendingReminder">{{
+          $t('payoutRequest.approveTicketSend') }}
+        </VaButton>
+      </div>
+
+    </div>
   </VaModal>
 
 </template>
@@ -106,6 +136,71 @@ const payouts = ref([]);
 const partnerTypes = ref([]);
 const LoadindTable = ref(true);
 const sendingReminder = ref(false);
+const approveTicketModal = ref(false);
+
+const abortTicket = async (payoutId) => {
+
+  let confirmation = window.confirm(t('payoutRequest.confirm_abort_ticket'));
+
+  if (confirmation) {
+
+    sendingReminder.value = true;
+
+    try {
+
+      const response = await axios.put(`/api/admin/payout-requests-ticket-abort/${payoutId}`, {}, {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`
+        }
+      });
+
+      toast.init({ message: t('payoutRequest.ticket_aborted'), color: 'success' })
+      sendingReminder.value = false
+      approveTicketModal.value = false
+      fetchPayoutRequests()
+
+    } catch (error) {
+
+      toast.init({ message: t('payoutRequest.unexpected_error'), color: 'danger' })
+      sendingReminder.value = false
+      approveTicketModal.value = false
+      fetchPayoutRequests()
+
+    }
+  } else {
+    approveTicketModal.value = false
+    sendingReminder.value = false;
+  }
+
+};
+
+const approveTicketSend = async (payoutId) => {
+
+  sendingReminder.value = true;
+
+  try {
+
+    const response = await axios.put(`/api/admin/payout-requests/${payoutId}/20`, {}, {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`
+      }
+    });
+
+    toast.init({ message: t('payoutRequest.ticket_approved'), color: 'success' })
+    sendingReminder.value = false
+    approveTicketModal.value = false
+    fetchPayoutRequests()
+
+  } catch (error) {
+
+    toast.init({ message: t('payoutRequest.unexpected_error'), color: 'danger' })
+    sendingReminder.value = false
+    approveTicketModal.value = false
+    fetchPayoutRequests()
+
+  }
+
+};
 
 const adminTicketReminder = async (payoutId) => {
 
@@ -119,14 +214,14 @@ const adminTicketReminder = async (payoutId) => {
       }
     });
 
-    toast.init({ message: t('payoutRequest.ticket_reminder_sent'), color: 'warning' });
-    sendingReminder.value = false;
+    toast.init({ message: t('payoutRequest.ticket_reminder_sent'), color: 'warning' })
+    sendingReminder.value = false
 
   } catch (error) {
 
-    toast.init({ message: t('payoutRequest.ticket_reminder_failed'), color: 'danger' });
-    sendingReminder.value = false;
-    
+    toast.init({ message: t('payoutRequest.ticket_reminder_failed'), color: 'danger' })
+    sendingReminder.value = false
+
   }
 
 };
