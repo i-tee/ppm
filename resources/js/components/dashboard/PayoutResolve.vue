@@ -72,8 +72,12 @@
 
       <h3 class="text-lg font-medium mb-4">{{ $t('payoutRequest.approve_ticket_title') }}</h3>
 
+      <pre>
+        {{ checkedPayout?.ticket_proof }}
+      </pre>
+
       <div class="text-center p-6 m-4 rounded-m bg-gray-100">
-        <a class="va-link my-4" target="_blank" :href="checkedPayout?.ticket_proof">
+        <a class="va-link my-4" target="_blank" :href="`/storage/${checkedPayout?.ticket_proof}`">
           <div>
             <p>{{ $t('payoutRequest.ticket.view_file') }}</p>
           </div>

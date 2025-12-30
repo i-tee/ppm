@@ -7,12 +7,17 @@
             <p class="text-sm text-gray-600">{{ $t('payoutRequest.ticket.description') }}</p>
         </div>
 
+        <div>
+            <VaAlert color="#fdeae7" text-color="#940909">{{ $t('payoutRequest.ticket.alert_date') }}</VaAlert>
+        </div>
+
         <!-- Форма загрузки -->
         <div>
-            <div class="bg-gray-200 text-center rounded-md mb-3">
+            <div class="bg-gray-200 text-center rounded-md mb-1">
                 <VaFileUpload v-model="files" type="single" file-types=".jpg,.jpeg,.png,.pdf,.doc,.docx"
                     :max-size="10240 * 1024" @update:modelValue="onFileChange" class="mb-4 text-center p-5" />
             </div>
+
             <VaButton @click="upload" :loading="uploading" :disabled="!canUpload" color="primary">
                 {{ $t('payoutRequest.ticket.upload_button') }}
             </VaButton>

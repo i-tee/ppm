@@ -97,7 +97,7 @@
       <a :href="selectedPayoutRequest.proof_link" target="_blank" class="va-link">
           <span>{{ $t('payoutRequest.received') }}:</span> 
           <b>{{ formatPrice(selectedPayoutRequest.received_amount) }}</b><span> </span>
-          <span>{{ $t('date.from') }}: {{ formatDate(selectedPayoutRequest.updated_at) }}</span>
+          <span>{{ $t('payoutRequest.view_proof') }}</span>
       </a>
     </div>
 
