@@ -8,7 +8,17 @@
       class="w-full rounded-md custom-block-discount-box"
       @input="handleInput"
       input-class="p-4 !text-lg !font-bold text-center id-i11 custom-input-coupon"
-    />
+    >
+      <template #appendInner>
+        <VaButton
+          preset="plain"
+          icon="casino"
+          :title="$t('coupons.random_code')"
+          @click.prevent="generateRandomCode"
+          class="dice-btn"
+        />
+      </template>
+    </VaInput>
 
     <p class="my-4">{{ $t('coupons.discountDescr') }} (%)</p>
 
@@ -51,6 +61,16 @@
 <script setup>
 import { reactive, watch, onMounted } from 'vue'
 import { transliterate } from '@/utils/transliterate'
+
+const PROMO_PREFIXES = ['SALE', 'DEAL', 'BONUS', 'SAVE', 'HOT', 'COOL', 'PROMO', 'WIN', 'VIP', 'GIFT', 'LUCKY', 'SUPER']
+const PROMO_SUFFIXES = ['CLUB', 'CODE', 'OFF', 'PLUS', 'PRO', 'MAX', 'TOP', 'ACE']
+
+function generateRandomCode() {
+  const prefix = PROMO_PREFIXES[Math.floor(Math.random() * PROMO_PREFIXES.length)]
+  const suffix = PROMO_SUFFIXES[Math.floor(Math.random() * PROMO_SUFFIXES.length)]
+  const num = Math.floor(Math.random() * 900) + 100
+  formDiscountData.name = `${prefix}_${suffix}${num}`
+}
 
 // Объявляем пропсы
 const props = defineProps({
