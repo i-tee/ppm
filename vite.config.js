@@ -11,7 +11,7 @@ import path from "path";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
     // Плагины Vite для обработки Laravel и Vue
     plugins: [
         // Плагин для интеграции с Laravel, определяет входные файлы и автообновление
@@ -62,7 +62,7 @@ export default defineConfig({
             host: "partner.avicenna.com.ru", // Домен для HMR
             port: 5173, // Порт для HMR
         },
-        // HTTPS настройки для безопасного соединения
+        // HTTPS настройки для безопасного соединения (только для dev)
         https:
             command === "serve"
                 ? {
@@ -89,4 +89,4 @@ export default defineConfig({
     build: {
         chunkSizeWarningLimit: 1000, // Лимит размера чанка (1000 кБ)
     },
-});
+}));
