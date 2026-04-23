@@ -17,7 +17,22 @@
           <tbody>
             <tr v-for="user in users.data" :key="user.id">
               <td style="border: 1px solid #ccc; padding: 8px;">{{ user.id }}</td>
-              <td style="border: 1px solid #ccc; padding: 8px;">{{ user.name }}</td>
+
+              <td style="border: 1px solid #ccc; padding: 8px;">
+                <div class="flex items-center gap-2 flex-nowrap">
+                  <!-- Avatar wrapper -->
+                  <div class="h-8 w-8 flex-none">
+                    <VaAvatar :src="user.avatar" class="bg-gray-200 flex items-center justify-center shrink-0"
+                      size="small">
+                      <VaIcon v-if="!user.avatar" name="person" size="small" class="text-gray-500" />
+                    </VaAvatar>
+                  </div>
+
+                  <!-- Name - занимает только необходимую ширину -->
+                  <div class="flex-none whitespace-nowrap">{{ user.name }}</div>
+                </div>
+              </td>
+
               <td style="border: 1px solid #ccc; padding: 8px;">{{ user.email }}</td>
               <td style="border: 1px solid #ccc; padding: 8px;">
                 <span v-if="user.email_verified_at" style="color: green;">
@@ -28,11 +43,8 @@
                 </span>
               </td>
               <td style="border: 1px solid #ccc; padding: 8px;">
-                <button 
-                  @click="impersonateUser(user.id)" 
-                  :disabled="currentUserId === user.id"
-                  style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px;"
-                >
+                <button @click="impersonateUser(user.id)" :disabled="currentUserId === user.id"
+                  style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px;">
                   {{ currentUserId === user.id ? 'Это вы' : $t('admin.users.impersonate') }}
                 </button>
               </td>
@@ -42,12 +54,7 @@
 
         <!-- Пагинация -->
         <div class="pagination-wrapper" v-if="users.last_page > 1">
-          <va-pagination
-            v-model="currentPage"
-            :pages="users.last_page"
-            :visible-pages="7"
-            buttons-preset="secondary"
-          />
+          <va-pagination v-model="currentPage" :pages="users.last_page" :visible-pages="7" buttons-preset="secondary" />
         </div>
       </div>
 
@@ -124,9 +131,9 @@ const impersonateUser = async (userId) => {
   try {
     const success = await authStore.impersonate(userId);
     if (success) {
-      toast.init({ 
-        type: 'success', 
-        message: t('admin.impersonation.success', { user: user.name }) 
+      toast.init({
+        type: 'success',
+        message: t('admin.impersonation.success', { user: user.name })
       });
       location.href = '/dashboard';
     } else {

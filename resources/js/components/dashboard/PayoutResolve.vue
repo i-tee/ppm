@@ -19,7 +19,7 @@
               <div enter-class="h-8 w-8">
                 <VaAvatar :src="payout.user.avatar" class="mr-2 bg-gray-200 flex items-center justify-center shrink-0"
                   size="small">
-                  <VaIcon name="person" size="small" class="text-gray-500" />
+                  <VaIcon v-if="!payout.user.avatar" name="person" size="small" class="text-gray-500" />
                 </VaAvatar>
               </div>
 
