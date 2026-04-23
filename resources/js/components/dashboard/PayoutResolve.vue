@@ -14,16 +14,16 @@
         <tr v-for="payout in payouts" :key="payout.id" class="align-middle">
           <td>{{ formatPrice(payout.received_amount) }}</td>
           <td>
-            <div class="flex items-center">
+            <div class="flex items-center justify-start gap-2">
 
-              <div enter-class="h-8 w-8">
-                <VaAvatar :src="payout.user.avatar" class="mr-2 bg-gray-200 flex items-center justify-center shrink-0"
+              <div class="h-8 w-8 flex-none">
+                <VaAvatar :src="payout.user.avatar" class="bg-gray-200 flex items-center justify-center shrink-0"
                   size="small">
                   <VaIcon v-if="!payout.user.avatar" name="person" size="small" class="text-gray-500" />
                 </VaAvatar>
               </div>
 
-              <div class="flex flex-col">
+              <div class="flex flex-col flex-none">
                 <span class="font-medium">
                   {{ payout.user.name }}
                 </span>
@@ -33,6 +33,7 @@
                   {{ payout.user.email }}
                 </span>
               </div>
+
             </div>
           </td>
           <td>
