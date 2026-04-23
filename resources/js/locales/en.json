@@ -103,5 +103,32 @@
   "register_error": "Registration error. Please try again.",
   "set_new_password_description": "Please enter a new password below to reset your account.",
   "back_to_login": "Back to Login",
-  "invalid_reset_token": "Invalid or expired reset token"
+  "invalid_reset_token": "Invalid or expired reset token",
+  "admin": {
+    "accessDenied": "Access denied",
+    "users": {
+      "title": "Users list",
+      "name": "Name",
+      "email": "Email",
+      "status": "Status",
+      "actions": "Actions",
+      "impersonate": "Login as",
+      "isYou": "It's you",
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "empty": "No users found",
+      "notFound": "Not found",
+      "searchByEmail": "Search by email",
+      "search": "Search",
+      "resetSearch": "Reset search"
+    },
+    "impersonation": {
+      "active": "Mode: {user}",
+      "success": "Logged in as {user}",
+      "stopped": "Mode ended",
+      "stop": "Exit",
+      "error": "Error logging in as user",
+      "confirm": "Are you sure you want to login as \"{user}\"?"
+    }
+  }
 }

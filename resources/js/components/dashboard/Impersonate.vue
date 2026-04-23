@@ -3,6 +3,24 @@
     <div v-if="loading">{{ $t('common.loading') }}</div>
 
     <div v-else>
+      <div class="search-wrapper">
+        <va-input
+          v-model="searchEmail"
+          :placeholder="$t('admin.users.searchByEmail')"
+          clearable
+          style="max-width: 320px;"
+          @keyup.enter="doSearch"
+          @clear="resetSearch"
+        >
+          <template #prepend>
+            <VaIcon name="search" />
+          </template>
+        </va-input>
+        <va-button @click="doSearch">
+          {{ $t('admin.users.search') }}
+        </va-button>
+      </div>
+
       <div v-if="users.data && users.data.length">
         <table style="width: 100%; border-collapse: collapse;">
           <thead>
@@ -20,15 +38,12 @@
 
               <td style="border: 1px solid #ccc; padding: 8px;">
                 <div class="flex items-center gap-2 flex-nowrap">
-                  <!-- Avatar wrapper -->
                   <div class="h-8 w-8 flex-none">
                     <VaAvatar :src="user.avatar" class="bg-gray-200 flex items-center justify-center shrink-0"
                       size="small">
                       <VaIcon v-if="!user.avatar" name="person" size="small" class="text-gray-500" />
                     </VaAvatar>
                   </div>
-
-                  <!-- Name - занимает только необходимую ширину -->
                   <div class="flex-none whitespace-nowrap">{{ user.name }}</div>
                 </div>
               </td>
@@ -45,17 +60,23 @@
               <td style="border: 1px solid #ccc; padding: 8px;">
                 <button @click="impersonateUser(user.id)" :disabled="currentUserId === user.id"
                   style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px;">
-                  {{ currentUserId === user.id ? 'Это вы' : $t('admin.users.impersonate') }}
+                  {{ currentUserId === user.id ? $t('admin.users.isYou') : $t('admin.users.impersonate') }}
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Пагинация -->
         <div class="pagination-wrapper" v-if="users.last_page > 1">
           <va-pagination v-model="currentPage" :pages="users.last_page" :visible-pages="7" buttons-preset="secondary" />
         </div>
+      </div>
+
+      <div v-else-if="isSearchMode" class="not-found-wrapper">
+        <span>{{ $t('admin.users.notFound') }}</span>
+        <va-button preset="secondary" @click="resetSearch">
+          {{ $t('admin.users.resetSearch') }}
+        </va-button>
       </div>
 
       <div v-else>{{ $t('admin.users.empty') }}</div>
@@ -79,6 +100,8 @@ const authStore = useAuthStore();
 const users = ref({ data: [], last_page: 1 });
 const loading = ref(false);
 const currentPage = ref(1);
+const searchEmail = ref('');
+const isSearchMode = ref(false);
 
 const currentUserId = computed(() => authStore.currentUser?.id);
 const isImpersonating = computed(() => authStore.isImpersonating);
@@ -104,11 +127,11 @@ onMounted(async () => {
 const fetchUsers = async (page = currentPage.value) => {
   loading.value = true;
   try {
-    const response = await api.get('/admin/users', {
-      params: { page }
-    });
+    const params = { page };
+    if (isSearchMode.value && searchEmail.value) params.email = searchEmail.value;
+    const response = await api.get('/admin/users', { params });
     users.value = response.data;
-    currentPage.value = response.data.current_page; // синхронизируем с ответом сервера
+    currentPage.value = response.data.current_page;
   } catch (error) {
     toast.init({ type: 'danger', message: t('errors.fetchUsers') });
   } finally {
@@ -116,14 +139,27 @@ const fetchUsers = async (page = currentPage.value) => {
   }
 };
 
-// При смене страницы в пагинации — подгружаем новую
 watch(currentPage, (newPage) => {
   fetchUsers(newPage);
 });
 
+const doSearch = async () => {
+  if (!searchEmail.value.trim()) return;
+  isSearchMode.value = true;
+  currentPage.value = 1;
+  await fetchUsers(1);
+};
+
+const resetSearch = async () => {
+  searchEmail.value = '';
+  isSearchMode.value = false;
+  currentPage.value = 1;
+  await fetchUsers(1);
+};
+
 const impersonateUser = async (userId) => {
   const user = users.value.data.find(u => u.id === userId);
-  if (!confirm(t('admin.impersonation.confirm', { user: user.name }) || `Вы точно хотите войти как "${user.name}"?`)) {
+  if (!confirm(t('admin.impersonation.confirm', { user: user.name }))) {
     return;
   }
 
@@ -168,6 +204,20 @@ const stopImpersonation = async () => {
 <style scoped>
 .admin-users {
   padding: 20px;
+}
+
+.search-wrapper {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.not-found-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
 }
 
 .pagination-wrapper {

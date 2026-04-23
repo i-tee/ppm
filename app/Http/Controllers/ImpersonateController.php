@@ -21,11 +21,14 @@ class ImpersonateController extends Controller
             return response()->json(['error' => 'Access denied'], 403);
         }
 
-        $users = User::select('id', 'name', 'email', 'avatar', 'email_verified_at')
-                     ->orderBy('created_at', 'desc')
-                     ->paginate(20);
+        $query = User::select('id', 'name', 'email', 'avatar', 'email_verified_at')
+                     ->orderBy('created_at', 'desc');
 
-        return response()->json($users);
+        if ($request->filled('email')) {
+            $query->where('email', $request->input('email'));
+        }
+
+        return response()->json($query->paginate(20));
     }
 
     public function impersonate(Request $request, User $user)

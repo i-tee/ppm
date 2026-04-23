@@ -828,12 +828,18 @@
       "status": "Статус",
       "actions": "Действия",
       "impersonate": "Войти как",
+      "isYou": "Это вы",
       "verified": "Подтверждён",
       "unverified": "Не подтверждён",
-      "empty": "Пользователи не найдены"
+      "empty": "Пользователи не найдены",
+      "notFound": "Не найдено",
+      "searchByEmail": "Поиск по email",
+      "search": "Найти",
+      "resetSearch": "Сбросить поиск"
     },
     "impersonation": {
       "active": "Режим: {user}",
+      "confirm": "Вы точно хотите войти как \"{user}\"?",
       "success": "Вошли как {user}",
       "stopped": "Режим завершён",
       "stop": "Выйти",
