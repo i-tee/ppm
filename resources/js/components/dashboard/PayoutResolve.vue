@@ -13,10 +13,24 @@
       <tbody>
         <tr v-for="payout in payouts" :key="payout.id" class="align-middle">
           <td>{{ formatPrice(payout.received_amount) }}</td>
-          <td>
-            <VaAvatar :src="payout.user.avatar" class="mr-1 bg-gray-200" size="small"></VaAvatar>
-            <span>{{ payout.user.name }}</span>
+          <td class="flex items-center">
+
+            <VaAvatar :src="payout.user.avatar" class="mr-2 bg-gray-200 flex items-center justify-center" size="small">
+              <VaIcon name="person" size="small" class="text-gray-500" />
+            </VaAvatar>
+
+            <div class="flex flex-col">
+              <span class="font-medium">
+                {{ payout.user.name }}
+              </span>
+
+              <span class="text-xs text-gray-500 cursor-pointer hover:text-primary"
+                @click="copyEmail(payout.user.email)" title="Нажмите, чтобы скопировать">
+                {{ payout.user.email }}
+              </span>
+            </div>
           </td>
+
           <td>
             <VaBadge color="secondary" :offset="[16, 0]" text-color="#fff" overlap
               :title="formatPrice(payout.commission_amount)"
@@ -73,8 +87,8 @@
       <h3 class="text-lg font-medium mb-4">{{ $t('payoutRequest.approve_ticket_title') }}</h3>
 
       <pre>
-        {{ checkedPayout?.ticket_proof }}
-      </pre>
+      {{ checkedPayout?.ticket_proof }}
+    </pre>
 
       <div class="text-center p-6 m-4 rounded-m bg-gray-100">
         <a class="va-link my-4" target="_blank" :href="`/storage/${checkedPayout?.ticket_proof}`">
@@ -124,6 +138,15 @@ const props = defineProps({
     required: true,
   },
 });
+
+const copyEmail = async (email) => {
+  try {
+    await navigator.clipboard.writeText(email)
+    toast.init({ message: t('payoutRequest.email_copied'), color: 'success' });
+  } catch (e) {
+    toast.init({ message: t('errors.email_copied_failed'), color: 'danger' });
+  }
+}
 
 const { t } = useI18n();
 const toast = useToast();
