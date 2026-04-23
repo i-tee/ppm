@@ -15,9 +15,11 @@
           <td>{{ formatPrice(payout.received_amount) }}</td>
           <td class="flex items-center">
 
-            <VaAvatar :src="payout.user.avatar" class="mr-2 bg-gray-200 flex items-center justify-center" size="small">
+            <VaAvatar :src="payout.user.avatar" class="mr-2 bg-gray-200 flex items-center justify-center shrink-0"
+              size="small">
               <VaIcon name="person" size="small" class="text-gray-500" />
             </VaAvatar>
+
 
             <div class="flex flex-col">
               <span class="font-medium">
