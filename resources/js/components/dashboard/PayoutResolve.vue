@@ -13,26 +13,28 @@
       <tbody>
         <tr v-for="payout in payouts" :key="payout.id" class="align-middle">
           <td>{{ formatPrice(payout.received_amount) }}</td>
-          <td class="flex items-center">
+          <td>
+            <div class="flex items-center">
 
-            <VaAvatar :src="payout.user.avatar" class="mr-2 bg-gray-200 flex items-center justify-center shrink-0"
-              size="small">
-              <VaIcon name="person" size="small" class="text-gray-500" />
-            </VaAvatar>
+              <div enter-class="h-8 w-8">
+                <VaAvatar :src="payout.user.avatar" class="mr-2 bg-gray-200 flex items-center justify-center shrink-0"
+                  size="small">
+                  <VaIcon name="person" size="small" class="text-gray-500" />
+                </VaAvatar>
+              </div>
 
+              <div class="flex flex-col">
+                <span class="font-medium">
+                  {{ payout.user.name }}
+                </span>
 
-            <div class="flex flex-col">
-              <span class="font-medium">
-                {{ payout.user.name }}
-              </span>
-
-              <span class="text-xs text-gray-500 cursor-pointer hover:text-primary"
-                @click="copyEmail(payout.user.email)" title="Нажмите, чтобы скопировать">
-                {{ payout.user.email }}
-              </span>
+                <span class="text-xs text-gray-500 cursor-pointer hover:text-primary"
+                  @click="copyEmail(payout.user.email)" title="Нажмите, чтобы скопировать">
+                  {{ payout.user.email }}
+                </span>
+              </div>
             </div>
           </td>
-
           <td>
             <VaBadge color="secondary" :offset="[16, 0]" text-color="#fff" overlap
               :title="formatPrice(payout.commission_amount)"
