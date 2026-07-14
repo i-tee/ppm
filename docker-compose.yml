@@ -41,8 +41,12 @@ services:
     container_name: ${PROJECT_NAME:-laravel}_mailpit
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP-порт (Laravel будет слать сюда)
-      - "8025:8025"   # Веб-интерфейс Mailpit
+      # Host-порты 1026/8026, чтобы не конфликтовать с mailpit основного
+      # бэкенда (avicenna-backend) на 1025/8025, когда оба стека подняты.
+      # Внутри контейнера — 1025/8025 без изменений: Laravel шлёт на
+      # mailpit:1025 по имени сервиса (см. MAIL_HOST=mailpit), веб-UI — :8026.
+      - "1026:1025"   # SMTP: host 1026 → контейнер 1025
+      - "8026:8025"   # Веб-интерфейс Mailpit: host 8026 → контейнер 8025
     volumes:
       - mailpit-data:/data   # чтобы база с письмами сохранялась при перезапуске
     # networks не нужно указывать — автоматически попадёт в дефолтную сеть compose
