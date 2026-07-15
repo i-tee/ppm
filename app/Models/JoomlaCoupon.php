@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\TrueBonusCode;
+use App\Services\AvicennaBackendClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -925,6 +926,48 @@ class JoomlaCoupon extends Model
             if ($amount > 100000) {
 
                 return ['success' => false, 'error' => 'coupon_amount_better_max'];
+            }
+        }
+
+        // ── Dual-write, шаг 1: бэкенд = источник истины (Фаза D, этап 3) ──────
+        // Порядок строгий: сперва минт на бэке, и ТОЛЬКО при успехе — старый
+        // INSERT в Joomla ниже. Занятый код у бэка (422) → тот же строковый
+        // ключ `coupon_code_exists`, что и локальная Joomla-проверка выше
+        // (фронт матчит ошибки по строке).
+        $mintViaBackend  = (bool) config('services.avicenna_backend.mint_via_backend');
+        $joomlaDualWrite = (bool) config('services.avicenna_backend.joomla_dual_write');
+
+        if ($mintViaBackend) {
+            // partner_ref = ppm user id (Auth::id()), НЕ $userId (это jm_users.id,
+            // идёт в avicenna_user_coupons). Совпадает с атрибуцией импорта (этап 2).
+            $partnerRef = Auth::id();
+            if (! $partnerRef) {
+                return ['success' => false, 'error' => 'coupon_no_partner_context'];
+            }
+
+            // mint_request_id: в slice 1–3 генерим на вызов (не персистим).
+            // Ретрай-идемпотентность на сетевых сбоях — slice 4–6 (minted_coupons).
+            $mint = app(AvicennaBackendClient::class)->mintPartnerCoupon([
+                'mint_request_id'    => (string) Str::uuid(),
+                'partner_ref'        => (string) $partnerRef,
+                'code'               => $couponCode,
+                'kind'               => $coupon_type === 1 ? 'bonus' : 'percent',
+                'value'              => (int) $amount,             // бонус: уже гросс ×1.2
+                'commission_percent' => (int) $cashback_percent,   // бонус: 0
+            ]);
+
+            if (! $mint['success']) {
+                return ['success' => false, 'error' => $mint['error']];
+            }
+
+            // Backend-only режим (JOOMLA_DUAL_WRITE=off, после гашения старого
+            // сайта — этап 7): в Joomla не пишем. ВНИМАНИЕ: сейчас этот путь
+            // пропускает и ppm-побочки (true_bonus_codes/уведомления) — их
+            // перенос в backend-only ветку = задача этапа 7. В параллельный
+            // период (slice 1–3) флаг dual_write=on, сюда не заходим.
+            if (! $joomlaDualWrite) {
+                Log::warning('partner.backend_only_mint_stub', ['code' => $couponCode]);
+                return ['success' => true, 'error' => null];
             }
         }
 
