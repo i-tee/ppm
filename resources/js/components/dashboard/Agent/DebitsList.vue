@@ -8,6 +8,7 @@
     <VaTabs v-model="activeTab" grow>
       <VaTab name="WithdrawalsTable">{{ $t('coupons.tWithdrawalsTable') }}</VaTab>
       <VaTab name="TrueBonusCodesTable">{{ $t('coupons.tTrueBonusCodesTable') }}</VaTab>
+      <VaTab v-if="bData.data?.backendReversals?.items?.length" name="ReversalsTable">{{ $t('coupons.tReversalsTable') }}</VaTab>
       <VaTab v-if="bData.data?.withdrawals?.debit" name="Olders">{{ $t('coupons.tOlders') }}</VaTab>
     </VaTabs>
   </div>
@@ -20,6 +21,9 @@
     <div v-else-if="activeTab === 'TrueBonusCodesTable'">
       <TrueBonusCodesTable :apiData="apiData" :bData="bData" :refresh="refresh" />
     </div>
+    <div v-else-if="activeTab === 'ReversalsTable'">
+      <ReversalsTable :apiData="apiData" :bData="bData" :refresh="refresh" />
+    </div>
     <div v-else-if="activeTab === 'Olders'">
       <Olders :apiData="apiData" :bData="bData" :refresh="refresh" />
     </div>
@@ -30,6 +34,7 @@
 import { ref } from 'vue'
 import WithdrawalsTable from './DebitsList/WithdrawalsTable.vue'
 import TrueBonusCodesTable from './DebitsList/TrueBonusCodesTable.vue'
+import ReversalsTable from './DebitsList/ReversalsTable.vue'
 import Olders from './DebitsList/Olders.vue'
 import { useI18n } from 'vue-i18n'
 import { useBase } from '@/composables/useBase'
