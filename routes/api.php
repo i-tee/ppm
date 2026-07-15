@@ -34,18 +34,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payout-requests', [PayoutRequestController::class, 'store']);
     Route::post('/payout-requests/{id}/ticket', [PayoutRequestController::class, 'uploadTicket']);
 
-    Route::get('/admin/payout-requests-prepared', [PayoutRequestController::class, 'adminIndexPrepared']);  //  метод для админа
-    Route::get('/admin/payout-requests', [PayoutRequestController::class, 'adminIndex']);  //  метод для админа
-    Route::post('/admin/payout-ticked-reminder/{id}', [PayoutRequestController::class, 'adminTicketReminder']);  //  метод для админа
-    Route::get('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminShow']);  //  метод для деталей
-    Route::put('/admin/payout-requests/{id}/{status}', [PayoutRequestController::class, 'adminStatusUpdate']);  // Обновление статуса
-    Route::put('/admin/payout-requests-ticket-abort/{id}', [PayoutRequestController::class, 'adminTickedAbort']);  // Откат статуса и отклонение чека
-    Route::put('/admin/payout-requests-received/{id}', [PayoutRequestController::class, 'adminReceived']);  // Отчёт(Обновление) о выплате
-    Route::delete('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminDestroy']);  // Удаление
+    // ── Админ-роуты: роль-гейт `admin` поверх auth:sanctum (Фаза D, этап 3) ──
+    // Раньше висели на одном auth:sanctum, роль-проверка была вразнобой в
+    // контроллерах (adminIndex её не имел вовсе). Теперь — централизованно.
+    Route::middleware('admin')->group(function () {
+        Route::get('/admin/payout-requests-prepared', [PayoutRequestController::class, 'adminIndexPrepared']);  //  метод для админа
+        Route::get('/admin/payout-requests', [PayoutRequestController::class, 'adminIndex']);  //  метод для админа
+        Route::post('/admin/payout-ticked-reminder/{id}', [PayoutRequestController::class, 'adminTicketReminder']);  //  метод для админа
+        Route::get('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminShow']);  //  метод для деталей
+        Route::put('/admin/payout-requests/{id}/{status}', [PayoutRequestController::class, 'adminStatusUpdate']);  // Обновление статуса
+        Route::put('/admin/payout-requests-ticket-abort/{id}', [PayoutRequestController::class, 'adminTickedAbort']);  // Откат статуса и отклонение чека
+        Route::put('/admin/payout-requests-received/{id}', [PayoutRequestController::class, 'adminReceived']);  // Отчёт(Обновление) о выплате
+        Route::delete('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminDestroy']);  // Удаление
 
-    Route::get('/admin/users', [ImpersonateController::class, 'index']);
-    Route::post('/admin/impersonate/{user}', [ImpersonateController::class, 'impersonate']);
-    Route::post('/admin/impersonate/stop', [ImpersonateController::class, 'stop']);
+        Route::get('/admin/users', [ImpersonateController::class, 'index']);
+        Route::post('/admin/impersonate/{user}', [ImpersonateController::class, 'impersonate']);
+        Route::post('/admin/impersonate/stop', [ImpersonateController::class, 'stop']);
+    });
 
     Route::get('/user/requisites', [RequisiteController::class, 'index']);
     Route::get('/user/requisites-all', [RequisiteController::class, 'all']);

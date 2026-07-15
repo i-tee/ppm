@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\TrueBonusCode;
+use App\Models\MintedCoupon;
 use App\Services\AvicennaBackendClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -1047,18 +1048,38 @@ class JoomlaCoupon extends Model
                 return ['success' => false, 'error' => 'coupon_no_partner_context'];
             }
 
-            // mint_request_id: в slice 1–3 генерим на вызов (не персистим).
-            // Ретрай-идемпотентность на сетевых сбоях — slice 4–6 (minted_coupons).
+            $kind = $coupon_type === 1 ? 'bonus' : 'percent';
+
+            // Журнал минтов: mint_request_id сохраняется ДО вызова → сетевой
+            // ретрай (тот же партнёр+код) переиспользует id → бэк ответит 200
+            // idempotent, а не 422. Ключ ретрая — unique(partner_ref, code).
+            $minted = MintedCoupon::firstOrCreate(
+                ['partner_ref' => (string) $partnerRef, 'code' => $couponCode],
+                [
+                    'mint_request_id'    => (string) Str::uuid(),
+                    'kind'               => $kind,
+                    'value'              => (int) $amount,
+                    'commission_percent' => (int) $cashback_percent,
+                    'joomla_written'     => false,
+                ]
+            );
+
             $mint = app(AvicennaBackendClient::class)->mintPartnerCoupon([
-                'mint_request_id'    => (string) Str::uuid(),
+                'mint_request_id'    => $minted->mint_request_id,
                 'partner_ref'        => (string) $partnerRef,
                 'code'               => $couponCode,
-                'kind'               => $coupon_type === 1 ? 'bonus' : 'percent',
+                'kind'               => $kind,
                 'value'              => (int) $amount,             // бонус: уже гросс ×1.2
                 'commission_percent' => (int) $cashback_percent,   // бонус: 0
             ]);
 
             if (! $mint['success']) {
+                // Сетевую ошибку НЕ чистим — ретрай тем же id (идемпотентность).
+                // Прочее (занятый код, 403, 5xx) — журнал-строку убираем, чтобы
+                // не мешала повтору с другим кодом / после фикса.
+                if (($mint['error'] ?? '') !== 'coupon_backend_unreachable') {
+                    $minted->delete();
+                }
                 return ['success' => false, 'error' => $mint['error']];
             }
 
@@ -1200,6 +1221,10 @@ class JoomlaCoupon extends Model
             }
 
             if ($result) {
+                // Dual-write полностью прошёл (бэк + Joomla) → помечаем журнал.
+                if ($mintViaBackend && isset($minted)) {
+                    $minted->update(['joomla_written' => true]);
+                }
                 return ['success' => true, 'error' => null];
             } else {
                 return ['success' => false, 'error' => 'coupon_user_link_failed TRY'];
