@@ -826,6 +826,14 @@ class JoomlaCoupon extends Model
 
             // Log::info('$orders->toArray()', [$orders->toArray()]);
 
+            // ── Шов: дотягиваем начисления нового сайта по коду купона ──────
+            // (Фаза D, слайс B). Только accruals; сторно → «Корректировки».
+            foreach (self::backendAccrualsForCoupon((string) $coupon->coupon_code) as $beOrder) {
+                $be = clone $beOrder;         // не мутируем кэш
+                $be->coupon_id = $couponId;   // чтобы data() резолвил coupon_type
+                $orders->push($be);
+            }
+
             return $orders->toArray();
         } catch (\Exception $e) {
             // Log::error("Failed to get PP orders", [
@@ -834,6 +842,100 @@ class JoomlaCoupon extends Model
             // ]);
             return [];
         }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Дотягивание начислений нового сайта (Фаза D, слайс B — dual-source ЛК)
+    // ══════════════════════════════════════════════════════════════════════
+
+    /** Кэш начислений бэка на время запроса. */
+    private static ?array $backendCache = null;
+
+    /**
+     * Один раз за запрос тянет начисления партнёра с бэка (все страницы) и
+     * раскладывает: accruals по коду купона (для шва getPpOrders) и reversals
+     * отдельно (для «Корректировок» + вычета из баланса). Флаг
+     * ACCRUALS_FROM_BACKEND; при выключенном флаге / отсутствии auth / сбое —
+     * пустой кэш (ЛК деградирует к чистым Joomla-данным).
+     *
+     * @return array{accrualsByCoupon:array<string,\stdClass[]>,reversals:array}
+     */
+    private static function loadBackend(): array
+    {
+        if (self::$backendCache !== null) {
+            return self::$backendCache;
+        }
+
+        $cache = ['accrualsByCoupon' => [], 'reversals' => []];
+
+        if ((bool) config('services.avicenna_backend.accruals_from_backend')) {
+            $partnerRef = Auth::id();
+            if ($partnerRef) {
+                $res = app(AvicennaBackendClient::class)->getAccruals((string) $partnerRef);
+                if ($res['success'] ?? false) {
+                    foreach ($res['rows'] as $row) {
+                        $type = $row['type'] ?? null;
+                        if ($type === 'accrual') {
+                            $code = mb_strtolower(trim((string) ($row['coupon_code'] ?? '')));
+                            if ($code !== '') {
+                                $cache['accrualsByCoupon'][$code][] = self::mapBackendRowToOrder($row);
+                            }
+                        } elseif ($type === 'reversal') {
+                            $cache['reversals'][] = $row;
+                        }
+                    }
+                }
+            }
+        }
+
+        return self::$backendCache = $cache;
+    }
+
+    /**
+     * Маппинг строки начисления бэка в форму Joomla-заказа (stdClass), чтобы
+     * бесшовно смешиваться с getPpOrders. order_status=6 (accrual = оплачен →
+     * проходит фильтр [6,7]); source='backend' — маркер «новый сайт» для UI.
+     */
+    private static function mapBackendRowToOrder(array $row): \stdClass
+    {
+        $o = new \stdClass();
+        $o->order_id       = 'be:' . ($row['order_number'] ?? '');
+        $o->order_number   = $row['order_number'] ?? null;
+        $o->order_subtotal = $row['order']['subtotal'] ?? null;
+        $o->order_discount = $row['order']['discount'] ?? null;
+        $o->order_total    = $row['order']['total'] ?? null;
+        $o->cashback       = $row['amount'] ?? 0;
+        $o->order_date     = $row['date'] ?? null;
+        $o->order_status   = 6;
+        $o->source         = 'backend';
+
+        return $o;
+    }
+
+    /** Начисления бэка по коду купона (для шва getPpOrders). @return \stdClass[] */
+    private static function backendAccrualsForCoupon(string $couponCode): array
+    {
+        return self::loadBackend()['accrualsByCoupon'][mb_strtolower(trim($couponCode))] ?? [];
+    }
+
+    /**
+     * Сводка сторно бэка для вкладки «Корректировки» + вычета из баланса.
+     * amount у reversal отрицательный → debit = Σ |amount|.
+     *
+     * @return array{debit:float,items:array}
+     */
+    public static function backendReversalsSummary(): array
+    {
+        $reversals = self::loadBackend()['reversals'];
+        $debit = 0.0;
+        foreach ($reversals as $r) {
+            $debit += abs((float) ($r['amount'] ?? 0));
+        }
+
+        return [
+            'debit' => round($debit, 2),
+            'items' => $reversals,
+        ];
     }
 
     /**

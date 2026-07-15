@@ -107,9 +107,19 @@ class UserCouponController extends Controller
             $balance -= $payoutRequestsData['debit']; // Списываем из баланса агента
         }
 
+        // Бэк-сторно (возвраты нового сайта) — списание из баланса (Фаза D, слайс B).
+        // Начисления бэка уже в credits.total_accruals через шов getPpOrders;
+        // здесь вычитаем возвраты, чтобы баланс был net (accruals − reversals).
+        $backendReversals = JoomlaCoupon::backendReversalsSummary();
+        if ($backendReversals['debit'] > 0) {
+            $expenseSummary += $backendReversals['debit'];
+            $balance -= $backendReversals['debit'];
+        }
+
         // 3. Отдаём JSON
         return response()->json([
             'user' => $user,
+            'backendReversals' => $backendReversals,
             'balance' => $balance,
             'expenseSummary' => $expenseSummary,
             'joomlaUser' => $joomlaUser,

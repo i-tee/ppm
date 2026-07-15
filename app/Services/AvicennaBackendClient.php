@@ -85,4 +85,63 @@ class AvicennaBackendClient
 
         return ['success' => false, 'error' => 'coupon_backend_error', 'status' => $resp->status()];
     }
+
+    /**
+     * Начисления партнёра из леджера нового сайта (Фаза D, слайс B).
+     *
+     * Тянет ВСЕ строки (пройдя по страницам) — баланс и списки в ЛК должны
+     * учитывать всё, не только первую страницу. `totals` берём с первой
+     * страницы (они считаются по всей выборке на бэке). Best-effort: при
+     * сбое возвращаем success=false, вызывающий деградирует к Joomla-данным.
+     *
+     * @return array{success:bool,rows:array,totals:array|null}
+     */
+    public function getAccruals(string $partnerRef, ?string $couponCode = null): array
+    {
+        $cfg    = config('services.avicenna_backend');
+        $rows   = [];
+        $totals = null;
+        $page   = 1;
+
+        do {
+            try {
+                $resp = Http::withHeaders([
+                    'X-Source-Token' => (string) $cfg['source_token'],
+                    'Accept'         => 'application/json',
+                ])
+                    ->timeout((int) ($cfg['timeout'] ?? 10))
+                    ->get(rtrim((string) $cfg['base_url'], '/') . '/api/v1/partner/accruals', array_filter([
+                        'partner_ref' => $partnerRef,
+                        'coupon_code' => $couponCode,
+                        'per_page'    => 100,
+                        'page'        => $page,
+                    ], fn ($v) => $v !== null && $v !== ''));
+            } catch (\Throwable $e) {
+                Log::error('avicenna_backend.accruals_network_error', [
+                    'error' => $e->getMessage(), 'partner_ref' => $partnerRef,
+                ]);
+
+                return ['success' => false, 'rows' => [], 'totals' => null];
+            }
+
+            if (! $resp->successful()) {
+                Log::error('avicenna_backend.accruals_failed', [
+                    'status' => $resp->status(), 'partner_ref' => $partnerRef,
+                ]);
+
+                return ['success' => false, 'rows' => [], 'totals' => null];
+            }
+
+            $body   = $resp->json();
+            $totals ??= $body['totals'] ?? null;
+            foreach (($body['data'] ?? []) as $r) {
+                $rows[] = $r;
+            }
+
+            $lastPage = (int) ($body['meta']['last_page'] ?? 1);
+            $page++;
+        } while ($page <= $lastPage && $page <= 50); // guard: не более 50 страниц (5000 строк)
+
+        return ['success' => true, 'rows' => $rows, 'totals' => $totals];
+    }
 }
