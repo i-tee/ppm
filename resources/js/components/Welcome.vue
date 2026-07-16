@@ -54,8 +54,9 @@
           <!-- Кнопки социальной авторизации -->
           <div class="grid grid-cols-2 gap-3">
             
-            <!-- Кнопка Google -->
-            <a href="/auth/google/redirect"
+            <!-- Кнопка Google: вход через Google отключён (регуляторные требования),
+                 по клику открываем поясняющую модалку вместо OAuth-редиректа -->
+            <a href="#" @click.prevent="showGoogleModal = true"
               class="w-full inline-flex justify-center items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md font-inter font-medium">
               <svg class="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4"
@@ -110,6 +111,19 @@
             </template>
           </VaModal>
 
+          <!-- Попап: вход через Google отключён -->
+          <VaModal v-model="showGoogleModal" :close-button="true" :title="$t('google_disabled_title')"
+            size="small" :hide-default-actions="true" :mobile-fullscreen="false">
+            <template #default>
+              <p class="font-inter text-gray-700">{{ $t('google_disabled_text') }}</p>
+              <br>
+              <VaButton @click="goToPasswordRecovery" color="primary"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-inter py-2 rounded-lg">
+                {{ $t('google_disabled_recover_btn') }}
+              </VaButton>
+            </template>
+          </VaModal>
+
         </div>
       </div>
     </div>
@@ -142,6 +156,7 @@ const formErrors = ref({
 const isPasswordVisible = ref(false)
 const serverError = ref(null)
 const showResetModal = ref(false)
+const showGoogleModal = ref(false)
 const resetEmail = ref('')
 const resetError = ref('')
 
@@ -179,6 +194,14 @@ watch(serverError, (newValue, oldValue) => {
 // Методы
 const mailTransport = () => {
   resetEmail.value = form.value.email
+}
+
+// Из модалки «вход через Google отключён» отправляем пользователя
+// в существующий флоу восстановления пароля.
+const goToPasswordRecovery = () => {
+  showGoogleModal.value = false
+  mailTransport()
+  showResetModal.value = true
 }
 
 const togglePassword = () => {
