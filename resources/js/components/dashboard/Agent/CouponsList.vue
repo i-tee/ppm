@@ -85,13 +85,17 @@ const selectedCoupon = ref(null);
 
 const percentageCoupons = computed(() => coupons.value.filter(c => c.coupon_type === 0));
 
+// Активен = не использован НИ в Joomla (used), НИ на новом сайте
+// (backend_used, этап 4) — та же логика, что в карточке CouponBonus.
+const isBonusActive = (c) => c.used === 0 && !c.backend_used;
+
 const bonusCoupons = computed(() => {
   return coupons.value
     .filter(c => c.coupon_type === 1)
     .sort((a, b) => {
-      // Купоны с used = 0 идут первыми
-      if (a.used === 0 && b.used !== 0) return -1;
-      if (a.used !== 0 && b.used === 0) return 1;
+      // Активные (не использованные ни в одной системе) идут первыми
+      if (isBonusActive(a) && !isBonusActive(b)) return -1;
+      if (!isBonusActive(a) && isBonusActive(b)) return 1;
       return 0; // Остальные купоны сохраняют порядок
     });
 });

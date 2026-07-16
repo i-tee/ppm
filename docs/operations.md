@@ -93,12 +93,12 @@ Rollback-матрица — план §3.2.
 |---|---|
 | `PARTNER_MINT_VIA_BACKEND` | минт купона идёт СНАЧАЛА в бэк (истина): `JoomlaCoupon::createCoupon` → `AvicennaBackendClient::mintPartnerCoupon`. Занятый код на бэке → 422 → фронт-ключ `errors.coupon_code_exists`. Off = старый чисто-Joomla минт |
 | `PARTNER_JOOMLA_DUAL_WRITE` | после успеха бэка выполняется старый INSERT в Joomla (купон работает на ОБОИХ сайтах). Off при включённом минте = backend-only (этап 7, пока заглушка) |
-| `PARTNER_ACCRUALS_FROM_BACKEND` | ЛК дотягивает начисления нового сайта: accruals вливаются через единый шов `JoomlaCoupon::getPpOrders` (→ «Начисления», per-coupon сводки, модалка «Заказы», баланс), reversals (возвраты) → вкладка «Списания → Корректировки» + вычет из баланса (net) |
+| `PARTNER_ACCRUALS_FROM_BACKEND` | ЛК дотягивает данные нового сайта. **Начисления** (процентные купоны): accruals вливаются через единый шов `JoomlaCoupon::getPpOrders` (→ «Начисления», per-coupon сводки, модалка «Заказы», баланс), reversals (возвраты) → вкладка «Списания → Корректировки» + вычет из баланса (net). **Погашения** (бонусные купоны, этап 4): `getRedemptions` → `getPpOrders` подмешивает заказ бонусника + `getUserCoupons` метит `backend_used` → карточка бонусника показывает «Использован» + «О заказе», даже если погашён на новом сайте (баланс не трогает — у бонусника комиссии нет) |
 
 Ключевые точки кода:
-- `app/Services/AvicennaBackendClient.php` — s2s-клиент (минт + accruals,
-  пагинация, маппинг ошибок в `errors.<key>` — ключи есть в
-  `resources/js/locales/ru.json`);
+- `app/Services/AvicennaBackendClient.php` — s2s-клиент (минт + accruals +
+  redemptions бонусников, пагинация, маппинг ошибок в `errors.<key>` — ключи
+  есть в `resources/js/locales/ru.json`);
 - `app/Models/JoomlaCoupon.php` — врезка dual-write в `createCoupon()`
   (backend-first; `partner_ref = Auth::id()`, НЕ Joomla-id), шов
   `getPpOrders()` + `loadBackend()` + `backendReversalsSummary()`;
@@ -128,10 +128,13 @@ Rollback-матрица — план §3.2.
    `source='partner'`; Joomla: `jm_jshopping_coupons`).
 3. Повторный минт того же кода → ошибка «Промокод с таким кодом уже существует».
 4. Строка в `minted_coupons`: `joomla_written=1`.
-5. (при `ACCRUALS_FROM_BACKEND=on`) Заказ с купоном на новом сайте → paid →
-   начисление видно в «Начисления» и в балансе; refund → строка в
+5. (при `ACCRUALS_FROM_BACKEND=on`) Заказ с ПРОЦЕНТНЫМ купоном на новом сайте →
+   paid → начисление видно в «Начисления» и в балансе; refund → строка в
    «Списания → Корректировки», баланс уменьшился.
-6. `/api/admin/*` под НЕ-админом → 403.
+6. (при `ACCRUALS_FROM_BACKEND=on`) БОНУСНЫЙ купон погашён на новом сайте →
+   карточка бонусника показывает «Использован» + кнопка «О заказе» открывает
+   заказ нового сайта; баланс НЕ изменился (у бонусника комиссии нет).
+7. `/api/admin/*` под НЕ-админом → 403.
 
 ## 7. Локальная разработка
 

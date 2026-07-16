@@ -565,6 +565,14 @@ class JoomlaCoupon extends Model
                 if ($coupon->coupon_value == 10 && $coupon->coupon_type == 0 && $coupon->cashback == 0) {
                     $coupon->cashback = 10;
                 }
+
+                // Этап 4: бонусник (coupon_type=1), погашённый на НОВОМ сайте,
+                // в Joomla остаётся used=0 (гашение не синхронизируем, §3.3).
+                // Метим backend_used по бэк-погашениям, чтобы карточка показала
+                // «Использован» + заказ. Дёшево: loadBackend мемоизирован.
+                $coupon->backend_used = ($coupon->coupon_type == 1
+                    && self::backendCouponUsed((string) $coupon->coupon_code)) ? 1 : 0;
+
                 return $coupon;
             });
 
@@ -835,6 +843,15 @@ class JoomlaCoupon extends Model
                 $orders->push($be);
             }
 
+            // ── Шов: погашения бонусника нового сайта (этап 4). У бонусника
+            // начислений нет — заказ приходит этим каналом (пересечения с
+            // accruals нет: бонусные и процентные — разные купоны/коды). ──────
+            foreach (self::backendRedemptionsForCoupon((string) $coupon->coupon_code) as $beOrder) {
+                $be = clone $beOrder;
+                $be->coupon_id = $couponId;
+                $orders->push($be);
+            }
+
             return $orders->toArray();
         } catch (\Exception $e) {
             // Log::error("Failed to get PP orders", [
@@ -853,13 +870,17 @@ class JoomlaCoupon extends Model
     private static ?array $backendCache = null;
 
     /**
-     * Один раз за запрос тянет начисления партнёра с бэка (все страницы) и
-     * раскладывает: accruals по коду купона (для шва getPpOrders) и reversals
-     * отдельно (для «Корректировок» + вычета из баланса). Флаг
-     * ACCRUALS_FROM_BACKEND; при выключенном флаге / отсутствии auth / сбое —
-     * пустой кэш (ЛК деградирует к чистым Joomla-данным).
+     * Один раз за запрос тянет данные партнёра с бэка (все страницы) и
+     * раскладывает:
+     *   - accruals по коду купона (для шва getPpOrders) и reversals отдельно
+     *     (для «Корректировок» + вычета из баланса) — процентные купоны;
+     *   - redemptions по коду купона (для шва getPpOrders) + множество
+     *     использованных кодов usedCodes — БОНУСНЫЕ купоны (этап 4: у бонусника
+     *     комиссии нет → в accruals его нет; см. getRedemptions).
+     * Флаг ACCRUALS_FROM_BACKEND; при выключенном флаге / отсутствии auth /
+     * сбое — пустой кэш (ЛК деградирует к чистым Joomla-данным).
      *
-     * @return array{accrualsByCoupon:array<string,\stdClass[]>,reversals:array}
+     * @return array{accrualsByCoupon:array<string,\stdClass[]>,reversals:array,redemptionsByCoupon:array<string,\stdClass[]>,usedCodes:array<string,true>}
      */
     private static function loadBackend(): array
     {
@@ -867,12 +888,20 @@ class JoomlaCoupon extends Model
             return self::$backendCache;
         }
 
-        $cache = ['accrualsByCoupon' => [], 'reversals' => []];
+        $cache = [
+            'accrualsByCoupon'    => [],
+            'reversals'           => [],
+            'redemptionsByCoupon' => [],
+            'usedCodes'           => [],
+        ];
 
         if ((bool) config('services.avicenna_backend.accruals_from_backend')) {
             $partnerRef = Auth::id();
             if ($partnerRef) {
-                $res = app(AvicennaBackendClient::class)->getAccruals((string) $partnerRef);
+                $client = app(AvicennaBackendClient::class);
+
+                // Начисления (процентные купоны): accrual → шов, reversal → «Корректировки».
+                $res = $client->getAccruals((string) $partnerRef);
                 if ($res['success'] ?? false) {
                     foreach ($res['rows'] as $row) {
                         $type = $row['type'] ?? null;
@@ -883,6 +912,18 @@ class JoomlaCoupon extends Model
                             }
                         } elseif ($type === 'reversal') {
                             $cache['reversals'][] = $row;
+                        }
+                    }
+                }
+
+                // Погашения (бонусные купоны): факт использования + заказ.
+                $red = $client->getRedemptions((string) $partnerRef);
+                if ($red['success'] ?? false) {
+                    foreach ($red['rows'] as $row) {
+                        $code = mb_strtolower(trim((string) ($row['coupon_code'] ?? '')));
+                        if ($code !== '') {
+                            $cache['redemptionsByCoupon'][$code][] = self::mapBackendRowToOrder($row);
+                            $cache['usedCodes'][$code] = true;
                         }
                     }
                 }
@@ -917,6 +958,18 @@ class JoomlaCoupon extends Model
     private static function backendAccrualsForCoupon(string $couponCode): array
     {
         return self::loadBackend()['accrualsByCoupon'][mb_strtolower(trim($couponCode))] ?? [];
+    }
+
+    /** Погашения бонусника с бэка по коду купона (для шва getPpOrders). @return \stdClass[] */
+    private static function backendRedemptionsForCoupon(string $couponCode): array
+    {
+        return self::loadBackend()['redemptionsByCoupon'][mb_strtolower(trim($couponCode))] ?? [];
+    }
+
+    /** Использован ли купон на новом сайте (бэк-погашение по коду). */
+    private static function backendCouponUsed(string $couponCode): bool
+    {
+        return isset(self::loadBackend()['usedCodes'][mb_strtolower(trim($couponCode))]);
     }
 
     /**

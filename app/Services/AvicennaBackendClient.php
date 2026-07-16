@@ -144,4 +144,63 @@ class AvicennaBackendClient
 
         return ['success' => true, 'rows' => $rows, 'totals' => $totals];
     }
+
+    /**
+     * Погашения БОНУСНЫХ купонов партнёра с бэка (Фаза D, этап 4 — follow-up).
+     *
+     * Парный к getAccruals канал: у бонусника комиссии нет → в леджере
+     * начислений его нет, и через getAccruals он не виден. Этот эндпоинт отдаёт
+     * оплаченные заказы по бонусным купонам — чтобы ЛК показал «использован» +
+     * заказ, включая погашение на новом сайте. Денег нет (totals отсутствуют),
+     * только факт использования. Тянет ВСЕ страницы; best-effort — при сбое
+     * success=false, вызывающий деградирует к чистым Joomla-данным.
+     *
+     * @return array{success:bool,rows:array}
+     */
+    public function getRedemptions(string $partnerRef, ?string $couponCode = null): array
+    {
+        $cfg  = config('services.avicenna_backend');
+        $rows = [];
+        $page = 1;
+
+        do {
+            try {
+                $resp = Http::withHeaders([
+                    'X-Source-Token' => (string) $cfg['source_token'],
+                    'Accept'         => 'application/json',
+                ])
+                    ->timeout((int) ($cfg['timeout'] ?? 10))
+                    ->get(rtrim((string) $cfg['base_url'], '/') . '/api/v1/partner/redemptions', array_filter([
+                        'partner_ref' => $partnerRef,
+                        'coupon_code' => $couponCode,
+                        'per_page'    => 100,
+                        'page'        => $page,
+                    ], fn ($v) => $v !== null && $v !== ''));
+            } catch (\Throwable $e) {
+                Log::error('avicenna_backend.redemptions_network_error', [
+                    'error' => $e->getMessage(), 'partner_ref' => $partnerRef,
+                ]);
+
+                return ['success' => false, 'rows' => []];
+            }
+
+            if (! $resp->successful()) {
+                Log::error('avicenna_backend.redemptions_failed', [
+                    'status' => $resp->status(), 'partner_ref' => $partnerRef,
+                ]);
+
+                return ['success' => false, 'rows' => []];
+            }
+
+            $body = $resp->json();
+            foreach (($body['data'] ?? []) as $r) {
+                $rows[] = $r;
+            }
+
+            $lastPage = (int) ($body['meta']['last_page'] ?? 1);
+            $page++;
+        } while ($page <= $lastPage && $page <= 50); // guard: не более 50 страниц
+
+        return ['success' => true, 'rows' => $rows];
+    }
 }

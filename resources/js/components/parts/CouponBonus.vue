@@ -82,8 +82,12 @@ const couponUrl = ref('https://avicenna.com.ru?');
 watch(
   [() => props.apiData, () => props.coupon],
   ([newApiData, newCoupon]) => {
-    // Проверка на использование
-    couponActive.value = newCoupon.used === 0;
+    // Проверка на использование. Активен = не использован НИ в Joomla (used),
+    // НИ на новом сайте (backend_used, этап 4 — бэк-погашение бонусника;
+    // undefined при выключенном флаге → ведёт себя как раньше). Когда
+    // использован — показывается «Использован» + кнопка «О заказе» (заказ
+    // нового сайта дотягивается через getPpOrders).
+    couponActive.value = newCoupon.used === 0 && !newCoupon.backend_used;
 
     // Обновляем maxDiscount
     const newMaxDiscount = newApiData?.cooperation_types?.[1]?.max_discount ?? 20;
