@@ -20,8 +20,9 @@
   партнёр↔купоны (`avicenna_user_coupons`), старые выплаты. Без этого
   подключения кабинет не работает.
 - **Основной бэкенд Avicenna** (с Фазы D): s2s-вызовы по `X-Source-Token` —
-  минт купонов (`POST /api/v1/coupons/partner`) и чтение начислений
-  (`GET /api/v1/partner/accruals`). Управляется флагами (см. §4).
+  минт купонов (`POST /api/v1/coupons/partner`), чтение начислений
+  (`GET /api/v1/partner/accruals`) и погашений бонусников
+  (`GET /api/v1/partner/redemptions`). Управляется флагами (см. §4).
 
 ## 2. Окружения и env-матрица
 
@@ -32,8 +33,8 @@
 | Своя БД (`DB_*`) | `dev-partner` @ dinabokan.beget.app | `Laravel_partner` @ Beget MySQL |
 | Joomla БД (`DB_JOOMLA_*`) | `AviDev` @ dinabokan.beget.app (dev-копия) | `avicenna` (боевая) |
 | Бэкенд Avicenna (`AVICENNA_BACKEND_BASE_URL`) | `http://host.docker.internal:8080` (локальный стек бэка) | `https://api.avicenna.com.ru` |
-| Source-токен (`AVICENNA_BACKEND_SOURCE_TOKEN`) | источник `local_ppm` в локальной админке бэка | источник «Партнёрка» создаётся в **прод**-Filament бэка (этап 5) |
-| Флаги `PARTNER_*` | on (обкатка) | **off до этапа 5** |
+| Source-токен (`AVICENNA_BACKEND_SOURCE_TOKEN`) | источник `local_ppm` в локальной админке бэка | источник «Партнёрка» СОЗДАН в **прод**-Filament бэка (этап 5, 2026-07-16) |
+| Флаги `PARTNER_*` | on (обкатка) | **✅ все ON с 2026-07-16** (этап 5 — параллельный режим на проде) |
 
 > Порт 8081 локально — сознательно: основной бэкенд занимает 8080 на той же
 > машине (его mailpit — 1025/8025, наш — 1026/8026). Vite 5173 не конфликтует.
@@ -50,36 +51,46 @@ staging и прод токены — три разных значения.
 Автодеплоя у ppm нет (в отличие от бэкенда с GitHub Actions). Исторический
 минимум был «`git pull` + `npm run build`» — **после Фазы D этого мало**.
 
-⚠️ **ВАЖНО:** `origin/main` уже содержит код Фазы D. Любой прод-`git pull`
-притянет его — это безопасно ТОЛЬКО пока флаги `PARTNER_*` отсутствуют/off
-в прод-`.env` (дефолты в config — off): интеграция мертва, поведение ЛК
-прежнее. Не включай флаги до этапа 5 и не раньше, чем выполнены шаги ниже.
+✅ **С 2026-07-16 параллельный режим ВКЛЮЧЁН на проде** (этап 5 выполнен):
+все три флага `PARTNER_*=true` в прод-`.env`, интеграция боевая. Обычный
+деплой (`git pull` + шаги ниже) тянет и активирует свежий код Фазы D —
+это штатно.
 
 Полный чек-лист прод-деплоя:
 
 ```bash
 cd <корень ppm на VDS>
+# 0. ⚠️ ГОТЧИ (ловлены на go-live 2026-07-16):
+#    - деплоить из-под i-tee (НЕ root!) с `umask 002`; если git падает с
+#      Permission denied (дерево после SFTP принадлежит dev-user) — из-под
+#      root разово: `chmod -R g+w . && find . -type d -exec chmod g+s {} \;`
+#    - если на проде лежит out-of-band код (SFTP-правки) и git pull ругается:
+#      `git stash push -u` (бэкап) → pull → сверить diff → стэш дропнуть
 git pull                          # 1. код
 composer install --no-dev         # 2. зависимости/автолоад (безвреден, когда lock не менялся)
 php artisan migrate --force       # 3. МИГРАЦИИ — обязательно (Фаза D: таблица minted_coupons;
                                   #    без неё минт купона упадёт 500)
-# 4. env-ключи (разово, при первом деплое Фазы D) — в .env:
+# 4. env-ключи (уже вписаны на проде с этапа 5; проверить при переезде):
 #    AVICENNA_BACKEND_BASE_URL=https://api.avicenna.com.ru
 #    AVICENNA_BACKEND_SOURCE_TOKEN=<токен источника «Партнёрка» из прод-Filament бэка>
 #    AVICENNA_BACKEND_TIMEOUT=10
-#    PARTNER_MINT_VIA_BACKEND=false      ← до этапа 5!
-#    PARTNER_JOOMLA_DUAL_WRITE=false     ← до этапа 5!
-#    PARTNER_ACCRUALS_FROM_BACKEND=false ← до этапа 5!
+#    PARTNER_MINT_VIA_BACKEND=true       ← прод-состояние с 2026-07-16
+#    PARTNER_JOOMLA_DUAL_WRITE=true      ← прод-состояние с 2026-07-16
+#    PARTNER_ACCRUALS_FROM_BACKEND=true  ← прод-состояние с 2026-07-16
 php artisan config:clear          # 5. сброс кеша конфига (в репо следов config:cache нет,
                                   #    но clear дёшев и снимает вопрос)
 npm ci && npm run build           # 6. фронт (Vite). ⚠️ VDS — 1 ГБ RAM: у сборки
-                                  #    реальный риск OOM (прецедент: Nuxt-сборка падала
-                                  #    и на 2 ГБ). Если упало — включить своп ИЛИ собрать
+                                  #    реальный риск OOM (на go-live прошла, своп ~22%).
+                                  #    Если упало — включить своп ИЛИ собрать
                                   #    локально и залить public/build на сервер.
+# 7. если после деплоя 500 при живом коде — возможен opcache-стейл:
+#    из-под root `systemctl reload php8.3-fpm`
 ```
 
-**Включение параллельного режима (этап 5, по чек-листу плана §7):** после
-смоука — три флага `true` в `.env` + `php artisan config:clear`.
+**Историческая справка:** параллельный режим включён 2026-07-16 по
+чек-листу плана §7 (импорт 384 старых купонов + флаги on + смоук на обоих
+сайтах). Этап 7 (будущее): после гашения старого сайта —
+`PARTNER_JOOMLA_DUAL_WRITE=false`.
 
 **Откат в любой момент:** флаги `false` + `config:clear` — минт и баланс
 мгновенно возвращаются к чисто-Joomla поведению, код не откатывается.

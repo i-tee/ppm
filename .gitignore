@@ -22,4 +22,5 @@ yarn-error.log
 /.vscode
 /.zed
 vite.config.local.js
-package-lock.jsonBEGET.DEV/
+package-lock.json
+BEGET.DEV/
