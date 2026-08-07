@@ -9,6 +9,8 @@ services:
     working_dir: /var/www
     volumes:
       - .:/var/www
+    networks:
+      - appnet
 
   nginx:
     image: nginx:alpine
@@ -21,6 +23,8 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
     depends_on:
       - backend
+    networks:
+      - appnet
 
   node:
     build:
@@ -35,6 +39,8 @@ services:
       - .:/var/www
       - node_modules:/var/www/node_modules
     command: npm run dev:local
+    networks:
+      - appnet
 
   mailpit:
     image: axllent/mailpit:latest
@@ -49,9 +55,20 @@ services:
       - "8026:8025"   # Веб-интерфейс Mailpit: host 8026 → контейнер 8025
     volumes:
       - mailpit-data:/data   # чтобы база с письмами сохранялась при перезапуске
-    # networks не нужно указывать — автоматически попадёт в дефолтную сеть compose
+    networks:
+      - appnet
 
 volumes:
   dbdata:
   node_modules:
   mailpit-data:
+
+# Явная именованная сеть: привязка сервисов детерминирована и переживает
+# пересоздание. Раньше стек полагался на авто-дефолт compose — при
+# пересоздании сети (новый ID) nginx оставался отвязанным и падал с
+# «host not found in upstream backend». Теперь `docker compose up -d`
+# всегда переподключает контейнеры к одной и той же сети.
+networks:
+  appnet:
+    name: ${PROJECT_NAME:-laravel}_net
+    driver: bridge
