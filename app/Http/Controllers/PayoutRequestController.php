@@ -7,6 +7,7 @@ use App\Models\PayoutRequest;
 use App\Models\JoomlaCoupon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Helpers\Partners;
 use App\Models\Requisite;
 use App\Models\User;
@@ -112,6 +113,26 @@ class PayoutRequestController extends Controller
                 ], 422);
             }
 
+            // Гвард от дубля: если у агента уже есть активная заявка в статусе
+            // «создана» (ещё не проведена) — новую не создаём. Раньше такой
+            // проверки не было, и двойной клик/ретрай плодил одинаковые заявки
+            // (инцидент: две заявки с разницей в 1 сек). Ниже, у самого create,
+            // эта же проверка дублируется под блокировкой строки пользователя —
+            // на случай гонки двух параллельных запросов.
+            $existingPending = PayoutRequest::where('user_id', $user->id)
+                ->where('status', PayoutRequest::STATUS_CREATED)
+                ->where('is_active', true)
+                ->first();
+
+            if ($existingPending) {
+                return response()->json([
+                    'success' => false,
+                    'message' => trans('payoutRequest.duplicate_pending'),
+                    'pending_payout_id' => $existingPending->id,
+                    'pending_payout' => $existingPending,
+                ], 422);
+            }
+
             // Получаем полный баланс агента через UserCouponController::data() (актуальный расчёт)
             $userCouponController = new UserCouponController();
             $balanceResponse = $userCouponController->data($request);  // Вызов метода data()
@@ -157,7 +178,31 @@ class PayoutRequestController extends Controller
             $validated['approver_id'] = null;  // ID одобряющего (заполнит админ)
             $validated['is_active'] = true;  // Активна (мягкое удаление не применено)
 
-            $payoutRequest = PayoutRequest::create($validated);  // Сохраняем в БД
+            // Создаём заявку под блокировкой строки пользователя: параллельные
+            // запросы (двойной сабмит/гонка) сериализуются, и повторная проверка
+            // внутри транзакции ловит уже созданную заявку. Вернём null — сигнал
+            // дубля, обрабатываем как 422 ниже.
+            $payoutRequest = DB::transaction(function () use ($user, $validated) {
+                User::whereKey($user->id)->lockForUpdate()->first();
+
+                $dupExists = PayoutRequest::where('user_id', $user->id)
+                    ->where('status', PayoutRequest::STATUS_CREATED)
+                    ->where('is_active', true)
+                    ->exists();
+
+                if ($dupExists) {
+                    return null;
+                }
+
+                return PayoutRequest::create($validated);  // Сохраняем в БД
+            });
+
+            if ($payoutRequest === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => trans('payoutRequest.duplicate_pending'),
+                ], 422);
+            }
 
             // Загружаем реквизит и вычисляемый атрибут status_text для ответа
             $payoutRequest->load('requisite');

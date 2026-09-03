@@ -80,7 +80,7 @@
         <VaButton preset="secondary" @click="emit('close')">
           {{ $t('modal.cancel') }}
         </VaButton>
-        <VaButton type="submit" color="primary" :loading="isSubmitting">
+        <VaButton type="submit" color="primary" :loading="isSubmitting" :disabled="isSubmitting">
           {{ $t('payoutRequest.create.submit') }}
         </VaButton>
       </div>
