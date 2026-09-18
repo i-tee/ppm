@@ -1137,10 +1137,13 @@ class JoomlaCoupon extends Model
             }
 
             // Backend-only режим (JOOMLA_DUAL_WRITE=off, после гашения старого
-            // сайта — этап 7): в Joomla не пишем. ВНИМАНИЕ: сейчас этот путь
-            // пропускает и ppm-побочки (true_bonus_codes/уведомления) — их
-            // перенос в backend-only ветку = задача этапа 7. В параллельный
-            // период (slice 1–3) флаг dual_write=on, сюда не заходим.
+            // сайта — этап 7): в Joomla не пишем. ☠️ ЗАГЛУШКА: этот путь
+            // пропускает (1) связь в avicenna_user_coupons — купон не виден в
+            // списке ЛК; (2) запись в true_bonus_codes — стоимость бонусника НЕ
+            // списывается с баланса; (3) уведомления компании. Их перенос в
+            // backend-only ветку = задача этапа 7; до этого флаг dual_write не
+            // выключать (docs/operations.md §3). Сейчас на проде dual_write=on,
+            // сюда не заходим.
             if (! $joomlaDualWrite) {
                 Log::warning('partner.backend_only_mint_stub', ['code' => $couponCode]);
                 return ['success' => true, 'error' => null];

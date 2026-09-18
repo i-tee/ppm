@@ -36,10 +36,12 @@ class AvicennaBackendClient
                 ->timeout((int) ($cfg['timeout'] ?? 10))
                 ->post(rtrim((string) $cfg['base_url'], '/') . '/api/v1/coupons/partner', $payload);
         } catch (\Throwable $e) {
-            // Сеть недоступна/таймаут: купона в бэке МОГЛО не быть — ретрай с
-            // тем же mint_request_id безопасен (идемпотентность бэка). В slice
-            // 1–3 mint_request_id не персистится → ретрай на слое выше (slice 4–6,
-            // таблица minted_coupons). Сейчас — сообщаем наверх сетевую ошибку.
+            // Сеть недоступна/таймаут: купон в бэке мог как создаться, так и
+            // нет — ретрай с тем же mint_request_id безопасен (идемпотентность
+            // бэка). mint_request_id уже сохранён в журнале minted_coupons до
+            // вызова (JoomlaCoupon::createCoupon), и при сетевой ошибке строка
+            // журнала не удаляется → повтор партнёром с тем же кодом
+            // переиспользует id. Здесь — просто сообщаем наверх сетевую ошибку.
             Log::error('avicenna_backend.mint_network_error', [
                 'error' => $e->getMessage(),
                 'code'  => $payload['code'] ?? null,

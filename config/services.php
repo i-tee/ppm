@@ -52,8 +52,13 @@ return [
     // Основной бэкенд Avicenna — dual-write партнёрских купонов (Фаза D, этап 3).
     // Флаги-рычаги перехода/отката (§3.2 плана миграции партнёрки):
     //   mint_via_backend      — минтить через API бэка (иначе только Joomla-INSERT);
-    //   joomla_dual_write     — дублировать успешный минт в Joomla;
-    //   accruals_from_backend — добавлять к балансу net из GET /partner/accruals.
+    //   joomla_dual_write     — дублировать успешный минт в Joomla. ☠️ НЕ выключать при
+    //                           mint_via_backend=true, пока не доделан backend_only_mint_stub:
+    //                           заглушка пропускает связь avicenna_user_coupons, списание
+    //                           бонусника (true_bonus_codes) и уведомления (docs/operations.md §3);
+    //   accruals_from_backend — подтягивать данные нового сайта: начисления и сторно из
+    //                           GET /partner/accruals (баланс + «Корректировки») и погашения
+    //                           бонусников из GET /partner/redemptions.
     'avicenna_backend' => [
         'base_url'              => env('AVICENNA_BACKEND_BASE_URL', 'http://host.docker.internal:8080'),
         'source_token'          => env('AVICENNA_BACKEND_SOURCE_TOKEN'),

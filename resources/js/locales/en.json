@@ -17,6 +17,15 @@
   "home": "Home",
   "_dashboard": "Partner Dashboard",
   "logout": "Logout",
+  "errors": {
+    "coupon_code_exists": "A promo code with this code already exists",
+    "coupon_insert_failed": "Failed to create the promo code",
+    "coupon_backend_unreachable": "The promo code service is temporarily unavailable. Please try again in a minute",
+    "coupon_backend_validation": "The promo code failed server-side validation. Check the code and values",
+    "coupon_backend_forbidden": "No access to the promo code service. Please contact support",
+    "coupon_backend_error": "Promo code service error. Please try again later or contact support",
+    "coupon_no_partner_context": "Could not identify the partner. Please sign in again"
+  },
   "dashboard": {
     "title": "Partner Management Dashboard",
     "welcome": "Welcome to your dashboard!",

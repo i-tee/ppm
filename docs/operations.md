@@ -90,11 +90,30 @@ npm ci && npm run build           # 6. фронт (Vite). ⚠️ VDS — 1 ГБ 
 **Историческая справка:** параллельный режим включён 2026-07-16 по
 чек-листу плана §7 (импорт 384 старых купонов + флаги on + смоук на обоих
 сайтах). Этап 7 (будущее): после гашения старого сайта —
-`PARTNER_JOOMLA_DUAL_WRITE=false`.
+`PARTNER_JOOMLA_DUAL_WRITE=false`, **но только после того, как доделан
+`backend_only_mint_stub`** (см. предупреждение ниже).
 
-**Откат в любой момент:** флаги `false` + `config:clear` — минт и баланс
-мгновенно возвращаются к чисто-Joomla поведению, код не откатывается.
-Rollback-матрица — план §3.2.
+> ## ☠️ `PARTNER_JOOMLA_DUAL_WRITE` НЕ ВЫКЛЮЧАТЬ, пока не доделан `backend_only_mint_stub`
+>
+> При `PARTNER_MINT_VIA_BACKEND=true` + `PARTNER_JOOMLA_DUAL_WRITE=false`
+> код уходит в заглушку (`JoomlaCoupon::createCoupon`, лог
+> `partner.backend_only_mint_stub`): купон создаётся только на бэке,
+> партнёр получает «успех», но пропускаются **три** вещи:
+>
+> 1. **Связь в `avicenna_user_coupons`** (Joomla) — купон не появится в
+>    списке промокодов партнёра в ЛК.
+> 2. **Запись в `true_bonus_codes`** — стоимость бонусного купона НЕ
+>    спишется с баланса (баланс считает `sum(bonus_code_cost)` по этой
+>    таблице): бонусники станут бесплатными.
+> 3. **Уведомления компании** о новом купоне (`sendPercentCouponToCompany` /
+>    `sendBonusCouponToCompany`).
+>
+> Перенос этих трёх шагов в backend-only ветку — задача этапа 7.
+
+**Откат в любой момент:** **все** флаги `false` + `config:clear` — минт
+и баланс мгновенно возвращаются к чисто-Joomla поведению, код не
+откатывается. Выключать один `PARTNER_JOOMLA_DUAL_WRITE` при включённом
+минте — это НЕ откат, а заглушка выше. Rollback-матрица — план §3.2.
 
 ## 4. Интеграция с бэкендом Avicenna (Фаза D, этап 3)
 
@@ -103,13 +122,13 @@ Rollback-матрица — план §3.2.
 | Флаг | Что делает |
 |---|---|
 | `PARTNER_MINT_VIA_BACKEND` | минт купона идёт СНАЧАЛА в бэк (истина): `JoomlaCoupon::createCoupon` → `AvicennaBackendClient::mintPartnerCoupon`. Занятый код на бэке → 422 → фронт-ключ `errors.coupon_code_exists`. Off = старый чисто-Joomla минт |
-| `PARTNER_JOOMLA_DUAL_WRITE` | после успеха бэка выполняется старый INSERT в Joomla (купон работает на ОБОИХ сайтах). Off при включённом минте = backend-only (этап 7, пока заглушка) |
+| `PARTNER_JOOMLA_DUAL_WRITE` | после успеха бэка выполняется старый INSERT в Joomla (купон работает на ОБОИХ сайтах). Off при включённом минте = backend-only-**заглушка**: ☠️ **НЕ выключать**, пока не доделан `backend_only_mint_stub` — пропускаются связь `avicenna_user_coupons`, списание бонусника (`true_bonus_codes`) и уведомления (см. §3) |
 | `PARTNER_ACCRUALS_FROM_BACKEND` | ЛК дотягивает данные нового сайта. **Начисления** (процентные купоны): accruals вливаются через единый шов `JoomlaCoupon::getPpOrders` (→ «Начисления», per-coupon сводки, модалка «Заказы», баланс), reversals (возвраты) → вкладка «Списания → Корректировки» + вычет из баланса (net). **Погашения** (бонусные купоны, этап 4): `getRedemptions` → `getPpOrders` подмешивает заказ бонусника + `getUserCoupons` метит `backend_used` → карточка бонусника показывает «Использован» + «О заказе», даже если погашён на новом сайте (баланс не трогает — у бонусника комиссии нет) |
 
 Ключевые точки кода:
 - `app/Services/AvicennaBackendClient.php` — s2s-клиент (минт + accruals +
   redemptions бонусников, пагинация, маппинг ошибок в `errors.<key>` — ключи
-  есть в `resources/js/locales/ru.json`);
+  есть в `resources/js/locales/ru.json` и `en.json`);
 - `app/Models/JoomlaCoupon.php` — врезка dual-write в `createCoupon()`
   (backend-first; `partner_ref = Auth::id()`, НЕ Joomla-id), шов
   `getPpOrders()` + `loadBackend()` + `backendReversalsSummary()`;
@@ -117,8 +136,12 @@ Rollback-матрица — план §3.2.
   `mint_request_id` сохраняется ДО вызова (`firstOrCreate` по
   partner_ref+code) → сетевой ретрай переиспользует uuid → бэк отвечает
   200 idempotent, а не «код занят»; `joomla_written=false` помечает
-  купоны, у которых бэк-минт прошёл, а Joomla-INSERT упал (follow-up:
-  фоновый ретрай таких строк);
+  купоны, у которых бэк-минт прошёл, а Joomla-INSERT упал. Фонового
+  ретрая и алерта по таким строкам **нет** (follow-up); журнал сейчас
+  только пишется, UI его не читает. ⚠️ В этом случае партнёр видит
+  ошибку `coupon_insert_failed`, хотя купон уже действует на новом
+  сайте; повтор с тем же кодом безопасен (тот же `mint_request_id` →
+  бэк ответит idempotent, затем повторится Joomla-INSERT);
 - `resources/js/components/dashboard/Agent/DebitsList/ReversalsTable.vue`
   (+ `ReversalDetailsModal.vue`) — вкладка «Корректировки».
 
@@ -131,6 +154,21 @@ Rollback-матрица — план §3.2.
   Проверки в контроллерах оставлены как дублирующая подстраховка.
 - `AVICENNA_BACKEND_SOURCE_TOKEN` — секрет уровня пароля БД: даёт право
   минтить купоны на бэке. Только `.env`, не логировать.
+
+### Известные проблемы (задачи в бэклоге, код пока не менялся)
+
+- **Роуты вне гейта `admin`** — доступны любому залогиненному партнёру
+  (`auth:sanctum`), проверки роли нет:
+  - `POST /api/notifications/send` (`NotificationController::send`) —
+    отправляет любое уведомление из `App\Notifications\*` любому
+    `user_id` с произвольным `data` (письма от имени компании любому
+    пользователю);
+  - `GET /api/dev2`, `/api/dev3`, `/api/dev4` — отладочные роуты
+    `UserCouponController` (у `dev2` метода `ddv` не существует → 500).
+- **`joomlaUser` из тела запроса** в `POST /api/user/coupon/create`
+  (`UserCouponController::create`): Joomla-id, к которому привязывается
+  купон в `avicenna_user_coupons`, берётся из запроса без сверки с
+  текущим пользователем.
 
 ## 6. Тест-чеклист (смоук после деплоя / включения флагов)
 
@@ -154,6 +192,12 @@ docker compose up -d     # backend(fpm) + nginx :8081 + node(vite :5173) + mailp
 docker exec laravel_backend php artisan migrate
 docker exec laravel_backend php artisan config:clear   # после правок .env
 ```
+
+⚠️ Контейнер `node` запускает `npm run dev:local` =
+`vite --config vite.config.local.js`, а этот файл **в `.gitignore`** — на
+чистом checkout его нет, и vite не стартует. Создать вручную: копия
+`vite.config.js` без HTTPS-блока (`server.https` читает сертификаты с
+путей VDS) и с `server.hmr = { host: "localhost", protocol: "ws" }`.
 
 `.env` локально: тестовые БД (см. §2), флаги — как удобно для задачи
 (dual-write тестируется с локальным бэком на :8080; сеть между стеками —
