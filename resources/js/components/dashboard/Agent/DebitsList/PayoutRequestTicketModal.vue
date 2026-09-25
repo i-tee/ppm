@@ -50,17 +50,10 @@ const files = ref([])
 const uploading = ref(false)
 const canUpload = ref(false)
 
-// Отладочный обработчик — выводит всё, что приходит в v-model
 const onFileChange = (newValue) => {
-    // console.log('=== VaFileUpload update:modelValue ===')
-    // console.log('newValue:', newValue)
-    // console.log('typeof newValue:', typeof newValue)
-    // console.log('Array.isArray(newValue):', Array.isArray(newValue))
-    // console.log('newValue instanceof File:', newValue instanceof File)
     if (newValue) {
         if (Array.isArray(newValue)) {
 
-            // console.log('Длина массива:', newValue.length)
             if (newValue.length > 0) canUpload.value = newValue[0].size > 0 ? true : false
 
         } else {
@@ -69,8 +62,6 @@ const onFileChange = (newValue) => {
     } else {
         canUpload.value = false
     }
-
-    // console.log('=====================================')
 
 }
 
@@ -100,9 +91,6 @@ const upload = async () => {
     formData.append('ticket', fileToUpload)
 
     try {
-
-        // console.log('Uploading file:', fileToUpload)
-        // console.log('formData:', formData)
 
         const { data } = await axios.post(
             `/api/payout-requests/${props.payoutRequest.id}/ticket`,

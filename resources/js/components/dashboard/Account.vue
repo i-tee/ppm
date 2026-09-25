@@ -184,7 +184,6 @@ export default {
           input.$el.focus();
         }
       });
-      console.log('Функция вызвана!');
     }
   },
   setup(props, { emit }) {
@@ -282,7 +281,6 @@ export default {
         await authStore.fetchUser();
         emit('user-updated', authStore.user);
       } catch (error) {
-        console.log('Error response:', error.response ? error.response.data : error.message);
         toast.init({
           message: error.response?.data?.message || error.message || t('vuestic.profile.verification_email_failed'),
           color: 'danger',
@@ -313,7 +311,6 @@ export default {
       await authStore.fetchUser();
       form.name = authStore.user?.name || '';
       form.email = authStore.user?.email || '';
-      //console.log('User profile mounted:', authStore.user);
     });
 
     const handleSubmit = async () => {

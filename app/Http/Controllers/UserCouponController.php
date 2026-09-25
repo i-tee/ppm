@@ -175,7 +175,6 @@ class UserCouponController extends Controller
             'name' => 'required|string|min:6|max:36|regex:/^[A-Za-zА-Яа-яЁё0-9_-]+$/',
             'value' => 'required|integer|min:0',
             'type' => 'required|in:0,1',
-            'joomlaUser' => 'required|integer' // joomlaUser — это ID пользователя в Joomla
         ]);
 
         if ($validator->fails()) {
@@ -185,12 +184,20 @@ class UserCouponController extends Controller
             ], 422);
         }
 
+        // Joomla-id текущего пользователя берём на сервере, а не из тела запроса.
+        $joomlaUser = JoomlaCoupon::joomlaUser();
+        if (!$joomlaUser) {
+            return response()->json([
+                'message' => __('errors.unexpected_error')
+            ], 500);
+        }
+
         try {
             // Попытка создания купона
             $result = JoomlaCoupon::createCoupon(
                 $data['name'],
                 $data['value'],
-                $data['joomlaUser'],
+                $joomlaUser->id,
                 $data['type']
             );
 

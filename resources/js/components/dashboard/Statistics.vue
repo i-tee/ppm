@@ -14,7 +14,7 @@
         <div class="flex flex-wrap gap-4 items-end mb-4">
           <div>
             <p class="text-sm text-secondary mb-1">{{ $t('statistics.period') }}</p>
-            <VaSelect v-model="periodPreset" :options="periodOptions" class="min-w-64" />
+            <VaSelect v-model="periodPreset" :options="periodOptions" value-by="value" text-by="text" class="min-w-64" />
           </div>
 
           <template v-if="periodPreset === 'custom'">
@@ -24,7 +24,7 @@
 
           <div v-if="couponOptions.length > 1">
             <p class="text-sm text-secondary mb-1">{{ $t('statistics.coupon_filter') }}</p>
-            <VaSelect v-model="selectedCouponId" :options="couponOptions" class="min-w-48" />
+            <VaSelect v-model="selectedCouponId" :options="couponOptions" value-by="value" text-by="text" class="min-w-48" />
           </div>
         </div>
 
@@ -33,39 +33,45 @@
           <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
             <p class="text-sm text-gray-600 mb-1">{{ $t('statistics.accrued') }}</p>
             <p class="text-2xl font-bold text-primary">{{ formatPrice(totals.accrued) }}</p>
-            <p v-if="accruedChange !== null" class="text-xs mt-1" :class="accruedChange >= 0 ? 'text-success' : 'text-danger'">
-              {{ accruedChange >= 0 ? '↑' : '↓' }} {{ formatPercent(accruedChange) }} {{ $t('statistics.vs_previous_period') }}
+            <p v-if="accruedChangeDisplay" class="text-xs mt-1" :class="accruedChangeDisplay.cls">
+              {{ accruedChangeDisplay.text }}
             </p>
           </div>
           <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
             <p class="text-sm text-gray-600 mb-1">{{ $t('statistics.orders_count') }}</p>
             <p class="text-2xl font-bold">{{ totals.ordersCount }}</p>
-            <p v-if="ordersChange !== null" class="text-xs mt-1" :class="ordersChange >= 0 ? 'text-success' : 'text-danger'">
-              {{ ordersChange >= 0 ? '↑' : '↓' }} {{ formatPercent(ordersChange) }} {{ $t('statistics.vs_previous_period') }}
+            <p v-if="ordersChangeDisplay" class="text-xs mt-1" :class="ordersChangeDisplay.cls">
+              {{ ordersChangeDisplay.text }}
             </p>
           </div>
           <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
             <p class="text-sm text-gray-600 mb-1">{{ $t('statistics.avg_order') }}</p>
             <p class="text-2xl font-bold">{{ formatPrice(totals.avgOrder) }}</p>
-            <p v-if="avgOrderChange !== null" class="text-xs mt-1" :class="avgOrderChange >= 0 ? 'text-success' : 'text-danger'">
-              {{ avgOrderChange >= 0 ? '↑' : '↓' }} {{ formatPercent(avgOrderChange) }} {{ $t('statistics.vs_previous_period') }}
+            <p v-if="avgOrderChangeDisplay" class="text-xs mt-1" :class="avgOrderChangeDisplay.cls">
+              {{ avgOrderChangeDisplay.text }}
             </p>
           </div>
           <div class="text-center p-4 bg-gray-50 rounded-lg shadow-sm">
             <p class="text-sm text-gray-600 mb-1">{{ $t('statistics.paid_out') }}</p>
             <p class="text-2xl font-bold">{{ formatPrice(paidOut) }}</p>
-            <p v-if="paidOutChange !== null" class="text-xs mt-1" :class="paidOutChange >= 0 ? 'text-success' : 'text-danger'">
-              {{ paidOutChange >= 0 ? '↑' : '↓' }} {{ formatPercent(paidOutChange) }} {{ $t('statistics.vs_previous_period') }}
+            <p v-if="paidOutChangeDisplay" class="text-xs mt-1" :class="paidOutChangeDisplay.cls">
+              {{ paidOutChangeDisplay.text }}
             </p>
           </div>
         </div>
 
-        <!-- Шаг графика -->
-        <div class="flex justify-end mb-2">
-          <VaButtonToggle v-model="chartStep" :options="chartStepOptions" size="small" />
+        <!-- Пустой период - заглушка вместо пустого графика с нулевой линией -->
+        <div v-if="isPeriodEmpty" class="p-4 my-4 rounded-lg bg-gray-200 text-center">
+          {{ $t('statistics.empty_period') }}
         </div>
+        <template v-else>
+          <!-- Шаг графика -->
+          <div class="flex justify-end mb-2">
+            <VaButtonToggle v-model="chartStep" :options="chartStepOptions" size="small" />
+          </div>
 
-        <StatisticsChart :labels="chart.labels" :accruals="chart.accruals" :ordersCount="chart.ordersCount" />
+          <StatisticsChart :labels="chart.labels" :accruals="chart.accruals" :ordersCount="chart.ordersCount" />
+        </template>
 
         <VaDivider class="my-4" />
 
@@ -100,13 +106,14 @@ import StatisticsChart from './Statistics/StatisticsChart.vue'
 import { usePartnerApplications } from '@/composables/usePartnerApplications'
 import { useBase } from '@/composables/useBase'
 import {
+  PERIOD_PRESETS,
   getPeriodRange,
   getPreviousPeriodRange,
   filterOrdersByPeriod,
   filterOrdersByCoupon,
   computeTotals,
   computePayout,
-  computeChange,
+  describeChange,
   autoChartStep,
   buildChartBuckets,
   getOrdersDateBounds,
@@ -137,7 +144,8 @@ const STORAGE_KEY = 'statistics.period_preset'
 
 function loadStoredPreset() {
   try {
-    return window.localStorage.getItem(STORAGE_KEY) || '30d'
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    return PERIOD_PRESETS.includes(stored) ? stored : '30d'
   } catch (e) {
     return '30d'
   }
@@ -204,16 +212,43 @@ const previousPaidOut = computed(() => previousPeriodRange.value
   ? computePayout(payoutRequests.value, previousPeriodRange.value)
   : null)
 
+// Нет заказов в периоде - показываем заглушку вместо графика/шага.
+const isPeriodEmpty = computed(() => periodOrders.value.length === 0)
+
+// Сравнение с прошлым периодом (null - нет предыдущего периода, «Всё время»).
 const hasPrevious = computed(() => !!previousPeriodRange.value)
-
-const accruedChange = computed(() => hasPrevious.value ? computeChange(totals.value.accrued, previousTotals.value.accrued) : null)
-const ordersChange = computed(() => hasPrevious.value ? computeChange(totals.value.ordersCount, previousTotals.value.ordersCount) : null)
-const avgOrderChange = computed(() => hasPrevious.value ? computeChange(totals.value.avgOrder, previousTotals.value.avgOrder) : null)
-const paidOutChange = computed(() => hasPrevious.value ? computeChange(paidOut.value, previousPaidOut.value) : null)
-
-function formatPercent(value) {
-  return `${Math.abs(value).toFixed(1)}%`
+function changeFor(current, previous) {
+  return describeChange(current, hasPrevious.value ? previous : null)
 }
+
+const accruedChange = computed(() => changeFor(totals.value.accrued, previousTotals.value.accrued))
+const ordersChange = computed(() => changeFor(totals.value.ordersCount, previousTotals.value.ordersCount))
+const avgOrderChange = computed(() => changeFor(totals.value.avgOrder, previousTotals.value.avgOrder))
+const paidOutChange = computed(() => changeFor(paidOut.value, previousPaidOut.value ?? 0))
+
+// Проценты - в русском формате (запятая, без лишнего знака у целых чисел),
+// независимо от языка интерфейса - так попросил мастер-чат.
+const percentFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 })
+function formatPercent(value) {
+  return `${percentFormatter.format(Math.abs(value))}%`
+}
+
+// Текст + цвет плитки сравнения: 'value' - обычный процент, 'new' - было 0,
+// стало больше 0 (без процента), 'neutral' - оба периода 0 или разница
+// округляется к 0 - «–» без стрелки, 'none' - сравнивать не с чем (скрыто).
+function changeDisplay(change) {
+  if (!change || change.kind === 'none') return null
+  if (change.kind === 'new') return { text: t('statistics.change_new'), cls: 'text-success' }
+  if (change.kind === 'neutral') return { text: `– ${t('statistics.vs_previous_period')}`, cls: 'text-secondary' }
+  const arrow = change.percent >= 0 ? '↑' : '↓'
+  const cls = change.percent >= 0 ? 'text-success' : 'text-danger'
+  return { text: `${arrow} ${formatPercent(change.percent)} ${t('statistics.vs_previous_period')}`, cls }
+}
+
+const accruedChangeDisplay = computed(() => changeDisplay(accruedChange.value))
+const ordersChangeDisplay = computed(() => changeDisplay(ordersChange.value))
+const avgOrderChangeDisplay = computed(() => changeDisplay(avgOrderChange.value))
+const paidOutChangeDisplay = computed(() => changeDisplay(paidOutChange.value))
 
 // --- График ---
 

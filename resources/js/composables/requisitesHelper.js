@@ -18,12 +18,10 @@ export function useRequisitesHelper() {
   async function fetchRequisiteSettings() {
     loading.value = true;
     try {
-      // console.log('🔄 Загрузка реквизитов...');
       const response = await axios.get("/api/rs", {
         headers: { Authorization: `Bearer ${authStore.token}` },
       });
       requisiteSettings.value = response.data;
-      // console.log('✅ Реквизиты загружены:', response.data);
       error.value = null;
     } catch (err) {
       // console.error('❌ Ошибка загрузки реквизитов:', err);
@@ -57,7 +55,7 @@ export function useRequisitesHelper() {
 
       return hasVerified;
     } catch (err) {
-      console.error('❌ Ошибка проверки реквизитов:', err);
+      console.error('hasVerifiedRequisite error:', err.message);
       return false; // На ошибке возвращаем false, чтоб не блокировало UI
     }
   }
@@ -68,10 +66,7 @@ export function useRequisitesHelper() {
    * @returns {Array} Отсортированный массив полей, видимых для данного типа партнера
    */
   const getFieldsByPartnerType = (partnerTypeId) => {
-    // console.log("🔍 Поиск полей для типа партнера:", partnerTypeId);
-
     if (!requisiteSettings.value) {
-      // console.log("❌ requisiteSettings не загружены");
       return [];
     }
 
@@ -91,19 +86,14 @@ export function useRequisitesHelper() {
       fields = requisiteSettings.value;
     }
 
-    // console.log('📋 Найдено полей всего:', fields.length);
-
     const filteredFields = fields
       .filter((field) => {
         const isVisible =
           field.visible && field.visible.includes(Number(partnerTypeId));
-        // console.log(`🔎 Поле "${field.name}": visible=${JSON.stringify(field.visible)}, includes=${isVisible}`);
         return isVisible;
       })
       .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    // console.log(`✅ Отфильтровано полей для типа ${partnerTypeId}:`, filteredFields.length);
-    // console.log('📝 Поля:', filteredFields);
 
     return filteredFields;
   };
@@ -200,17 +190,8 @@ export function useRequisitesHelper() {
     const errors = [];
     const requiredFields = getRequiredFieldsByPartnerType(partnerTypeId);
 
-    // console.log("🔍 Валидация данных:", data);
-    // console.log("📋 Обязательные поля:", requiredFields);
-
     requiredFields.forEach((field) => {
       const value = data[field.name];
-      // console.log(
-      //   `🔎 Проверка поля "${field.name}":`,
-      //   value,
-      //   "required:",
-      //   field.required
-      // );
 
       // Проверяем что значение не пустое (учитываем разные типы)
       let isEmpty = false;
@@ -227,22 +208,15 @@ export function useRequisitesHelper() {
       }
 
       if (isEmpty) {
-        // console.log(`❌ Поле "${field.name}" не заполнено`);
         errors.push({
           field: field.name,
           message: `Поле "${getFieldLabel(
             field.name
           )}" обязательно для заполнения`,
         });
-      } else {
-        // console.log(`✅ Поле "${field.name}" заполнено:`, value);
       }
     });
 
-    // console.log("📊 Результат валидации:", {
-    //   isValid: errors.length === 0,
-    //   errors,
-    // });
     return {
       isValid: errors.length === 0,
       errors,

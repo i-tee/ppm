@@ -165,22 +165,17 @@ export default {
       return this.formErrors.email.length === 0;
     },
     async handleResetPassword() {
-      //console.log('Handle Reset Password triggered');
       this.serverError = null;
       if (!this.validateEmail(this.email) || !this.validatePassword(this.newPassword) || !this.validateConfirmPassword(this.confirmPassword)) {
-        //console.log('Validation failed:', this.formErrors);
         return;
       }
 
       try {
         const token = this.route.query.token;
-        //console.log('Token:', token, 'Email:', this.email, 'New Password:', this.newPassword, 'Confirm Password:', this.confirmPassword);
         if (!token) throw new Error(this.$t('invalid_reset_token'));
         await this.authStore.resetPassword(token, this.newPassword, this.email, this.confirmPassword); // Убедимся, что все поля передаются
-        //console.log('Reset successful, redirecting to /dashboard');
         this.router.push('/dashboard');
       } catch (error) {
-        //console.log('Reset error:', error.response?.data || error.message);
         this.serverError = error.response?.data?.message || this.$t('reset_error');
         if (error.response?.status === 422) {
           this.serverError = error.response?.data?.errors?.password?.[0] || this.$t('reset_error');

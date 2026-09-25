@@ -53,7 +53,6 @@ export default defineComponent({
         // Отправляем событие родителю
         emit('user-updated', authStore.user); // Используем emit вместо window.$emit
       } catch (error) {
-        console.log('Error response:', error.response ? error.response.data : error.message);
         toast.init({
           message: error.response?.data?.message || error.message || t('vuestic.profile.verification_email_failed'),
           color: 'danger',

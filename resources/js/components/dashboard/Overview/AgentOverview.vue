@@ -317,9 +317,8 @@ onMounted(async () => {
     try {
         const result = await hasVerifiedRequisite()
         isVerified.value = result
-
     } catch (err) {
-        console.log('hasVerifiedRequisite() error:', err)
+        console.error('hasVerifiedRequisite error:', err.message)
     }
 })
 </script>

@@ -136,12 +136,21 @@ export function computePayout(payoutRequests, { start, end } = {}) {
     .reduce((sum, r) => sum + Number(r.withdrawal_amount || 0), 0);
 }
 
-// ↑/↓ в процентах, null - если сравнивать не с чем (нет предыдущего периода
-// или он пуст без возможности посчитать долю).
-export function computeChange(current, previous) {
-  if (previous === null || previous === undefined) return null;
-  if (previous === 0) return current === 0 ? 0 : null;
-  return ((current - previous) / previous) * 100;
+// Тип сравнения с прошлым периодом для UI:
+// - 'none' - сравнивать не с чем (нет предыдущего периода, «Всё время»);
+// - 'new' - в прошлом периоде было 0, сейчас больше 0 - показываем «новое»
+//   без процента (делить на 0 нечем);
+// - 'neutral' - оба периода 0, либо процент округляется к 0.0 - «–»,
+//   без стрелки;
+// - 'value' - обычный процент разницы.
+export function describeChange(current, previous) {
+  if (previous === null || previous === undefined) return { kind: 'none' };
+  if (previous === 0) {
+    return current === 0 ? { kind: 'neutral' } : { kind: 'new' };
+  }
+  const percent = ((current - previous) / previous) * 100;
+  if (Math.round(percent * 10) / 10 === 0) return { kind: 'neutral' };
+  return { kind: 'value', percent };
 }
 
 // Для «Всё время» period.start/end - null (нет фиксированной границы), но

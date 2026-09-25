@@ -163,7 +163,7 @@ import { useSettingsStore } from '@/stores/settings';
 import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'vuestic-ui';
 import { useI18n } from 'vue-i18n';
-import axios from 'axios';
+import api from '@/api';
 
 const props = defineProps({
   user: {
@@ -176,8 +176,6 @@ const { t } = useI18n();
 const toast = useToast();
 const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
-
-axios.defaults.headers.common['Authorization'] = `Bearer ${authStore.token}`;
 
 const isAdmin = computed(() => authStore.isAdmin);
 
@@ -289,7 +287,7 @@ const fetchApplications = async () => {
       sort_direction: sortDesc.value ? 'desc' : 'asc',
       ...filters.value,
     };
-    const response = await axios.get('/api/partner-applications', { params });
+    const response = await api.get('/partner-applications', { params });
     applications.value = response.data.data;
     totalPages.value = response.data.last_page;
   } catch (error) {
@@ -341,8 +339,6 @@ const editApplication = (application) => {
     return;
   }
 
-  console.log('slotProps.row:', application);
-
   // Находим соответствующие объекты для select'ов
   const cooperationType = cooperationTypeOptions.value.find(opt => opt.value === item.cooperation_type_id);
   const partnerType = partnerTypeOptions.value.find(opt => opt.value === item.partner_type_id);
@@ -384,8 +380,6 @@ const saveApplication = async () => {
       delete sendData.middle_name;
     }
 
-    console.log('Отправляемые данные:', sendData); // Логируем перед отправкой
-
     // Проверка на null для обязательных полей
     const nameRequired = sendData.last_name !== undefined || sendData.first_name !== undefined;
     if ((nameRequired && (!sendData.last_name || !sendData.first_name)) ||
@@ -399,27 +393,23 @@ const saveApplication = async () => {
     }
 
     if (form.value.id) {
-      await axios.put(`/api/partner-applications/${form.value.id}`, sendData);
+      await api.put(`/partner-applications/${form.value.id}`, sendData);
     } else {
-      const response = await axios.post('/api/partner-applications', sendData);
-      console.log('Ответ сервера:', response.data); // Логируем успешный ответ
+      await api.post('/partner-applications', sendData);
     }
     showModal.value = false;
     fetchApplications();
     toast.init({ message: t('success.saved'), color: 'success' });
   } catch (error) {
-    console.error('Ошибка иши:', error.response ? error.response.data : error.message); // Логируем детали ошибки
+    console.error('saveApplication error:', error.message);
     toast.init({ message: error.response?.data?.message || t('errors.save_failed'), color: 'danger' });
   }
 };
 
 const deleteApplication = async (id) => {
   if (confirm(t('confirm.delete'))) {
-
-    console.log(id);
-
     try {
-      await axios.delete(`/api/partner-applications/${id}`);
+      await api.delete(`/partner-applications/${id}`);
       fetchApplications();
       toast.init({ message: t('success.deleted'), color: 'success' });
     } catch (error) {

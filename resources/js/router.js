@@ -26,7 +26,6 @@ const Account = () => import("./components/dashboard/Account.vue");
 // выбора сотрудничества (этап 1.4). Компоненты не удалены (могут
 // пригодиться позже), но больше не подключены к роутам - их пути ниже
 // редиректят на актуальные экраны.
-// import Dev from "./components/dashboard/Dev.vue";
 
 const routes = [
   {

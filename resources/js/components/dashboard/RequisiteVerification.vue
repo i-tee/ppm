@@ -80,7 +80,7 @@ import { useAuthStore } from '@/stores/auth';
 import { ref, computed, onMounted, watch } from 'vue';
 import { useToast } from 'vuestic-ui';
 import { useI18n } from 'vue-i18n';
-import axios from 'axios';
+import api from '@/api';
 import { usePartnersHelper } from '@/composables/partnersHelper';
 
 const props = defineProps({
@@ -94,8 +94,6 @@ const { t } = useI18n();
 const toast = useToast();
 const authStore = useAuthStore();
 const { partnerSettings } = usePartnersHelper();
-
-axios.defaults.headers.common['Authorization'] = `Bearer ${authStore.token}`;
 
 const canManageFinance = computed(() => authStore.canManageFinance);
 
@@ -152,12 +150,7 @@ watch(requisites, () => {
 
 const fetchUnverifiedRequisites = async () => {
   try {
-    console.log('User levels:', props.user.effective_access_levels); // ДЕБАГ: уровни юзера
-    console.log('Can manage finance:', canManageFinance.value); // ДЕБАГ: isAdmin
-
-    const response = await axios.get('/api/user/requisites-all');
-    console.log('Full API Response:', response); // ДЕБАГ: полный response
-    console.log('Response.data:', response.data); // ДЕБАГ: данные ответа
+    const response = await api.get('/user/requisites-all');
 
     // Чек на HTML (ошибка роута/proxy)
     if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
@@ -172,14 +165,8 @@ const fetchUnverifiedRequisites = async () => {
       req.partner_type_name = type ? type.name : 'unknown';
       return req;
     });
-    console.log('Processed requisites:', requisites.value); // ДЕБАГ: обработанные данные
   } catch (error) {
-    console.error('Full API Error:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-      config: error.config?.url // ДЕБАГ: полный error
-    });
+    console.error('fetchUnverifiedRequisites error:', error.message);
     requisites.value = [];
     toast.init({ message: t('errors.fetch_failed'), color: 'danger' });
   }
@@ -199,12 +186,12 @@ const approveRequisite = async () => {
   if (!selectedRequisite.value?.id) return;
 
   try {
-    await axios.put(`/api/user/requisites/${selectedRequisite.value.id}/verify`);
+    await api.put(`/user/requisites/${selectedRequisite.value.id}/verify`);
     showModal.value = false;
     await fetchUnverifiedRequisites(); // Refetch всех данных
     toast.init({ message: t('requisites.approved'), color: 'success' });
   } catch (error) {
-    console.error('Approve Error:', error.response?.data || error);
+    console.error('approveRequisite error:', error.message);
     toast.init({ message: error.response?.data?.message || t('errors.approve_failed'), color: 'danger' });
   }
 };
@@ -213,9 +200,7 @@ const deleteRequisite = async (id) => {
   if (!confirm(t('requisites.confirm_delete'))) return;
 
   try {
-    await axios.delete(`/api/user/requisites/${id}`, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    });
+    await api.delete(`/user/requisites/${id}`);
 
     if (showModal.value && selectedRequisite.value?.id === id) {
       showModal.value = false;
@@ -224,7 +209,7 @@ const deleteRequisite = async (id) => {
     await fetchUnverifiedRequisites(); // Refetch всех данных
     toast.init({ message: t('success.deleted'), color: 'success' });
   } catch (error) {
-    console.error('Delete Error:', error.response?.data || error);
+    console.error('deleteRequisite error:', error.message);
     toast.init({ message: t('errors.delete_failed'), color: 'danger' });
   }
 };
@@ -271,24 +256,18 @@ const formatDate = (dateString) => {
 };
 
 onMounted(async () => {
-  console.log('onMounted: User props:', props.user); // ДЕБАГ: полный user
   if (canManageFinance.value) {
     // Ждём загрузки partnerSettings
     if (!partnerSettings.value) {
-      console.log('Waiting for partnerSettings...'); // ДЕБАГ: ожидание
       const unwatch = watch(() => partnerSettings.value, (newVal) => {
         if (newVal) {
-          console.log('partnerSettings loaded:', newVal); // ДЕБАГ: загружено
           unwatch();
           fetchUnverifiedRequisites();
         }
       });
     } else {
-      console.log('partnerSettings already loaded'); // ДЕБАГ: уже есть
       await fetchUnverifiedRequisites();
     }
-  } else {
-    console.log('Not admin, skipping fetch'); // ДЕБАГ: не админ
   }
 });
 </script>

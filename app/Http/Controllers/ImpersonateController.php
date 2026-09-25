@@ -74,18 +74,25 @@ class ImpersonateController extends Controller
     public function stop(Request $request)
     {
         $user = Auth::user(); // Это будет impersonated user
-        
+        $token = $request->user()->currentAccessToken();
+
+        // Зовётся с impersonation-токеном (создаётся в impersonate() с именем
+        // impersonation-token-<adminId>), не с обычным партнёрским токеном.
+        if (!$token || !str_starts_with($token->name, 'impersonation-token-')) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
         // Ищем cache запись об impersonation для этого пользователя
         $cacheKeys = Cache::get('impersonation_keys', []);
         $cacheKey = null;
-        
+
         foreach ($cacheKeys as $key) {
             if (str_contains($key, '_' . $user->id . '_by_')) {
                 $cacheKey = $key;
                 break;
             }
         }
-        
+
         if ($cacheKey) {
             Cache::forget($cacheKey);
             // Обновляем список ключей
@@ -93,8 +100,8 @@ class ImpersonateController extends Controller
             Cache::put('impersonation_keys', $cacheKeys, now()->addHours(24));
         }
 
-        // Удаляем текущий токен
-        $request->user()->currentAccessToken()->delete();
+        // Отзываем именно impersonation-токен
+        $token->delete();
 
         return response()->json(['message' => 'Impersonation stopped']);
     }

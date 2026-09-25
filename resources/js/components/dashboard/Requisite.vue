@@ -309,39 +309,29 @@ function resetForm() {
  * Валидация и отправка формы
  */
 async function validateAndSubmit() {
-  // console.log('🔄 Начало валидации формы...');
 
   // Валидация Vuestic формы
   if (formRef.value) {
     const isValid = await formRef.value.validate();
     if (!isValid) {
-      // console.log('❌ Vuestic валидация не пройдена');
       toast.init({ message: t('validation.form_invalid'), color: 'warning' });
       return;
     }
   }
 
-  // console.log('✅ Vuestic валидация пройдена');
-
   // Валидация бизнес-логики через наш хелпер
   const validationResult = validateRequisitesData(form.value, form.value.partner_type_id);
-  // console.log('🔍 Результат бизнес-валидации:', validationResult);
 
   if (!validationResult.isValid) {
     validationResult.errors.forEach(error => {
-      // console.log(`❌ Ошибка валидации: ${error.message}`);
       toast.init({ message: error.message, color: 'danger' });
     });
     return;
   }
 
-  // console.log('✅ Все валидации пройдены');
-  // console.log('📝 Данные формы:', form.value);
-
   // Фильтруем данные перед отправкой
   const payload = filterRequisitesData(form.value, form.value.partner_type_id);
   payload.partner_type_id = form.value.partner_type_id;
-  // console.log('📤 Отправляемые данные:', payload);
 
   submitting.value = true;
 
@@ -387,7 +377,6 @@ async function validateAndSubmit() {
     } else {
 
       toast.init({ message: t('requisites.unierror'), color: 'danger' });
-      console.log('IoErr ^^')
 
     }
 
@@ -443,13 +432,9 @@ async function deleteRequisite(id) {
  * Отслеживаем загрузку данных из обоих хелперов
  */
 watch([partnerSettings, requisiteSettings], ([partnerData, requisiteData]) => {
-  // console.log('🔍 Отслеживание загрузки данных:');
-  // console.log('   - partnerSettings:', partnerData);
-  // console.log('   - requisiteSettings:', requisiteData);
 
   if (partnerData?.partner_types && requisiteData) {
     isDataLoaded.value = true;
-    // console.log('✅ Все данные загружены!');
   }
 }, { immediate: true });
 
@@ -459,17 +444,14 @@ watch([partnerSettings, requisiteSettings], ([partnerData, requisiteData]) => {
 watch(
   () => form.value.partner_type_id,
   (newValue) => {
-    // console.log('🔄 Изменен тип партнера:', newValue);
 
     if (!requisiteSettings.value) {
-      // console.log('❌ requisiteSettings не загружены, не могу получить поля');
       return;
     }
 
     if (newValue) {
       // Получаем поля для выбранного типа партнера
       requisiteFieldsForm.value = getFieldsByPartnerType(newValue);
-      // console.log('✅ Поля для типа', newValue, ':', requisiteFieldsForm.value);
 
       // Инициализируем дефолтные значения для новых полей
       if (requisiteFieldsForm.value.length > 0) {
@@ -491,8 +473,6 @@ watch(
           ...defaultValues
         };
 
-        // console.log('🎯 Дефолтные значения установлены:', defaultValues);
-        // console.log('📋 Текущая форма:', form.value);
       }
     } else {
       requisiteFieldsForm.value = null;
@@ -505,7 +485,6 @@ watch(
  * Инициализация компонента
  */
 onMounted(() => {
-  // console.log('🚀 Компонент Requisite mounted');
   loadRequisites();
 
   // Принудительно загружаем настройки реквизитов если нужно

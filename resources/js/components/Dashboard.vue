@@ -5,6 +5,12 @@
     @left-overlay-click="isSidebarVisible = false">
 
     <template #top>
+      <div v-if="authStore.isImpersonating" class="impersonation-banner">
+        <span>{{ $t('admin.impersonation.bannerText', { user: currentUser?.name }) }}</span>
+        <VaButton size="small" preset="primary" @click="authStore.stopImpersonation()">
+          {{ $t('admin.impersonation.returnToAdmin') }}
+        </VaButton>
+      </div>
       <VaNavbar shadowed>
         <template #left>
           <VaButton preset="secondary" :icon="isSidebarVisible ? 'menu_open' : 'menu'"
@@ -71,7 +77,7 @@ onMounted(() => {
   // Профиль на этот момент уже загружен guard'ом роутера (router.js) -
   // повторный fetchUser здесь не нужен, это и был двойной запрос.
   if (!authStore.isAuthenticated) {
-    router.push('/login')
+    router.push({ name: 'welcome' })
   }
 
   isLoading.value = false
@@ -115,6 +121,18 @@ watch(() => route.path, () => {
 
 .text-secondary {
   color: #888;
+}
+
+.impersonation-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background-color: var(--va-warning);
+  color: #fff;
+  font-weight: 500;
+  text-align: center;
 }
 </style>
 

@@ -55,7 +55,7 @@
 
 <script setup>
 // Импорты: подключаем зависимости Vue и проекта
-import { ref, watch } from 'vue' // ref для реактивности, watch для отслеживания изменений
+import { ref } from 'vue' // ref для реактивности
 import { useI18n } from 'vue-i18n' // Для локализации текстов
 import { useToast } from 'vuestic-ui' // Для уведомлений Vuestic UI
 import { useAuthStore } from '@/stores/auth' // Хранилище Pinia для авторизации
@@ -91,11 +91,6 @@ const { apiData, bData } = defineProps({
   }
 })
 
-// Отслеживаем изменения apiData для отладки
-watch(() => apiData, (newValue) => {
-  //console.log('CreateCoupon apiData:', newValue)
-})
-
 // Функция создания купона
 async function createCoupon() {
   // Создаём объект данных купона в зависимости от активной вкладки
@@ -105,10 +100,6 @@ async function createCoupon() {
   } else if (activeTab.value === 'bonusForm') {
     creatCouponData = { ...bonusObject.value, type: 1 } // Бонусный купон (type: 1)
   }
-
-  creatCouponData.joomlaUser = bData.data.joomlaUser.id;
-
-  //console.log('createCouponData:', creatCouponData);
 
   // Проверяем валидность кода купона
   if (!creatCouponData.name || !isValidPromoCode(creatCouponData.name)) {
@@ -156,8 +147,6 @@ async function createCoupon() {
       message: t(errorMessage),
       color: 'danger'
     })
-    // console.error('Ошибка создания купона:', err)
-    // console.log('Полный ответ сервера:', err.response) // Для отладки: полный объект ошибки
 
     submitting.value = false;
 

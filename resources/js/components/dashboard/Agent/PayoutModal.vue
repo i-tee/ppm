@@ -322,8 +322,6 @@ const handleSubmit = async () => {
 
       selectedPayoutRequest.value = err.response.data.pending_payout
 
-      console.log('selectedPayoutRequest.value:', selectedPayoutRequest.value)
-
       showTicketModal.value = true
 
     }
@@ -343,10 +341,7 @@ watch(() => form.value.requisite_id, (newId) => {
 })
 
 // Загрузка реквизитов при монтировании компонента
-onMounted(
-  fetchRequisites,
-  // console.log('"|||"', props.apiData.cooperation_types[1].min_payout)
-)
+onMounted(fetchRequisites)
 
 // Это вот нормальное состояние, когда я на 289 строке
 </script>

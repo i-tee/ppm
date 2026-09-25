@@ -283,8 +283,6 @@ const filteredPartnerTypes = computed(() => {
 
 // Функция для показа условий
 function showConditions(id) {
-  console.log('Opening conditions for ID:', id);
-
   switch (id) {
     case 1: // influencer
       showConditions_Influencer.value = true;
@@ -378,8 +376,6 @@ async function validateAndSubmit() {
   if (typeof sendData.partner_type_id === 'object') {
     sendData.partner_type_id = sendData.partner_type_id.value;
   }
-
-  //console.log('Отправка данных:', sendData);
 
   try {
     const resp = await axios.post('/api/partner-applications', sendData, {

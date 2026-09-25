@@ -25,25 +25,21 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response) {
-      if (error.response.status === 401 && !isRefreshing) {
-        const authStore = useAuthStore();
-        isRefreshing = true;
-        try {
-          authStore.user = null;
-          authStore.token = null;
-          localStorage.removeItem('auth_token');
-          sessionStorage.removeItem('social_token');
-        } catch (logoutError) {
-          console.error('Error clearing auth state:', logoutError);
-        } finally {
-          isRefreshing = false;
-        }
+    if (error.response && error.response.status === 401 && !isRefreshing) {
+      const authStore = useAuthStore();
+      isRefreshing = true;
+      try {
+        authStore.user = null;
+        authStore.token = null;
+        localStorage.removeItem('auth_token');
+        sessionStorage.removeItem('social_token');
+      } catch (logoutError) {
+        console.error('Error clearing auth state:', logoutError.message);
+      } finally {
+        isRefreshing = false;
       }
-      throw error.response.data || new Error('Server error');
-    } else {
-      throw new Error('Network error');
     }
+    return Promise.reject(error);
   }
 );
 

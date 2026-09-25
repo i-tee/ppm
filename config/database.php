@@ -59,6 +59,7 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
             ]) : [],
         ],
 
@@ -75,6 +76,9 @@ return [
             'prefix' => 'jm_', // Укажите префикс таблиц Joomla, если он отличается от стандартного (например, 'jos_')
             'strict' => true,
             'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
+            ]) : [],
         ],
 
         'mariadb' => [

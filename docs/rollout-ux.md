@@ -37,8 +37,8 @@ git pull                                  # из boost-ux смёржено в ma
 composer install --no-dev --optimize-autoloader
 npm ci && npm run build                   # ⚠️ 1 ГБ RAM – см. operations.md §3
 php artisan config:clear
-php artisan route:clear                   # route:cache НЕ запускать: дубль имени
-                                          # password.reset в web.php/api.php его ломает
+php artisan route:cache                   # дубль имени password.reset устранён этапом 1.0а
+php artisan route:clear
 ```
 
 Новые npm-пакеты этапа 1 (ставятся через `npm ci` из lock-файла):
@@ -85,6 +85,12 @@ php artisan ppm:access --list                       # проверить ито�
   проживут ещё до 60 с.
 - `SESSION_DRIVER`/`CACHE_STORE` в прод-`.env` **не менять** (решено
   25.09: API на токенах, на скорость не влияет).
+- Включить `DB_PERSISTENT=true` на проде – **только после проверки лимитов**
+  (этап Г, 2026-09-25): владелец сверяет `pm.max_children` прод-пула
+  php-fpm × 2 БД против `max_user_connections`/`max_connections` обеих
+  прод-БД (`Laravel_partner`, `avicenna` – узнать через SELECT, см.
+  `docs/operations.md` «Постоянные соединения с БД»). Отдельное решение
+  владельца, не автоматически при обычном деплое.
 
 ## 5. После выката
 

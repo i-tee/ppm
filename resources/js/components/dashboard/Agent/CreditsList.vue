@@ -154,7 +154,6 @@ const loadData = () => {
   try {
     loading.value = true
     const ordersData = props.orders ?? (props.bData?.data?.credits?.orders || [])
-    console.log('CreditsList orders:', ordersData.length, 'items loaded')
     // Тост только для дефолтного (нефильтрованного) списка - при фильтре по
     // периоду/промокоду пустой результат ожидаем, для него уже есть текст в
     // самом шаблоне, тост на каждую смену фильтра был бы навязчив.
@@ -180,8 +179,7 @@ const loadData = () => {
 }
 
 // Отслеживание изменения currentPage
-watch(currentPage, (newVal, oldVal) => {
-  console.log('currentPage changed:', newVal, 'from', oldVal)
+watch(currentPage, () => {
   maintainScrollPosition() // Сохраняем позицию скролла
 })
 

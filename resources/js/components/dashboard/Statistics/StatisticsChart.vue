@@ -49,14 +49,17 @@ const props = defineProps({
 
 // Цвета - из палитры Vuestic (primary + спокойный второй), не кислотные.
 // Canvas не умеет var(...) напрямую - читаем computed style один раз.
+// --va-slate-500 в этой теме не существует (Vuestic инжектит CSS-переменные
+// только для именованных цветов пресета - primary/secondary/success/...,
+// не для палитры variables из vuestic.config.js) - берём --va-secondary,
+// реально существующую и заметно отличимую от primary.
 const primaryColor = ref('#154ec1')
-const secondaryColor = ref('#64748b')
+const secondaryColor = ref('#767c88')
 
 onMounted(() => {
   const styles = getComputedStyle(document.documentElement)
   primaryColor.value = styles.getPropertyValue('--va-primary').trim() || primaryColor.value
-  const slate = styles.getPropertyValue('--va-slate-500').trim()
-  secondaryColor.value = slate || primaryColor.value
+  secondaryColor.value = styles.getPropertyValue('--va-secondary').trim() || secondaryColor.value
 })
 
 const chartData = computed(() => ({
@@ -78,7 +81,10 @@ const chartData = computed(() => ({
       borderColor: secondaryColor.value,
       backgroundColor: secondaryColor.value,
       pointRadius: 3,
-      tension: 0.3,
+      // Прямые отрезки между точками - без сглаживания, чтобы линия не
+      // рисовала «горбы» между реальными значениями (0.3 давало заметный
+      // перегиб выше/ниже точек).
+      tension: 0,
       yAxisID: 'y1',
       order: 1,
     },
@@ -103,6 +109,11 @@ const chartOptions = computed(() => ({
     },
   },
   scales: {
+    x: {
+      // Отступ по краям категорий - иначе крайние столбцы (первый/последний)
+      // обрезаются по краю области графика.
+      offset: true,
+    },
     y: {
       type: 'linear',
       position: 'left',

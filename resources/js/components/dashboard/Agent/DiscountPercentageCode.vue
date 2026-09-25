@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { reactive, watch, onMounted } from 'vue'
+import { reactive, watch } from 'vue'
 import { transliterate } from '@/utils/transliterate'
 
 const PROMO_PREFIXES = ['SALE', 'DEAL', 'BONUS', 'SAVE', 'HOT', 'COOL', 'PROMO', 'WIN', 'VIP', 'GIFT', 'LUCKY', 'SUPER']
@@ -91,17 +91,6 @@ const formDiscountData = reactive({
 const handleInput = (event) => {
   formDiscountData.name = transliterate(event.target.value)
 }
-
-onMounted(() => console.log('DiscountPercentageCode bData:', props.bData.data.joomlaUser))
-
-// Отслеживаем изменения apiData для отладки
-watch(() => props.apiData, (newValue) => {
-  console.log('DiscountPercentageCode apiData:', newValue)
-  // Пример: доступ к cooperation_types
-  if (newValue?.cooperation_types) {
-    console.log('Cooperation Types:', newValue.cooperation_types)
-  }
-})
 
 // Эмитим изменения formDiscountData наружу
 watch(

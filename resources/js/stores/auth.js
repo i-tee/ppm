@@ -13,6 +13,7 @@ export const useAuthStore = defineStore("auth", {
     loading: false,
     error: null,
     lastUserRefreshAt: 0,
+    isImpersonating: localStorage.getItem("is_impersonating") === "true",
   }),
 
   actions: {
@@ -100,7 +101,7 @@ export const useAuthStore = defineStore("auth", {
         useSettingsStore().reset();
         useBusinessStore().reset();
         if (router) {
-          router.push("/login"); // Редирект через переданный router
+          router.push({ name: "welcome" }); // Редирект через переданный router
         }
       } catch (error) {
         this.error = error.response?.data?.message || "Ошибка при выходе";
@@ -124,12 +125,6 @@ export const useAuthStore = defineStore("auth", {
     async resetPassword(token, newPassword, email, passwordConfirmation) {
       this.loading = true;
       try {
-        console.log("Sending reset request with:", {
-          token,
-          email,
-          password: newPassword,
-          password_confirmation: passwordConfirmation,
-        });
         const response = await api.post("/reset-password", {
           token: token,
           email: email,
@@ -142,10 +137,6 @@ export const useAuthStore = defineStore("auth", {
         localStorage.setItem("auth_token", newToken);
         return true;
       } catch (error) {
-        console.log(
-          "Reset error on server:",
-          error.response?.data || error.message
-        );
         throw error;
       } finally {
         this.loading = false;
@@ -193,6 +184,7 @@ export const useAuthStore = defineStore("auth", {
         localStorage.setItem("auth_token", token);
         localStorage.setItem("impersonated_user", JSON.stringify(user));
         localStorage.setItem("is_impersonating", "true");
+        this.isImpersonating = true;
         useSettingsStore().reset();
         useBusinessStore().reset();
 
@@ -205,45 +197,42 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    // Выход из режима impersonate: сначала стоп на бэке (отзыв токена), но
+    // даже если сервер ответил ошибкой - всё равно восстанавливаем админа
+    // локально из localStorage и перезагружаем страницу.
     async stopImpersonation() {
       this.loading = true;
       this.error = null;
       try {
-        // Сначала стоп на бэке (чтобы удалить токен)
-        await api.post("/admin/impersonate/stop"); // ✅ Исправлено!
-
-        // Восстанавливаем original
-        const originalToken = localStorage.getItem("original_auth_token");
-        const originalUser = localStorage.getItem("original_user");
-        if (originalToken && originalUser) {
-          this.token = originalToken;
-          this.user = JSON.parse(originalUser);
-          localStorage.setItem("auth_token", originalToken);
-        }
-
-        // Очищаем
-        localStorage.removeItem("original_auth_token");
-        localStorage.removeItem("original_user");
-        localStorage.removeItem("impersonated_user");
-        localStorage.removeItem("is_impersonating");
-        useSettingsStore().reset();
-        useBusinessStore().reset();
-
-        return true;
+        await api.post("/admin/impersonate/stop");
       } catch (error) {
         this.error = error.response?.data?.error || "Ошибка stop impersonation";
-        return false;
-      } finally {
-        this.loading = false;
       }
+
+      const originalToken = localStorage.getItem("original_auth_token");
+      const originalUser = localStorage.getItem("original_user");
+      if (originalToken && originalUser) {
+        this.token = originalToken;
+        this.user = JSON.parse(originalUser);
+        localStorage.setItem("auth_token", originalToken);
+      }
+
+      localStorage.removeItem("original_auth_token");
+      localStorage.removeItem("original_user");
+      localStorage.removeItem("impersonated_user");
+      localStorage.removeItem("is_impersonating");
+      this.isImpersonating = false;
+      useSettingsStore().reset();
+      useBusinessStore().reset();
+      this.loading = false;
+
+      window.location.href = "/dashboard/partners";
     },
   },
 
   getters: {
     isAuthenticated: (state) => !!state.token,
     currentUser: (state) => state.user,
-    isImpersonating: (state) =>
-      localStorage.getItem("is_impersonating") === "true",
     isAdmin: (state) =>
       state.user &&
       (state.user.effective_access_levels?.includes(1) ||

@@ -75,7 +75,6 @@ const selectedPayoutRequest = ref(null)
 const openModal = (item) => {
   selectedPayoutRequest.value = item
   showModal.value = true
-  console.log('Открыта модалка для выплаты:', selectedPayoutRequest.value)
 }
 
 // Пропсы (добавил userId и userName для мини-режима)

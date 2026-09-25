@@ -86,10 +86,10 @@
     <RequisitFullModal :checkedPayout="checkedPayout"
       @payoutUpdated="showRequisitFullModal = false; fetchPayoutRequests()" />
     <template #footer>
-      <d iv class="flex justify-end space-x-4">
+      <div class="flex justify-end space-x-4">
         <VaButton @click="showRequisitFullModal = false" preset="secondary" color="secondary">{{ $t('modal.cancel') }}
         </VaButton>
-      </d>
+      </div>
     </template>
   </VaModal>
 
@@ -273,7 +273,7 @@ const fetchPayoutRequests = async () => {
     LoadindTable.value = true
 
     const params = {
-      statu_id: ''
+      status_id: ''
     };
 
     const response = await axios.get('/api/admin/payout-requests-prepared', {

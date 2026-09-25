@@ -103,15 +103,11 @@ const filledFields = computed(() => {
 })
 
 const handleSaveProof = async () => {
-  // console.log('step 1:: ', proofLink.value)
 
   if (!proofLink.value) {
     toast.init({ message: t('payoutRequest.proof_link_required'), color: 'danger' })
-    // console.log('step 2:: ', proofLink.value)
     return
   }
-
-  // console.log('step 3:: ', proofLink.value)
 
   try {
     // Собираем данные в отдельную переменную для дебага
@@ -120,16 +116,11 @@ const handleSaveProof = async () => {
       note: note.value || null
     }
 
-    // console.log('Sending data:', data); // Лог для проверки, что улетает
-    // console.log('props.checkedPayout.id:', props.checkedPayout.id); // Лог для проверки, что улетает
-
     const response = await axios.put(`/api/admin/payout-requests-received/${props.checkedPayout.id}`, data, {
       headers: {
         Authorization: `Bearer ${authStore.token}`
       }
     })
-
-    // console.log('Response from server:', response); // Лог ответа (как у тебя)
 
     if (response.data.success) {
       toast.init({ message: t('payoutRequest.received_success'), color: 'success' })
@@ -141,7 +132,6 @@ const handleSaveProof = async () => {
       toast.init({ message: response.data.message || t('errors.update_failed'), color: 'danger' })
     }
   } catch (error) {
-    // console.error('Error details:', error); // Добавил лог ошибки для дебага
     toast.init({ message: t('errors.update_failed'), color: 'danger' })
   }
 }
