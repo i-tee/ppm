@@ -1685,7 +1685,13 @@ class JoomlaCoupon extends Model
                 $cashback = (float) $order->cashback;
                 $discount = (float) $order->order_discount;
 
-                $discountRatio = ($totalSubtotal > 0) ? $discount / $totalSubtotal : 0;
+                // Доля скидки считается от суммы ЭТОГО заказа до скидки
+                // (order_subtotal = order_total + order_discount), а не от
+                // накопителя по предыдущим заказам купона — иначе правило
+                // «старых 10%-промокодов» ниже не срабатывало у первого заказа
+                // и срабатывало почти случайно у остальных (PPM-W15).
+                $orderSubtotal = (float) $order->order_subtotal;
+                $discountRatio = ($orderSubtotal > 0) ? $discount / $orderSubtotal : 0;
 
                 switch (true) {
                     case ($cashback < 0):
