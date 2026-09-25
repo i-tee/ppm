@@ -21,13 +21,9 @@
         </VaDivider>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div v-for="coupon in visiblePercentageCoupons" :key="coupon.coupon_id">
-            <CouponDiscount :coupon="coupon" :bData="bData" :apiData="apiData" @open-order-info="handleOrderInfo" />
-            <div class="flex justify-end mt-1">
-              <VaButton preset="plain" size="small" icon="visibility_off"
-                :loading="hidingCode === normalizeCode(coupon.coupon_code)" @click="confirmHide(coupon)">
-                {{ t('coupons.hide') }}
-              </VaButton>
-            </div>
+            <CouponDiscount :coupon="coupon" :bData="bData" :apiData="apiData"
+              :hiding="hidingCode === normalizeCode(coupon.coupon_code)" @open-order-info="handleOrderInfo"
+              @hide="confirmHide(coupon)" />
           </div>
         </div>
       </div>
@@ -39,13 +35,9 @@
         </VaDivider>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div v-for="coupon in visibleBonusCoupons" :key="coupon.coupon_id">
-            <CouponBonus :coupon="coupon" :bData="bData" :apiData="apiData" @open-order-info="handleOrderInfo" />
-            <div class="flex justify-end mt-1">
-              <VaButton preset="plain" size="small" icon="visibility_off"
-                :loading="hidingCode === normalizeCode(coupon.coupon_code)" @click="confirmHide(coupon)">
-                {{ t('coupons.hide') }}
-              </VaButton>
-            </div>
+            <CouponBonus :coupon="coupon" :bData="bData" :apiData="apiData"
+              :hiding="hidingCode === normalizeCode(coupon.coupon_code)" @open-order-info="handleOrderInfo"
+              @hide="confirmHide(coupon)" />
           </div>
         </div>
       </div>
@@ -61,7 +53,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <VaCard v-for="coupon in hiddenCoupons" :key="coupon.coupon_id" outlined class="rounded-xl">
               <VaCardContent class="flex items-center justify-between gap-2">
-                <span class="font-bold">{{ coupon.coupon_code }}</span>
+                <span class="font-bold">{{ coupon.coupon_code?.toUpperCase() }}</span>
                 <VaButton preset="secondary" size="small" icon="restore"
                   :loading="restoringCode === normalizeCode(coupon.coupon_code)" @click="restoreCoupon(coupon)">
                   {{ t('coupons.restore') }}

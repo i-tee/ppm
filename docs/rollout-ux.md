@@ -45,7 +45,8 @@ php artisan route:clear                   # route:cache НЕ запускать:
 
 | Пакет | Этап | Зачем |
 |---|---|---|
-| – | – | – |
+| `chart.js` (^4.5.1) | 1.5 | График начислений/заказов на экране «Статистика» |
+| `vue-chartjs` (^5.3.4) | 1.5 | Vue-обёртка над `chart.js` (компонент `<Bar>`) |
 
 ## 2. Миграции
 
@@ -57,6 +58,7 @@ php artisan migrate --force
 | Миграция | Этап | Что делает | Откат |
 |---|---|---|---|
 | `2026_09_25_140000_create_hidden_coupons_table` | 1.6 | Создаёт таблицу `hidden_coupons` (своя БД ppm, партнёр + код + когда скрыт) — признак «скрыт» для списка промокодов в ЛК, Joomla и основной бэкенд не трогает | `php artisan migrate:rollback --step=1` безопасен — таблица новая, ничего кроме неё не меняет |
+| `2026_09_25_150000_add_name_parts_specialty_experience_years_to_partner_applications_table` | 1.7 | Добавляет в `partner_applications` колонки `last_name`, `first_name`, `middle_name`, `specialty` (nullable string), `experience_years` (nullable unsigned smallint) — разбивка ФИО и новые поля анкеты; старые колонки (`full_name`, `experience`) не трогает | `php artisan migrate:rollback --step=1` удаляет только новые колонки — данные новых анкет в них пропадут, `full_name`/`experience` старых заявок останутся как есть |
 
 ## 3. Роли (этап 1.3)
 
@@ -77,6 +79,10 @@ php artisan ppm:access --list                       # проверить ито�
   §4а). Пишет его php-fpm (`www-data`) – каталог должен быть доступен на
   запись группе: после `git pull` права `storage/` не трогать.
 - Сбросить кеш вручную: `php artisan cache:clear --store=file`.
+- **После выката этапа 1.5б** (уборка ПДн покупателя из `business-data` /
+  `/user/coupon/orders`) сразу выполнить `php artisan cache:clear --store=file`
+  – иначе старые записи кеша со старым составом полей заказа (включая ПДн)
+  проживут ещё до 60 с.
 - `SESSION_DRIVER`/`CACHE_STORE` в прод-`.env` **не менять** (решено
   25.09: API на токенах, на скорость не влияет).
 

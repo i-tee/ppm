@@ -35,10 +35,16 @@
       <VaButton preset="secondary" class="mr-6 mb-2 cursor-copy" icon="content_copy" @click="copyCouponUrl">
         {{ t('coupons.copy_url') }}
       </VaButton>
+      <VaButton preset="plain" class="mr-6 mb-2" icon="visibility_off" :loading="hiding" @click="emit('hide')">
+        {{ t('coupons.hide') }}
+      </VaButton>
     </VaCardActions>
     <VaCardActions v-else class="flex justify-right gap-2">
       <VaButton preset="secondary" class="mr-6 mb-2" icon="info" @click="orderInfo">
         {{ t('coupons.order_info') }}
+      </VaButton>
+      <VaButton preset="plain" class="mr-6 mb-2" icon="visibility_off" :loading="hiding" @click="emit('hide')">
+        {{ t('coupons.hide') }}
       </VaButton>
     </VaCardActions>
   </VaCard>
@@ -66,10 +72,14 @@ const props = defineProps({
   apiData: {
     type: Object,
     default: null
+  },
+  hiding: {
+    type: Boolean,
+    default: false
   }
 });
 
-const emit = defineEmits(['open-order-info']);
+const emit = defineEmits(['open-order-info', 'hide']);
 
 // Реактивные значения
 const maxDiscount = ref(20);

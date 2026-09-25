@@ -257,6 +257,24 @@ Middleware-алиасы (`bootstrap/app.php`):
 - `AVICENNA_BACKEND_SOURCE_TOKEN` — секрет уровня пароля БД: даёт право
   минтить купоны на бэке. Только `.env`, не логировать.
 
+### ПДн покупателя в заказах (этап 1.5б, 2026-09-25)
+
+Заказы `jshopping_orders` отдаются партнёру **только белым списком полей**,
+без персональных данных покупателя (152-ФЗ): `order_id`, `order_number`,
+`order_date`, `order_status`, `order_total`, `order_subtotal`,
+`order_discount`, `cashback`, `coupon_id`, `f_name` (только имя), `city`.
+Список задан в `App\Models\JoomlaCoupon::ORDER_SAFE_FIELDS` и применяется
+через `->select()` в `loadPpOrdersBatch()` — единственном месте, которое
+селектит `jshopping_orders` (используется `getPpOrders()` и всем, что его
+зовёт: `/user/business-data`, `/user/coupon/orders`,
+`getUserPercentCouponsSummary()`). Заказы нового сайта (бэк, `source:
+'backend'`, `mapBackendRowToOrder()`) приводятся к тому же набору ключей
+(`f_name`/`city` = `null`, у бэка их и не было). Email, телефоны
+(`phone`, `mobil_phone`, `d_phone`, `d_mobil_phone`), фамилия/отчество
+(`l_name`, `m_name`), улица/дом (`street`, `street_nr`, `home`, `apartment`,
+`zip`), IP (`ip_address`) и хеши файлов (`order_hash`, `file_hash`) —
+**никогда** не добавлять в белый список.
+
 ### Известные проблемы (задачи в бэклоге, код пока не менялся)
 
 - **Роуты вне гейта** — доступны любому залогиненному партнёру

@@ -36,6 +36,18 @@ class JoomlaCoupon extends Model
     protected $primaryKey = 'coupon_id';
 
     /**
+     * Белый список полей заказа Joomla (`jshopping_orders`), которые можно
+     * отдавать партнёру. Персональные данные покупателя (ФИО кроме имени,
+     * email, телефоны, адрес, IP, хеши файлов и т. п.) сюда не добавлять —
+     * см. docs/operations.md §5.
+     */
+    private const ORDER_SAFE_FIELDS = [
+        'order_id', 'order_number', 'order_date', 'order_status',
+        'order_total', 'order_subtotal', 'order_discount', 'cashback',
+        'coupon_id', 'f_name', 'city',
+    ];
+
+    /**
      * Отключаем автоинкремент, если он не нужен
      */
     public $incrementing = true;
@@ -901,6 +913,9 @@ class JoomlaCoupon extends Model
 
         $ordersByCoupon = DB::connection('mysql_joomla')
             ->table('jshopping_orders')
+            // Только белый список полей — без ПДн покупателя (152-ФЗ),
+            // см. self::ORDER_SAFE_FIELDS и docs/operations.md §5.
+            ->select(self::ORDER_SAFE_FIELDS)
             ->whereIn('coupon_id', $missing)
             ->whereIn('order_status', [6, 7])
             ->get()
@@ -1052,6 +1067,10 @@ class JoomlaCoupon extends Model
         $o->order_date     = $row['date'] ?? null;
         $o->order_status   = 6;
         $o->source         = 'backend';
+        // У заказов бэка нет ФИО/города покупателя (и не нужны) — приводим
+        // к тому же набору ключей, что и Joomla-заказы (self::ORDER_SAFE_FIELDS).
+        $o->f_name         = null;
+        $o->city           = null;
 
         return $o;
     }

@@ -16,6 +16,9 @@ class PartnerApplication extends Model
         'user_id',
         'responsible_user_id',
         'full_name',
+        'last_name',
+        'first_name',
+        'middle_name',
         'phone',
         'email',
         'cooperation_type_id',
@@ -23,6 +26,8 @@ class PartnerApplication extends Model
         'status_id',
         'company_name',
         'experience',
+        'specialty',
+        'experience_years',
         'comment',
         'city',
         'links'
@@ -32,6 +37,7 @@ class PartnerApplication extends Model
 
     protected $casts = [
         'links' => 'array', // Автоматическое преобразование JSON ↔ array
+        'experience_years' => 'integer',
     ];
 
     // Автор заявки

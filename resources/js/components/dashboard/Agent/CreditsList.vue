@@ -17,7 +17,7 @@
     <div v-else-if="filteredOrders.length" class="mt-4">
       <p class="va-h1">{{ $t('coupons.credits') }}</p>
       <p>{{ $t('coupons.credits_descr') }}</p>
-      <p class="va-h5">{{ $t('total') }}: <b>{{ formatPrice(bData.data?.credits?.total_accruals) }}</b></p>
+      <p class="va-h5">{{ $t('total') }}: <b>{{ formatPrice(total ?? bData.data?.credits?.total_accruals) }}</b></p>
       <hr class="mt-4">
 
       <VaDataTable
@@ -96,6 +96,18 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  // Отфильтрованные заказы (период + промокод) - передаёт Statistics.vue.
+  // Если не задано - берём все заказы из bData, как раньше.
+  orders: {
+    type: Array,
+    default: null,
+  },
+  // Итог для строки "Итого" над таблицей - если не задан, берём
+  // bData.data.credits.total_accruals (итог за всё время).
+  total: {
+    type: [Number, String],
+    default: null,
+  },
 })
 
 // Реактивные переменные
@@ -141,9 +153,12 @@ const maintainScrollPosition = () => {
 const loadData = () => {
   try {
     loading.value = true
-    const ordersData = props.bData?.data?.credits?.orders || []
+    const ordersData = props.orders ?? (props.bData?.data?.credits?.orders || [])
     console.log('CreditsList orders:', ordersData.length, 'items loaded')
-    if (!ordersData.length) {
+    // Тост только для дефолтного (нефильтрованного) списка - при фильтре по
+    // периоду/промокоду пустой результат ожидаем, для него уже есть текст в
+    // самом шаблоне, тост на каждую смену фильтра был бы навязчив.
+    if (!ordersData.length && props.orders === null) {
       console.warn('No orders found in bData.data.credits.orders')
       initToast({
         message: t('coupons.credits-no_orders'),
@@ -175,4 +190,7 @@ onMounted(loadData)
 
 // Отслеживание изменений в props.refresh для обновления данных
 watch(() => props.refresh, loadData)
+
+// Statistics.vue пересчитывает orders при смене периода/промокода
+watch(() => props.orders, loadData)
 </script>

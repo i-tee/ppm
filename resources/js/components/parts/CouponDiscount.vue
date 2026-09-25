@@ -56,6 +56,9 @@
       <VaButton v-if="bData.data.couponsSummary[coupon.coupon_code]?.usage_count" preset="secondary" class="mr-6 mb-2" icon="info" @click="orderInfo">
         {{ t('coupons.orders') }}
       </VaButton>
+      <VaButton preset="plain" class="mr-6 mb-2" icon="visibility_off" :loading="hiding" @click="emit('hide')">
+        {{ t('coupons.hide') }}
+      </VaButton>
     </VaCardActions>
   </VaCard>
 </template>
@@ -70,7 +73,7 @@ const { formatPrice } = useBase()
 const { t } = useI18n()
 const { init: initToast } = useToast()
 
-const emit = defineEmits(['open-order-info']);
+const emit = defineEmits(['open-order-info', 'hide']);
 
 const props = defineProps({
   coupon: {
@@ -84,6 +87,10 @@ const props = defineProps({
   apiData: {
     type: Object,
     default: null,
+  },
+  hiding: {
+    type: Boolean,
+    default: false,
   },
 })
 

@@ -36,8 +36,35 @@
     "restore_success": "Promo code returned to the list",
     "restore_failed": "Failed to restore the promo code",
     "archive": "Archive",
-    "archive_hint": "Hidden promo codes keep working on the site — accruals still go through as before, they just don't clutter the list.",
+    "archive_hint": "Hidden promo codes keep working on the site – accruals still go through as before, they just don't clutter the list.",
     "archive_empty": "Archive is empty"
+  },
+  "statistics": {
+    "period": "Period",
+    "period_7d": "7 days",
+    "period_30d": "30 days",
+    "period_3m": "3 months",
+    "period_this_month": "This month",
+    "period_last_month": "Last month",
+    "period_year": "Year",
+    "period_all": "All time",
+    "period_custom": "Custom range",
+    "period_from": "From",
+    "period_to": "To",
+    "coupon_filter": "Promo code",
+    "coupon_all": "All",
+    "accrued": "Accrued",
+    "orders_count": "Orders",
+    "avg_order": "Average order",
+    "paid_out": "Paid out",
+    "vs_previous_period": "vs previous period",
+    "chart_step": "Chart step",
+    "chart_step_day": "By day",
+    "chart_step_week": "By week",
+    "chart_step_month": "By month",
+    "chart_accruals": "Accruals",
+    "chart_orders": "Orders",
+    "empty_period": "No accruals for this period"
   },
   "dashboard": {
     "title": "Partner Management Dashboard",
@@ -140,6 +167,20 @@
   "set_new_password_description": "Please enter a new password below to reset your account.",
   "back_to_login": "Back to Login",
   "invalid_reset_token": "Invalid or expired reset token",
+  "form": {
+    "last_name": "Last name",
+    "first_name": "First name",
+    "middle_name": "Middle name",
+    "specialty": "Specialty",
+    "experience_years": "Experience, years",
+    "experience_years_placeholder": "e.g. 3"
+  },
+  "validation": {
+    "digits_only": "Digits only"
+  },
+  "partnerApplications": {
+    "legacy_label": "From the old application"
+  },
   "admin": {
     "accessDenied": "Access denied",
     "users": {

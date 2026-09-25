@@ -40,8 +40,17 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <div>
-          <VaInput v-model="form.full_name" :label="$t('form.full_name')"
+          <VaInput v-model="form.last_name" :label="$t('form.last_name') + '*'"
             :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+        </div>
+
+        <div>
+          <VaInput v-model="form.first_name" :label="$t('form.first_name') + '*'"
+            :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+        </div>
+
+        <div>
+          <VaInput v-model="form.middle_name" :label="$t('form.middle_name')" class="w-full" />
         </div>
 
         <div>
@@ -78,7 +87,15 @@
         </div>
 
         <div>
-          <VaInput v-model="form.experience" :label="$t('partnerApplications.specialty')" class="w-full" />
+          <VaInput v-model="form.specialty" :label="$t('form.specialty')"
+            :placeholder="$t('partnerApplications.specialty_demo')" class="w-full" />
+        </div>
+
+        <div>
+          <VaInput v-model="form.experience_years" :label="$t('form.experience_years')"
+            :placeholder="$t('form.experience_years_placeholder')" inputmode="numeric"
+            @update:model-value="onExperienceYearsInput"
+            :rules="[(v) => !v || /^\d+$/.test(String(v)) || $t('validation.digits_only')]" class="w-full" />
         </div>
 
         <div class="col-span-1 md:col-span-2">
@@ -114,8 +131,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from 'vuestic-ui';
 
 // Тип сотрудничества "Агент" - единственный доступный на этом этапе
-// (см. docs/prompts/stage-1.4-menu.md, п.1). Форма и её поля не меняем -
-// анкету по составу полей переделает этап 1.7.
+// (см. docs/prompts/stage-1.4-menu.md, п.1).
 const AGENT_COOPERATION_TYPE_ID = 2;
 
 const { hasApplication } = usePartnerApplications();
@@ -133,19 +149,30 @@ const isApproved = computed(() => hasApplication(2, AGENT_COOPERATION_TYPE_ID));
 const isPending = computed(() => hasApplication(0, AGENT_COOPERATION_TYPE_ID) || hasApplication(1, AGENT_COOPERATION_TYPE_ID));
 const isRejected = computed(() => hasApplication(3, AGENT_COOPERATION_TYPE_ID) || hasApplication(9, AGENT_COOPERATION_TYPE_ID));
 
+// Предзаполнение: если в имени пользователя ровно одно слово - считаем
+// его именем, иначе не угадываем (не разбиваем "Иван Петров" наугад).
+const nameWords = (authStore.user.name || '').trim().split(/\s+/).filter(Boolean);
+
 const form = ref({
-  full_name: authStore.user.name || '',
+  last_name: '',
+  first_name: nameWords.length === 1 ? nameWords[0] : '',
+  middle_name: '',
   phone: '',
   email: authStore.user.email || '',
   cooperation_type_id: AGENT_COOPERATION_TYPE_ID,
   partner_type_id: null,
   status_id: 0,
   company_name: '',
-  experience: '',
+  specialty: '',
+  experience_years: '',
   comment: '',
   city: '',
   links: [],
 });
+
+function onExperienceYearsInput(value) {
+  form.value.experience_years = String(value ?? '').replace(/\D/g, '');
+}
 
 const filteredPartnerTypes = computed(() => {
   if (!apiData.value?.partner_types) return [];
@@ -178,6 +205,8 @@ async function validateAndSubmit() {
   if (typeof sendData.partner_type_id === 'object') {
     sendData.partner_type_id = sendData.partner_type_id.value;
   }
+
+  sendData.experience_years = sendData.experience_years === '' ? null : Number(sendData.experience_years);
 
   try {
     await axios.post('/api/partner-applications', sendData, {

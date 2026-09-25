@@ -100,7 +100,7 @@
   "auth_forgotPassword_success": "Инструкция по сбросу пароля отправлена на вашу почту",
   "auth_forgotPassword_noAccount": "Нет такого аккаунта",
   "auth_forgotPassword_error": "Ошибка при отправке инструкции",
-  "_dashboard": "Кабинет партнера",
+  "_dashboard": "Главная",
   "logout": "Выход",
   "requisites": {
     "add": "Добавить",
@@ -305,7 +305,7 @@
     "requisites_descr": "Реквизиты участника программы включают договор-оферту. Добавляя или редактируя реквизиты, вы подтверждаете согласие с нашими условиями использования и оферты.",
     "requisite": "Реквизиты",
     "partner_applications": "Заявки партнеров",
-    "requisite_verification": "Реквизиты не проверку",
+    "requisite_verification": "Реквизиты на проверку",
     "application": "Анкета",
     "application_descr": "Анкета участника программы «Агент» и статус её рассмотрения.",
     "statistics": "Статистика",
@@ -434,7 +434,7 @@
   "set_new_password_description": "Пожалуйста, введите новый пароль ниже, чтобы сбросить ваш аккаунт.",
   "back_to_login": "Назад к входу",
   "invalid_reset_token": "Недействительный или истёкший токен сброса",
-  "account": "Учетная запись",
+  "account": "Профиль",
   "more": "Подробнее...",
   "partners": {
     "affiliation": "Представляю компанию, бренд, сообщество",
@@ -526,6 +526,9 @@
   },
   "form": {
     "full_name": "ФИО",
+    "last_name": "Фамилия",
+    "first_name": "Имя",
+    "middle_name": "Отчество",
     "phone": "Телефон",
     "city": "Город",
     "link": "Ссылка",
@@ -534,13 +537,17 @@
     "email": "Email",
     "company_name": "Компания",
     "experience": "Опыт",
+    "specialty": "Специальность",
+    "experience_years": "Опыт, лет",
+    "experience_years_placeholder": "например, 3",
     "comment": "Комментарий"
   },
   "validation": {
     "required": "Обязательное поле",
     "form_invalid": "Есть несоответствия в данных",
     "errors_found": "Форма заполнена некорректно",
-    "email": "Некорректный email"
+    "email": "Некорректный email",
+    "digits_only": "Только цифры"
   },
   "success": {
     "application_submitted": "Заявка успешно отправлена",
@@ -579,7 +586,8 @@
     "experience": "Опыт",
     "specialty": "специальность",
     "specialty_demo": "врач, нутрициолог, и т.п.",
-    "comment": "Комментарий"
+    "comment": "Комментарий",
+    "legacy_label": "Из старой анкеты"
   },
   "status": {
     "new": "Новая",
@@ -637,7 +645,7 @@
     "restore_success": "Промокод возвращён в список",
     "restore_failed": "Не удалось восстановить промокод",
     "archive": "Архив",
-    "archive_hint": "Скрытые промокоды продолжают работать на сайте — начисления по ним идут как раньше, они просто не мешают в списке.",
+    "archive_hint": "Скрытые промокоды продолжают работать на сайте – начисления по ним идут как раньше, они просто не мешают в списке.",
     "archive_empty": "Архив пуст",
     "bonusPromoText": "Превратите свои бонусы в ещё больше продаж! Укажите сумму — мы добавим {percent}% сверху для клиента. Это выгоднее, чем выводить деньги.",
     "bonusBalance": "Ваш бонусный счёт",
@@ -708,6 +716,33 @@
     "value_placeholder": "Введите значение скидки",
     "create": "Создать промокод",
     "created_successfully": "Промокод успешно создан"
+  },
+  "statistics": {
+    "period": "Период",
+    "period_7d": "7 дней",
+    "period_30d": "30 дней",
+    "period_3m": "3 месяца",
+    "period_this_month": "Этот месяц",
+    "period_last_month": "Прошлый месяц",
+    "period_year": "Год",
+    "period_all": "Всё время",
+    "period_custom": "Свой диапазон",
+    "period_from": "С",
+    "period_to": "По",
+    "coupon_filter": "Промокод",
+    "coupon_all": "Все",
+    "accrued": "Начислено",
+    "orders_count": "Заказов",
+    "avg_order": "Средний чек заказа",
+    "paid_out": "Выплачено",
+    "vs_previous_period": "к прошлому периоду",
+    "chart_step": "Шаг графика",
+    "chart_step_day": "По дням",
+    "chart_step_week": "По неделям",
+    "chart_step_month": "По месяцам",
+    "chart_accruals": "Начисления",
+    "chart_orders": "Заказов",
+    "empty_period": "За этот период начислений нет"
   },
   "orders": {
     "title": "Заказ",

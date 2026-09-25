@@ -20,9 +20,9 @@ https://trello.com/c/RFWSNOMq, бриф – `docs/prompts/partner-ux-master-brie
 |---|---|---|---|---|
 | `/welcome`, `/register`, `/reset-password` | `Welcome.vue`, `Register.vue`, `ResetPassword.vue` | гость | `/login`, `/register`, `/forgot-password`, `/reset-password`, соц-вход Yandex | вход, регистрация, сброс пароля |
 | `/dashboard` | `dashboard/Overview.vue` → `Overview/AgentOverview.vue` | партнёр | `/ps`, `/user/business-data`, `/user/requisites`, `/email/resend` | подтверждение email; без одобренной заявки – статус + ссылка на анкету; при одобренной – сводка агента (баланс, начисления, расходы, промокоды) |
-| `/dashboard/application` | `dashboard/Application.vue` | партнёр без одобренной заявки | `/ps`, `POST /partner-applications` | анкета участника программы «Агент» (форма не менялась) и статус её рассмотрения; пункт меню скрывается после одобрения |
+| `/dashboard/application` | `dashboard/Application.vue` | партнёр без одобренной заявки | `/ps`, `POST /partner-applications` | анкета участника программы «Агент» (поля см. §7, этап 1.7) и статус её рассмотрения; пункт меню скрывается после одобрения |
 | `/dashboard/promocodes` | `dashboard/Promocodes.vue` | партнёр с одобренной заявкой | `/ps`, `/user/business-data`, `/user/coupon/create` | промокоды (`Agent/CouponsList.vue`) + создание (`CreateCoupon.vue`) |
-| `/dashboard/statistics` | `dashboard/Statistics.vue` | партнёр с одобренной заявкой | `/ps`, `/user/business-data` | начисления (`Agent/CreditsList.vue`); график добавит этап 1.5 |
+| `/dashboard/statistics` | `dashboard/Statistics.vue` | партнёр с одобренной заявкой | `/ps`, `/user/business-data` | этап 1.5: период (пресеты + свой диапазон, в `localStorage`), фильтр по промокоду, плитки итогов со сравнением с прошлым периодом, график начислений/заказов (`Statistics/StatisticsChart.vue`, `chart.js`+`vue-chartjs`), ниже - начисления (`Agent/CreditsList.vue`), отфильтрованные тем же периодом и промокодом; расчёты - `utils/statistics.js` |
 | `/dashboard/payouts` | `dashboard/Payouts.vue` | партнёр с одобренной заявкой | `/ps`, `/user/business-data`, `/payout-requests` | баланс, «Вывести» (`Agent/PayoutModal.vue`), ссылка на договор/условия, списания (`Agent/DebitsList.vue`: выплаты, бонусники, корректировки, старое) |
 | `/dashboard/requisite` | `dashboard/Requisite.vue` | партнёр с одобренной заявкой | `/rs`, `/user/requisites` | реквизиты для выплат |
 | `/dashboard/account` | `dashboard/Account.vue` | все | `/email/resend`, `/user/change-password`, `/user/avatar` | профиль |
@@ -59,9 +59,14 @@ Distributor) в интерфейсе больше нет - программа т
 `coupons_full` скрытые не исключает – фильтрация на фронте, в
 `Agent/CouponsList.vue`).
 
-- У каждого заказа в `credits.orders[]` есть `order_date`, `cashback`,
-  `order_total`, `coupon_id`, `coupon_type`, `source` (`backend` = новый
-  сайт). Этого хватает для статистики по датам на фронте (п. 3) без правки
+- У каждого заказа в `credits.orders[]` и в ответе `/user/coupon/orders`
+  (этап 1.5б, 2026-09-25) – **белый список** полей, без ПДн покупателя:
+  `order_id`, `order_number`, `order_date`, `order_status`, `order_total`,
+  `order_subtotal`, `order_discount`, `cashback`, `coupon_id`, `f_name`
+  (только имя), `city`; у заказов бэка (`source: 'backend'`) добавляется
+  `source`, а `f_name`/`city` = `null`. Список задан в
+  `JoomlaCoupon::ORDER_SAFE_FIELDS`, подробности – `docs/operations.md` §5.
+  Этого хватает для статистики по датам на фронте (п. 3) без правки
   сервера.
 - Сервер собирает ответ так: для каждого купона партнёра – отдельный
   запрос в удалённую БД Joomla (`getPpOrders` в цикле) + два s2s-запроса
@@ -95,6 +100,11 @@ accountant (этап 1.3, 2026-09-25 – переименован из manager).
 ## 4. Найденные проблемы
 
 **Безопасность**
+- ☠️ `business-data` → `credits.orders[]` и `/user/coupon/orders` отдают в
+  браузер партнёра целые строки заказов Joomla с ПДн покупателя (ФИО,
+  email, телефон, адрес, IP); маскирует их только шаблон
+  `OrderDetailsModal.vue`. Найдено 25.09, на проде сейчас. Промпт –
+  `docs/prompts/stage-1.5b-buyer-pii.md`.
 - `stores/auth.js:101` при сбросе пароля пишет новый пароль и токен в консоль.
 - `POST /api/notifications/send` – любое уведомление любому пользователю
   от любого партнёра (известно, `docs/operations.md` §5).
@@ -225,7 +235,19 @@ SQL Joomla на `business-data` теперь **не растёт с числом
 
 ## 7. Анкета партнёра (п. 5)
 
-`partner_applications`: `full_name` (varchar, одно поле), `experience`
-(text, свободный текст), `city`, `links` (json), `company_name`,
-`comment`. Поля «Специальность» нет и в истории git не было. Разбивка ФИО,
-опыт в годах и специальность требуют миграции – решение владельца.
+Реализовано на этапе 1.7 (2026-09-25). `partner_applications`: старые
+`full_name` (varchar, одно поле) и `experience` (text, свободный текст)
+не трогаем и не разбиваем (в них смесь старых «специальности» и «опыта»,
+см. `Application.vue`/`PartnerApplications.vue` до этапа). Новые колонки
+(миграция `2026_09_25_150000_...`): `last_name`, `first_name` (обязательны
+на новых анкетах), `middle_name`, `specialty`, `experience_years`
+(unsigned smallint, 0–80) — все nullable из-за старых записей. `full_name`
+новых заявок собирает сервер сам («Фамилия Имя Отчество»), с фронта
+больше не принимается; поле `experience` новые формы не присылают.
+
+Фронт: `Application.vue` (партнёр) — три поля ФИО + «Специальность» +
+«Опыт, лет» (только цифры). `PartnerApplications.vue` (админ) — те же
+поля; для старых заявок (где `last_name`/`first_name` пустые) `full_name`
+и старое `experience` показаны только для чтения с подписью «Из старой
+анкеты», в таблице списка добавлены колонки «Специальность» и
+«Опыт, лет».

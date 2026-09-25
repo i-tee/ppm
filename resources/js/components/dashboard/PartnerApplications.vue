@@ -60,9 +60,26 @@
       <VaModal v-model="showModal" :title="modalTitle" :hide-default-actions="true" :mobile-fullscreen="false">
         <VaForm ref="formRef" class="p-4 space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <template v-if="isLegacyApplication">
+              <div>
+                <VaInput :model-value="form.full_name" :label="$t('form.full_name') + ' (' + $t('partnerApplications.legacy_label') + ')'"
+                  readonly class="w-full" />
+              </div>
+              <div>
+                <VaInput :model-value="form.experience" :label="$t('form.experience') + ' (' + $t('partnerApplications.legacy_label') + ')'"
+                  readonly class="w-full" />
+              </div>
+            </template>
             <div>
-              <VaInput v-model="form.full_name" :label="$t('form.full_name')"
-                :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
+              <VaInput v-model="form.last_name" :label="$t('form.last_name')"
+                :rules="isLegacyApplication ? [] : [(v) => !!v || $t('validation.required')]" class="w-full" />
+            </div>
+            <div>
+              <VaInput v-model="form.first_name" :label="$t('form.first_name')"
+                :rules="isLegacyApplication ? [] : [(v) => !!v || $t('validation.required')]" class="w-full" />
+            </div>
+            <div>
+              <VaInput v-model="form.middle_name" :label="$t('form.middle_name')" class="w-full" />
             </div>
             <div>
               <VaInput v-model="form.email" :label="$t('form.email')" type="email"
@@ -90,7 +107,14 @@
                 :rules="[(v) => !!v || $t('validation.required')]" class="w-full" />
             </div>
             <div>
-              <VaInput v-model="form.experience" :label="$t('form.experience')" class="w-full" />
+              <VaInput v-model="form.specialty" :label="$t('form.specialty')"
+                :placeholder="$t('partnerApplications.specialty_demo')" class="w-full" />
+            </div>
+            <div>
+              <VaInput v-model="form.experience_years" :label="$t('form.experience_years')"
+                :placeholder="$t('form.experience_years_placeholder')" inputmode="numeric"
+                @update:model-value="onExperienceYearsInput"
+                :rules="[(v) => !v || /^\d+$/.test(String(v)) || $t('validation.digits_only')]" class="w-full" />
             </div>
             <div class="col-span-1 md:col-span-2 border-2 border-gray-200 p-6 rounded-md my-2">
               <VaSwitch v-model="isCompanyEnabled" :label="$t('partners.affiliation')"
@@ -176,6 +200,9 @@ const modalTitle = ref('');
 const form = ref({
   id: null,
   full_name: '',
+  last_name: '',
+  first_name: '',
+  middle_name: '',
   phone: '',
   email: '',
   cooperation_type_id: null,
@@ -183,11 +210,22 @@ const form = ref({
   status_id: null,
   company_name: '',
   experience: '',
+  specialty: '',
+  experience_years: '',
   comment: '',
   city: '',
   links: [],
 });
 const isCompanyEnabled = ref(false);
+
+// Старые заявки не имеют разбитого ФИО - показываем full_name/experience
+// только для чтения, чтобы админ видел, что там было (см. решение владельца,
+// docs/prompts/stage-1.7-application-form.md).
+const isLegacyApplication = computed(() => !!form.value.id && !form.value.last_name && !form.value.first_name);
+
+function onExperienceYearsInput(value) {
+  form.value.experience_years = String(value ?? '').replace(/\D/g, '');
+}
 
 const statusOptions = ref([]);
 const cooperationTypeOptions = ref([]);
@@ -228,6 +266,8 @@ watch(filters, () => {
 const columns = [
   // { key: 'id', label: 'ID', sortable: true },
   { key: 'full_name', label: t('partnerApplications.full_name'), sortable: true },
+  { key: 'specialty', label: t('form.specialty'), sortable: false },
+  { key: 'experience_years', label: t('form.experience_years'), sortable: false },
   { key: 'city', label: t('partnerApplications.city'), sortable: true },
   // { key: 'phone', label: t('partnerApplications.phone'), sortable: true },
   // { key: 'email', label: t('partnerApplications.email'), sortable: true },
@@ -271,6 +311,9 @@ const openCreateModal = () => {
   form.value = {
     id: null,
     full_name: '',
+    last_name: '',
+    first_name: '',
+    middle_name: '',
     phone: '',
     email: '',
     cooperation_type_id: null,
@@ -278,6 +321,8 @@ const openCreateModal = () => {
     status_id: statusOptions.value.length > 0 ? statusOptions.value[0] : null,
     company_name: '',
     experience: '',
+    specialty: '',
+    experience_years: '',
     comment: '',
     city: '',
     links: []
@@ -326,10 +371,24 @@ const saveApplication = async () => {
       partner_type_id: form.value.partner_type_id?.value || null,
       status_id: form.value.status_id?.value || (statusOptions.value.length > 0 ? statusOptions.value[0].value : null)
     };
+    sendData.experience_years = sendData.experience_years === '' || sendData.experience_years == null
+      ? null
+      : Number(sendData.experience_years);
+    delete sendData.full_name; // собирается сервером из фамилии/имени/отчества
+
+    // Старая заявка, где фамилию/имя не тронули - не разбиваем её full_name,
+    // новые поля в запрос не отправляем (см. решение владельца).
+    if (isLegacyApplication.value && !sendData.last_name && !sendData.first_name) {
+      delete sendData.last_name;
+      delete sendData.first_name;
+      delete sendData.middle_name;
+    }
+
     console.log('Отправляемые данные:', sendData); // Логируем перед отправкой
 
     // Проверка на null для обязательных полей
-    if (!sendData.full_name ||
+    const nameRequired = sendData.last_name !== undefined || sendData.first_name !== undefined;
+    if ((nameRequired && (!sendData.last_name || !sendData.first_name)) ||
       !sendData.phone ||
       !sendData.email ||
       sendData.cooperation_type_id == null ||

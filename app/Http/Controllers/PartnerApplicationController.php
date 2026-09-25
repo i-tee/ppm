@@ -43,13 +43,16 @@ class PartnerApplicationController extends Controller
     public function store(Request $req)
     {
         $validated = $req->validate([
-            'full_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:100',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
             'phone' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
             'cooperation_type_id' => 'required|integer',
             'partner_type_id' => 'nullable|integer',
             'company_name' => 'nullable|string|max:255',
-            'experience' => 'nullable|string',
+            'specialty' => 'nullable|string|max:255',
+            'experience_years' => 'nullable|integer|min:0|max:80',
             'comment' => 'nullable|string',
             'city' => 'nullable|string|max:255',
             'links' => 'nullable|array',
@@ -62,6 +65,14 @@ class PartnerApplicationController extends Controller
                 $validated['links'] = null;
             }
         }
+
+        // full_name собирается сервером из фамилии/имени/отчества — с
+        // фронта его больше не принимаем.
+        $validated['full_name'] = trim(implode(' ', array_filter([
+            $validated['last_name'],
+            $validated['first_name'],
+            $validated['middle_name'] ?? null,
+        ], fn ($part) => $part !== null && $part !== '')));
 
         $data = array_merge($validated, [
             'user_id' => $req->user()->id,
@@ -83,14 +94,20 @@ class PartnerApplicationController extends Controller
         $application = PartnerApplication::findOrFail($id);
 
         $validated = $request->validate([
-            'full_name' => 'sometimes|string|max:255',
+            'last_name' => 'sometimes|required|string|max:100',
+            'first_name' => 'sometimes|required|string|max:100',
+            'middle_name' => 'sometimes|nullable|string|max:100',
             'phone' => 'sometimes|string|max:20',
             'email' => 'sometimes|nullable|email|max:255',
             'cooperation_type_id' => 'sometimes|integer',
             'partner_type_id' => 'sometimes|nullable|integer',
             'status_id' => 'sometimes|integer',
             'company_name' => 'sometimes|nullable|string|max:255',
+            // Старое поле "опыт" (смесь специальности/опыта из старых анкет)
+            // не трогаем при правке новых полей - оставляем как есть.
             'experience' => 'sometimes|nullable|string',
+            'specialty' => 'sometimes|nullable|string|max:255',
+            'experience_years' => 'sometimes|nullable|integer|min:0|max:80',
             'comment' => 'sometimes|nullable|string',
             'city' => 'sometimes|nullable|string|max:255',
             'links' => 'sometimes|nullable|array',
@@ -107,6 +124,19 @@ class PartnerApplicationController extends Controller
             } else {
                 $validated['links'] = null;
             }
+        }
+
+        // full_name пересобираем только если правили одну из частей имени -
+        // иначе не трогаем (у старых заявок частей имени вообще нет).
+        if (array_key_exists('last_name', $validated) || array_key_exists('first_name', $validated) || array_key_exists('middle_name', $validated)) {
+            $lastName = $validated['last_name'] ?? $application->last_name;
+            $firstName = $validated['first_name'] ?? $application->first_name;
+            $middleName = array_key_exists('middle_name', $validated) ? $validated['middle_name'] : $application->middle_name;
+
+            $validated['full_name'] = trim(implode(' ', array_filter(
+                [$lastName, $firstName, $middleName],
+                fn ($part) => $part !== null && $part !== ''
+            )));
         }
 
         $application->update($validated);
