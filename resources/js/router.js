@@ -2,23 +2,28 @@ import { createRouter, createWebHistory } from "vue-router";
 import Welcome from "./components/Welcome.vue";
 import Register from "./components/Register.vue";
 import Dashboard from "./components/Dashboard.vue";
-import Overview from "./components/dashboard/Overview.vue";
-import Promocodes from "./components/dashboard/Promocodes.vue";
-import Influencer from "./components/dashboard/Influencer.vue";
-import Agent from "./components/dashboard/Agent.vue";
-import Requisite from "./components/dashboard/Requisite.vue";
-import Wholesale from "./components/dashboard/Wholesale.vue";
-import Distributor from "./components/dashboard/Distributor.vue";
-import PartnerApplications from "./components/dashboard/PartnerApplications.vue";
-import RequisiteVerification from "./components/dashboard/RequisiteVerification.vue";
-import PayoutResolve from "./components/dashboard/PayoutResolve.vue";
-import Types from "./components/dashboard/Types.vue";
-import Impersonate from "./components/dashboard/Impersonate.vue";
-import ReferralLinks from "./components/dashboard/ReferralLinks.vue";
-import Account from "./components/dashboard/Account.vue";
 import ResetPassword from "./components/ResetPassword.vue";
 import NotFound from "./components/NotFound.vue";
 import { useAuthStore } from "./stores/auth";
+
+// Дочерние экраны дашборда - лениво, чтобы при заходе на один экран не
+// тянуть код всех остальных (Welcome/Dashboard остаются статическими).
+const Overview = () => import("./components/dashboard/Overview.vue");
+const Promocodes = () => import("./components/dashboard/Promocodes.vue");
+const Influencer = () => import("./components/dashboard/Influencer.vue");
+const Agent = () => import("./components/dashboard/Agent.vue");
+const Requisite = () => import("./components/dashboard/Requisite.vue");
+const Wholesale = () => import("./components/dashboard/Wholesale.vue");
+const Distributor = () => import("./components/dashboard/Distributor.vue");
+const PartnerApplications = () =>
+  import("./components/dashboard/PartnerApplications.vue");
+const RequisiteVerification = () =>
+  import("./components/dashboard/RequisiteVerification.vue");
+const PayoutResolve = () => import("./components/dashboard/PayoutResolve.vue");
+const Types = () => import("./components/dashboard/Types.vue");
+const Impersonate = () => import("./components/dashboard/Impersonate.vue");
+const ReferralLinks = () => import("./components/dashboard/ReferralLinks.vue");
+const Account = () => import("./components/dashboard/Account.vue");
 // import Dev from "./components/dashboard/Dev.vue";
 
 const routes = [

@@ -135,6 +135,7 @@
 
 <script setup>
 import { useAuthStore } from '@/stores/auth';
+import { useSettingsStore } from '@/stores/settings';
 import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'vuestic-ui';
 import { useI18n } from 'vue-i18n';
@@ -150,6 +151,7 @@ const props = defineProps({
 const { t } = useI18n();
 const toast = useToast();
 const authStore = useAuthStore();
+const settingsStore = useSettingsStore();
 
 axios.defaults.headers.common['Authorization'] = `Bearer ${authStore.token}`;
 
@@ -168,6 +170,8 @@ const filters = ref({
   cooperation_type_id: null,
   partner_type_id: null,
 });
+
+const apiData = computed(() => settingsStore.data);
 
 const showModal = ref(false);
 const modalTitle = ref('');
@@ -190,7 +194,6 @@ const isCompanyEnabled = ref(false);
 const statusOptions = ref([]);
 const cooperationTypeOptions = ref([]);
 const partnerTypeOptions = ref([]);
-const apiData = ref(null);
 
 // Вычисляемые свойства для получения текстовых значений по ID
 const getStatusText = computed(() => {
@@ -404,10 +407,7 @@ const formatDate = (dateString) => {
 onMounted(async () => {
   if (isAdmin.value) {
     try {
-      const response = await axios.get('/api/ps', {
-        headers: { Authorization: `Bearer ${authStore.token}` },
-      });
-      apiData.value = response.data;
+      await settingsStore.load();
 
       // 1. Заполняем statusOptions
       statusOptions.value = [

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Helpers\Requisites; // <-- крутой хелпер
 use App\Helpers\Partners;
+use App\Helpers\BusinessDataCache;
 use Illuminate\Support\Facades\Validator;
 
 class RequisiteController extends Controller
@@ -62,6 +63,8 @@ class RequisiteController extends Controller
         $requisite = Requisite::findOrFail($id);
         $requisite->is_verified = true;
         $requisite->save();
+
+        BusinessDataCache::forget($requisite->user_id);
 
         return response()->json([
             'message' => 'Реквизиты верифицированы',
@@ -150,6 +153,8 @@ class RequisiteController extends Controller
 
         $requisite = Requisite::create($cleanData);
 
+        BusinessDataCache::forget($cleanData['user_id']);
+
         return response()->json($requisite, 201);
     }
 
@@ -175,6 +180,8 @@ class RequisiteController extends Controller
         $requisite->is_active = false;
         $requisite->save();
         $requisite->delete();
+
+        BusinessDataCache::forget($requisite->user_id);
 
         return response()->json([
             'message' => 'Requisite deleted successfully',
@@ -202,6 +209,8 @@ class RequisiteController extends Controller
 
         // Мягкая деактивация + отмена верификации + мягкое удаление
         $requisite->softDeactivateAndUnverify();
+
+        BusinessDataCache::forget($requisite->user_id);
 
         return response()->json([
             'message' => __('requisites.deleted_successfully'), // i18n-ключ для "Реквизиты успешно удалены"

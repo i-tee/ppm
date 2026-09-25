@@ -1,33 +1,19 @@
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-import { useAuthStore } from '@/stores/auth';
-import { useToast } from 'vuestic-ui';
+import { computed, onMounted } from 'vue';
+import { useSettingsStore } from '@/stores/settings';
 
 export function usePartnersHelper() {
-  const authStore = useAuthStore();
-  const toast = useToast();
-  const partnerSettings = ref(null);
-  const error = ref(null);
+  const settingsStore = useSettingsStore();
 
-  async function fetchPartnerSettings() {
-    try {
-      const response = await axios.get('/api/ps', {
-        headers: { Authorization: `Bearer ${authStore.token}` },
-      });
-      partnerSettings.value = response.data;
-    } catch (err) {
-      error.value = err.response ? err.response.data : err.message;
-      toast.init({ message: 'Ошибка загрузки настроек партнеров', color: 'danger' });
-    }
-  }
+  const partnerSettings = computed(() => settingsStore.data);
+  const error = computed(() => settingsStore.error);
 
   onMounted(() => {
-    fetchPartnerSettings();
+    settingsStore.load();
   });
 
   return {
     partnerSettings,
     error,
-    fetchPartnerSettings, // Для принудительного обновления, если нужно
+    fetchPartnerSettings: () => settingsStore.load(), // Для принудительного обновления, если нужно
   };
 }

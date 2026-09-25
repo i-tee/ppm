@@ -51,16 +51,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useToast } from 'vuestic-ui';
-import { getUserCoupons } from '@/api/coupons';
 import CouponDiscount from '@/components/parts/CouponDiscount.vue';
 import CouponBonus from '@/components/parts/CouponBonus.vue';
 import OrderInfoModal from '@/components/parts/OrderInfoModal.vue';
 
 const { t } = useI18n();
-const { init: initToast } = useToast();
 
 const props = defineProps({
   apiData: {
@@ -77,8 +74,11 @@ const props = defineProps({
   }
 });
 
-const coupons = ref([]);
-const loading = ref(false);
+// coupons_full в business-data - те же данные, что отдаёт /api/user/coupons
+// (обе ручки берут их из JoomlaCoupon::getUserCoupons()), отдельный запрос
+// не нужен (stage 1.2).
+const coupons = computed(() => props.bData?.data?.coupons_full || []);
+const loading = computed(() => !props.bData);
 const error = ref(null);
 const showModal = ref(false);
 const selectedCoupon = ref(null);
@@ -104,60 +104,4 @@ const handleOrderInfo = (coupon) => {
   selectedCoupon.value = coupon;
   showModal.value = true;
 };
-
-onMounted(() => {
-  console.log('bData:', props.bData);
-  console.log('apiData:', props.apiData);
-});
-
-watch(() => props.bData, (newValue) => {
-  console.log('bData:', newValue.data);
-});
-
-watch(() => props.refresh, () => {
-  console.log('Refresh triggered, reloading coupons');
-  loadAllData();
-});
-
-const loadCoupons = async () => {
-  try {
-    loading.value = true;
-    error.value = null;
-    const response = await getUserCoupons();
-    if (response.success) {
-      coupons.value = response.coupons_full || response.coupons;
-      if (response.count === 0) {
-        initToast({
-          message: t('coupons.no_coupons'),
-          color: 'warning'
-        });
-      }
-    } else {
-      throw new Error(response.error || t('errors.load_failed'));
-    }
-  } catch (err) {
-    error.value = err.message;
-    initToast({
-      message: err.message,
-      color: 'danger'
-    });
-    console.error('Ошибка загрузки купонов:', err);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const loadAllData = async () => {
-  try {
-    await Promise.all([loadCoupons()]);
-  } catch (err) {
-    console.error('Ошибка загрузки данных:', err);
-    initToast({
-      message: t('errors.load_failed'),
-      color: 'danger'
-    });
-  }
-};
-
-onMounted(loadAllData);
 </script>

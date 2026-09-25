@@ -458,8 +458,20 @@ class JoomlaCoupon extends Model
         }
     }
 
+    /**
+     * Мемо-кеш на время запроса: id текущего Laravel-пользователя => Joomla-юзер.
+     * Убирает повторный SELECT из jm_users, когда joomlaUser() зовётся из
+     * нескольких мест одного запроса (data(), withdrawals(), getUserPercentCouponsSummary()...).
+     */
+    private static array $joomlaUserCache = [];
+
     public static function joomlaUser()
     {
+        $authId = Auth::id();
+        if ($authId !== null && array_key_exists($authId, self::$joomlaUserCache)) {
+            return self::$joomlaUserCache[$authId];
+        }
+
         try {
             // Получаем пользователя в Joomla по email текущего пользователя Laravel
             $userEmail = Auth::user()->email;
@@ -469,10 +481,36 @@ class JoomlaCoupon extends Model
                 ->table('users')
                 ->where('email', $userEmail)
                 ->first();
-            return $joomlaUser;
         } catch (\Exception $e) {
-            return null;
+            $joomlaUser = null;
         }
+
+        if ($authId !== null) {
+            self::$joomlaUserCache[$authId] = $joomlaUser;
+        }
+
+        return $joomlaUser;
+    }
+
+    /**
+     * Мемо-кеш записи avicenna_user_coupons по id Joomla-пользователя (на время запроса).
+     * Используется в getUserCoupons(), oldPromocodBalance(), getUserPercentCouponsSummary() —
+     * без него это одна и та же строка тянулась отдельным SELECT из каждого места.
+     */
+    private static array $userCouponRecordCache = [];
+
+    private static function getUserCouponRecord(int $joomlaUserId)
+    {
+        if (array_key_exists($joomlaUserId, self::$userCouponRecordCache)) {
+            return self::$userCouponRecordCache[$joomlaUserId];
+        }
+
+        $record = DB::connection('mysql_joomla')
+            ->table('avicenna_user_coupons')
+            ->where('user_id', $joomlaUserId)
+            ->first();
+
+        return self::$userCouponRecordCache[$joomlaUserId] = $record;
     }
 
     public static function getCouponTypeById($couponId)
@@ -509,18 +547,34 @@ class JoomlaCoupon extends Model
      *
      * @return array
      */
+    /** Мемо-кеш результата getUserCoupons() по id текущего Laravel-пользователя (на время запроса). */
+    private static array $userCouponsCache = [];
+
     public static function getUserCoupons()
+    {
+        $authId = Auth::id();
+        if ($authId !== null && array_key_exists($authId, self::$userCouponsCache)) {
+            return self::$userCouponsCache[$authId];
+        }
+
+        $result = self::getUserCouponsUncached();
+
+        if ($authId !== null) {
+            self::$userCouponsCache[$authId] = $result;
+        }
+
+        return $result;
+    }
+
+    private static function getUserCouponsUncached()
     {
         try {
             // Получаем email и имя текущего пользователя Laravel
             $userEmail = Auth::user()->email;
             $userName = Auth::user()->name ?? 'User';
 
-            // Ищем пользователя в Joomla
-            $joomlaUser = DB::connection('mysql_joomla')
-                ->table('users')
-                ->where('email', $userEmail)
-                ->first();
+            // Ищем пользователя в Joomla (мемоизировано в joomlaUser())
+            $joomlaUser = self::joomlaUser();
 
             // Если пользователь не найден, создаем его
             if (!$joomlaUser) {
@@ -532,13 +586,17 @@ class JoomlaCoupon extends Model
                         'error' => 'Failed to create Joomla user'
                     ];
                 }
+
+                // Свежесозданного юзера кладём в кеш joomlaUser(), чтобы остальные
+                // места запроса не искали его повторным SELECT.
+                $authId = Auth::id();
+                if ($authId !== null) {
+                    self::$joomlaUserCache[$authId] = $joomlaUser;
+                }
             }
 
             // Получаем запись купонов (если нет - null)
-            $userCouponRecord = DB::connection('mysql_joomla')
-                ->table('avicenna_user_coupons')
-                ->where('user_id', $joomlaUser->id)
-                ->first();
+            $userCouponRecord = self::getUserCouponRecord($joomlaUser->id);
 
             // Если записи нет, возвращаем пустой список купонов
             if (!$userCouponRecord) {
@@ -697,12 +755,8 @@ class JoomlaCoupon extends Model
                 return ['be' => false];
             }
 
-            $oldBalance = DB::connection('mysql_joomla')
-                ->table('avicenna_user_coupons')
-                ->where('user_id', $userId)
-                ->value('old_balance');
-
-            $oldBalance = (int) $oldBalance;
+            $record = self::getUserCouponRecord($userId);
+            $oldBalance = (int) ($record->old_balance ?? 0);
 
             return [
                 'be' => $oldBalance > 0,
@@ -759,6 +813,12 @@ class JoomlaCoupon extends Model
      * @param int $couponId ID купона
      * @return array Массив заказов
      */
+    /**
+     * Мемо-кеш заказов по купону на время запроса (coupon_id => массив заказов,
+     * уже с применённой правкой cashback и подмешанными заказами бэка).
+     */
+    private static array $ppOrdersCache = [];
+
     public static function getPpOrders($couponId)
     {
         try {
@@ -769,50 +829,100 @@ class JoomlaCoupon extends Model
                 return [];
             }
 
-            // Получаем детали купона для проверки условий
-            $coupon = DB::connection('mysql_joomla')
-                ->table('jshopping_coupons')
-                ->where('coupon_id', $couponId)
-                ->first();
+            if (!array_key_exists($couponId, self::$ppOrdersCache)) {
+                // Пакетом тянем заказы сразу по всем купонам текущего пользователя
+                // (не только по запрошенному $couponId) — иначе цикл по купонам
+                // партнёра (data(), getUserPercentCouponsSummary()...) бил бы по
+                // 2 SQL в Joomla на каждый купон.
+                self::loadPpOrdersBatch(self::couponIdsForBatch($couponId));
+            }
+
+            // Клонируем объекты из кеша: вызывающий код (например, data() в
+            // контроллере) дописывает поля прямо в $order — без клонирования
+            // это мутировало бы кеш и утекало бы в другие места, читающие
+            // те же заказы из self::$ppOrdersCache.
+            return array_map(
+                fn($order) => is_object($order) ? clone $order : $order,
+                self::$ppOrdersCache[$couponId] ?? []
+            );
+        } catch (\Exception $e) {
+            // Log::error("Failed to get PP orders", [
+            //     'coupon_id' => $couponId,
+            //     'error' => $e->getMessage(),
+            // ]);
+            return [];
+        }
+    }
+
+    /**
+     * ID купонов текущего пользователя (если уже известны из кеша getUserCoupons()),
+     * плюс запрошенный $couponId — набор для пакетной подгрузки заказов.
+     *
+     * @return int[]
+     */
+    private static function couponIdsForBatch(int $couponId): array
+    {
+        $ids = [$couponId];
+
+        $authId = Auth::id();
+        if ($authId !== null && isset(self::$userCouponsCache[$authId]['coupons'])) {
+            foreach (self::$userCouponsCache[$authId]['coupons'] as $coupon) {
+                $ids[] = (int) $coupon->coupon_id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * Пакетно загружает и кеширует заказы для набора купонов: один SELECT по
+     * jshopping_coupons и один по jshopping_orders вместо пары запросов на
+     * каждый купон в цикле.
+     *
+     * @param int[] $couponIds
+     */
+    private static function loadPpOrdersBatch(array $couponIds): void
+    {
+        $couponIds = array_values(array_unique(array_filter(
+            array_map('intval', $couponIds),
+            fn($id) => $id > 0
+        )));
+
+        $missing = array_values(array_diff($couponIds, array_keys(self::$ppOrdersCache)));
+        if (empty($missing)) {
+            return;
+        }
+
+        $coupons = DB::connection('mysql_joomla')
+            ->table('jshopping_coupons')
+            ->whereIn('coupon_id', $missing)
+            ->get()
+            ->keyBy('coupon_id');
+
+        $ordersByCoupon = DB::connection('mysql_joomla')
+            ->table('jshopping_orders')
+            ->whereIn('coupon_id', $missing)
+            ->whereIn('order_status', [6, 7])
+            ->get()
+            ->groupBy('coupon_id');
+
+        foreach ($missing as $couponId) {
+            $coupon = $coupons->get($couponId);
 
             if (!$coupon) {
                 Log::warning("Coupon not found", ['coupon_id' => $couponId]);
-                return [];
+                self::$ppOrdersCache[$couponId] = [];
+                continue;
             }
 
-            // Логируем данные купона для отладки
-            // Log::info("Checking coupon conditions", [
-            //     'coupon_id' => $couponId,
-            //     'coupon_type' => $coupon->coupon_type,
-            //     'cashback' => $coupon->cashback,
-            //     'coupon_value' => $coupon->coupon_value,
-            // ]);
-
-            // Получаем заказы
-            $orders = DB::connection('mysql_joomla')
-                ->table('jshopping_orders')
-                ->where('coupon_id', $couponId)
-                ->whereIn('order_status', [6, 7])
-                ->get();
-
-            // Log::info("Получаем заказы", [$orders]);
+            $orders = $ordersByCoupon->get($couponId, collect());
 
             // Проверяем условия: coupon_type=0, cashback=0, coupon_value=10
             if ($coupon->coupon_type == 0 && (float) $coupon->cashback == 0.0 && (float) $coupon->coupon_value == 10.0) {
-
-                // Log::info("Coupon conditions met, checking orders for cashback update", [
-                //     'coupon_id' => $couponId,
-                // ]);
-
-                // Log::info('Приводим cashback и order_discount к числу для точного сравнения - 0');
                 $orders = $orders->map(function ($order) {
-
-                    // Log::info('Приводим cashback и order_discount к числу для точного сравнения - 1');
                     // Приводим cashback и order_discount к числу для точного сравнения
                     $orderCashback = (float) $order->cashback;
                     $orderDiscount = (float) $order->order_discount;
-
-                    // Log::info('Приводим cashback и order_discount к числу для точного сравнения - 2');
 
                     if ($orderCashback == 0.0 && $orderDiscount > 0) {
                         $order->cashback = number_format($orderDiscount, 2, '.', '');
@@ -833,8 +943,6 @@ class JoomlaCoupon extends Model
                 ]);
             }
 
-            // Log::info('$orders->toArray()', [$orders->toArray()]);
-
             // ── Шов: дотягиваем начисления нового сайта по коду купона ──────
             // (Фаза D, слайс B). Только accruals; сторно → «Корректировки».
             foreach (self::backendAccrualsForCoupon((string) $coupon->coupon_code) as $beOrder) {
@@ -852,13 +960,7 @@ class JoomlaCoupon extends Model
                 $orders->push($be);
             }
 
-            return $orders->toArray();
-        } catch (\Exception $e) {
-            // Log::error("Failed to get PP orders", [
-            //     'coupon_id' => $couponId,
-            //     'error' => $e->getMessage(),
-            // ]);
-            return [];
+            self::$ppOrdersCache[$couponId] = $orders->values()->toArray();
         }
     }
 
@@ -1398,8 +1500,11 @@ class JoomlaCoupon extends Model
      */
     public static function getUserPercentCouponsSummary($joomlaUserId = null)
     {
+        $authId = Auth::id();
+        $forCurrentUser = $joomlaUserId === null;
+
         // Если не указан userId, берём текущего Joomla пользователя (из существующего метода)
-        if ($joomlaUserId === null) {
+        if ($forCurrentUser) {
             $joomlaUser = self::joomlaUser();
             if (!$joomlaUser) {
                 return []; // Нет пользователя
@@ -1407,30 +1512,36 @@ class JoomlaCoupon extends Model
             $joomlaUserId = $joomlaUser->id;
         }
 
-        // 1. Получаем все купоны пользователя из jm_avicenna_user_coupons
-        $userCouponRecord = DB::connection('mysql_joomla')
-            ->table('avicenna_user_coupons')
-            ->where('user_id', $joomlaUserId)
-            ->first();
+        // Если это текущий пользователь и его купоны уже загружены getUserCoupons()
+        // в рамках этого запроса — фильтруем процентные (type=0) из кеша вместо
+        // повторного SELECT по jshopping_coupons.
+        if ($forCurrentUser && $authId !== null && isset(self::$userCouponsCache[$authId]['coupons'])) {
+            $coupons = collect(self::$userCouponsCache[$authId]['coupons'])
+                ->filter(fn($coupon) => (int) $coupon->coupon_type === 0)
+                ->keyBy('coupon_code');
+        } else {
+            // 1. Получаем все купоны пользователя из jm_avicenna_user_coupons
+            $userCouponRecord = self::getUserCouponRecord($joomlaUserId);
 
-        if (!$userCouponRecord || empty($userCouponRecord->coupons)) {
-            return []; // Нет купонов
+            if (!$userCouponRecord || empty($userCouponRecord->coupons)) {
+                return []; // Нет купонов
+            }
+
+            // Разбиваем строку coupons на массив ID
+            $couponIds = array_filter(explode(',', $userCouponRecord->coupons));
+
+            if (empty($couponIds)) {
+                return [];
+            }
+
+            // 2. Получаем детали купонов из jm_jshopping_coupons, только type=0 (процентные)
+            $coupons = DB::connection('mysql_joomla')
+                ->table('jshopping_coupons')
+                ->whereIn('coupon_id', $couponIds)
+                ->where('coupon_type', 0) // Только процентные
+                ->get()
+                ->keyBy('coupon_code'); // Ключ по coupon_code для удобства
         }
-
-        // Разбиваем строку coupons на массив ID
-        $couponIds = array_filter(explode(',', $userCouponRecord->coupons));
-
-        if (empty($couponIds)) {
-            return [];
-        }
-
-        // 2. Получаем детали купонов из jm_jshopping_coupons, только type=0 (процентные)
-        $coupons = DB::connection('mysql_joomla')
-            ->table('jshopping_coupons')
-            ->whereIn('coupon_id', $couponIds)
-            ->where('coupon_type', 0) // Только процентные
-            ->get()
-            ->keyBy('coupon_code'); // Ключ по coupon_code для удобства
 
         if ($coupons->isEmpty()) {
             return [];

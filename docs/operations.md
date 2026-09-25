@@ -145,6 +145,67 @@ npm ci && npm run build           # 6. фронт (Vite). ⚠️ VDS — 1 ГБ 
 - `resources/js/components/dashboard/Agent/DebitsList/ReversalsTable.vue`
   (+ `ReversalDetailsModal.vue`) — вкладка «Корректировки».
 
+## 4а. Производительность кабинета: пакетные запросы в Joomla + кеш `business-data`
+
+Этап 1.2б (2026-09-25, `docs/prompts/stage-1.2b-server-speed.md`). Раньше
+`GET /api/user/business-data` (`UserCouponController::data`) и
+`getUserPercentCouponsSummary()` дёргали Joomla-БД в цикле «по одному
+запросу на купон» (`JoomlaCoupon::getPpOrders`) плюс повторяли одни и те
+же запросы (`jm_users`, `avicenna_user_coupons`) из разных методов.
+У партнёра с 5+ купонами это было 39–55 SQL в Joomla на один вызов
+`business-data` — см. `docs/cabinet-map.md` §4а.
+
+**Пакетные запросы (`app/Models/JoomlaCoupon.php`).** Публичная сигнатура
+`getPpOrders($couponId)` не изменилась, но при первом обращении она тянет
+заказы **сразу по всем купонам текущего пользователя** одним `whereIn`-запросом
+в `jshopping_coupons` и одним — в `jshopping_orders` (`loadPpOrdersBatch()`),
+вместо пары запросов на каждый купон в цикле. Результат кладётся в
+статический кеш класса (`self::$ppOrdersCache`, ключ — `coupon_id`) на время
+запроса и отдаётся оттуда всем последующим вызовам — `data()`,
+`credits()`/`orders()`, `getUserPercentCouponsSummary()` больше не бьют
+по Joomla повторно за одни и те же заказы. Так же мемоизированы на время
+запроса: `joomlaUser()` (SELECT из `jm_users`), результат `getUserCoupons()`
+и запись `avicenna_user_coupons` (`getUserCouponRecord()`) — по образцу уже
+существовавшего `loadBackend()`/`self::$backendCache` для HTTP в бэкенд.
+Объекты заказов при чтении из кеша клонируются (`getPpOrders()`), чтобы
+мутации на стороне вызывающего кода (`data()` дописывает `coupon_type` в
+объект заказа) не утекали в кеш и другие места, читающие те же заказы.
+
+Итог у партнёра с 5+ купонами: **6 SQL в Joomla** на `business-data`
+(было 39–55), и число запросов **не растёт** с числом купонов партнёра
+(один `whereIn` на пачку, а не на купон).
+
+**Кеш ответа (`App\Helpers\BusinessDataCache`).** `GET /user/business-data`
+и `GET /user/coupons` кешируются на **60 секунд** явно через
+`Cache::store('file')` (не через дефолтный `CACHE_STORE` — на проде это
+`database`, то есть та же удалённая БД, кешировать в неё же бессмысленно).
+Ключ — `ppm:business-data:{user_id}` / `ppm:user-coupons:{user_id}`, где
+`user_id` — id **фактического** пользователя запроса
+(`$request->user()->id`), поэтому при impersonate кешируется именно
+impersonated-партнёр, а не админ. Файлы кеша — `storage/framework/cache/data`
+(локально) — стандартный `file`-стор Laravel, ничего дополнительно
+настраивать не нужно.
+
+Сброс кеша — `App\Helpers\BusinessDataCache::forget($userId)`, вызывается
+после любого действия, меняющего баланс/купоны/выплаты партнёра:
+- `UserCouponController::create()` — после успешного создания купона;
+- `PayoutRequestController::store()` — после создания заявки на выплату;
+- `PayoutRequestController::uploadTicket()` — после загрузки чека;
+- `PayoutRequestController::adminReceived()`, `adminStatusUpdate()`,
+  `adminTickedAbort()` — админские переходы статуса выплаты;
+- `RequisiteController::store()`, `verify()`, `dalete()`, `destroy()` —
+  свои и админские действия с реквизитами (сброс на случай, если реквизиты
+  когда-нибудь попадут в ответ `business-data`; сейчас эндпоинт их не
+  возвращает, но так безопаснее).
+
+Сбросить кеш вручную (например, при отладке): `php artisan tinker --execute="\App\Helpers\BusinessDataCache::forget(<user_id>);"`
+либо просто подождать 60 секунд.
+
+Начисления из основного бэкенда Avicenna (accruals/redemptions,
+`loadBackend()`) при этом могут отображаться в ЛК с задержкой до 60 секунд
+после реального события на бэке — это принято как приемлемый компромисс
+(см. промпт этапа).
+
 ## 5. Безопасность
 
 - `/api/admin/*` защищены middleware **`admin`**

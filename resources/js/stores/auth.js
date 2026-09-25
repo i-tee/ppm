@@ -1,6 +1,10 @@
 // resources/js/stores/auth.js
 import { defineStore } from "pinia";
 import api from "@/api";
+import { useSettingsStore } from "./settings";
+import { useBusinessStore } from "./business";
+
+const USER_REFRESH_THROTTLE_MS = 30000;
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -8,6 +12,7 @@ export const useAuthStore = defineStore("auth", {
     token: localStorage.getItem("auth_token") || null,
     loading: false,
     error: null,
+    lastUserRefreshAt: 0,
   }),
 
   actions: {
@@ -39,12 +44,31 @@ export const useAuthStore = defineStore("auth", {
       try {
         const response = await api.get("/user");
         this.user = response.data;
+        this.lastUserRefreshAt = Date.now();
       } catch (error) {
         this.user = null;
         this.token = null;
         localStorage.removeItem("auth_token");
       } finally {
         this.loading = false;
+      }
+    },
+
+    // Тихое обновление профиля (возврат на вкладку, переход между экранами
+    // дашборда): без спиннера и без выброса на логин при сетевой ошибке.
+    // Не чаще раза в USER_REFRESH_THROTTLE_MS.
+    async refreshUser() {
+      if (!this.token) return;
+
+      const now = Date.now();
+      if (now - this.lastUserRefreshAt < USER_REFRESH_THROTTLE_MS) return;
+      this.lastUserRefreshAt = now;
+
+      try {
+        const response = await api.get("/user");
+        this.user = response.data;
+      } catch (error) {
+        // Тихо игнорируем - сетевая ошибка не должна выбрасывать на логин.
       }
     },
 
@@ -73,6 +97,8 @@ export const useAuthStore = defineStore("auth", {
         this.user = null;
         this.token = null;
         localStorage.removeItem("auth_token");
+        useSettingsStore().reset();
+        useBusinessStore().reset();
         if (router) {
           router.push("/login"); // Редирект через переданный router
         }
@@ -167,6 +193,8 @@ export const useAuthStore = defineStore("auth", {
         localStorage.setItem("auth_token", token);
         localStorage.setItem("impersonated_user", JSON.stringify(user));
         localStorage.setItem("is_impersonating", "true");
+        useSettingsStore().reset();
+        useBusinessStore().reset();
 
         return true;
       } catch (error) {
@@ -198,6 +226,8 @@ export const useAuthStore = defineStore("auth", {
         localStorage.removeItem("original_user");
         localStorage.removeItem("impersonated_user");
         localStorage.removeItem("is_impersonating");
+        useSettingsStore().reset();
+        useBusinessStore().reset();
 
         return true;
       } catch (error) {

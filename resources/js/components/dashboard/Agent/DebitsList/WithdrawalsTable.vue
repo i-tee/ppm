@@ -47,7 +47,7 @@
 
     <!-- Показываем TicketModal только когда это актуально -->
     <PayoutRequestTicketModal v-if="selectedPayoutRequest.status == 14" :payoutRequest="selectedPayoutRequest"
-      :bData="bData" @close="showModal = false" />
+      :bData="bData" @close="showModal = false" @updated="emit('ticket-updated')" />
 
     <PayoutRequestDetailsModal :bData="bData" :payoutRequest="selectedPayoutRequest" @close="showModal = false" />
   </VaModal>
@@ -86,6 +86,8 @@ const props = defineProps({
   userId: { type: Number, default: null }, // Для фильтра по партнёру
   userName: { type: String, default: '' }, // Для заголовка
 })
+
+const emit = defineEmits(['ticket-updated'])
 
 // Реактивные переменные
 const payoutRequests = ref([])

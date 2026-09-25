@@ -12,6 +12,7 @@ use App\Helpers\Partners;
 use App\Models\Requisite;
 use App\Models\User;
 use App\Http\Controllers\UserCouponController;
+use App\Helpers\BusinessDataCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -208,6 +209,9 @@ class PayoutRequestController extends Controller
             $payoutRequest->load('requisite');
             $payoutRequest->status_text = $payoutRequest->getStatusTextAttribute();
 
+            // Списание попадёт в expenseSummary/balance business-data — сбрасываем кеш агента.
+            BusinessDataCache::forget($user->id);
+
             return response()->json([
                 'success' => true,
                 'data' => $payoutRequest,  // Заявка с отношениями и status_text
@@ -380,6 +384,9 @@ class PayoutRequestController extends Controller
             $payoutRequest->load(['user', 'approver', 'requisite']);
             $payoutRequest->append('status_text');
 
+            // Админ поменял статус выплаты агента — сбрасываем его кеш business-data.
+            BusinessDataCache::forget($payoutRequest->user_id);
+
             // Отправляем уведомления юзеру и компании
             $this->sendPayoutPaidNotifications($payoutRequest);
             Notification::send($payoutRequest->user, new PayoutTicketReminderNotification($payoutRequest));
@@ -482,6 +489,7 @@ class PayoutRequestController extends Controller
             'status' => PayoutRequest::STATUS_TICKET_UPLOADED,
         ]);
 
+        BusinessDataCache::forget($payoutRequest->user_id);
 
         // Отправляем уведомление компании о загрузке чека
         try {
@@ -627,6 +635,8 @@ class PayoutRequestController extends Controller
             $payoutRequest->load(['user', 'approver', 'requisite']);
             $payoutRequest->append('status_text');
 
+            BusinessDataCache::forget($payoutRequest->user_id);
+
             // Если нужно — здесь можно добавить отправку уведомления юзеру о полном завершении выплаты
             // Notification::send($payoutRequest->user, new PayoutFullyCompletedNotification($payoutRequest));
 
@@ -702,6 +712,8 @@ class PayoutRequestController extends Controller
             ]);
 
             $payoutRequest->load(['user', 'approver', 'requisite'])->append('status_text');
+
+            BusinessDataCache::forget($payoutRequest->user_id);
 
             Notification::send($payoutRequest->user, new PayoutTicketReminderNotification($payoutRequest));
 

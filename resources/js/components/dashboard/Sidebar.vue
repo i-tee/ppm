@@ -102,33 +102,23 @@
 
 import { usePartnerApplications } from '@/composables/usePartnerApplications';
 const { getApplication, hasApplicationsWithStatus } = usePartnerApplications();
-import { computed } from 'vue';
-
-import { ref, onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
+import { useSettingsStore } from '@/stores/settings';
 
 const emit = defineEmits(['close'])
 
-const hasApprovedApplications = hasApplicationsWithStatus(2);
+// computed - пересчитывается при обновлении authStore.user (свежий профиль
+// после refreshUser), иначе статус «заявка не одобрена» держался бы до
+// перезагрузки страницы.
+const hasApprovedApplications = computed(() => hasApplicationsWithStatus(2));
 
-// Определяем реактивные переменные
-const apiData = ref(null);
-const error = ref(null);
 const authStore = useAuthStore();
+const settingsStore = useSettingsStore();
+const apiData = computed(() => settingsStore.data);
 
-onMounted(async () => {
-  try {
-    const response = await axios.get('/api/ps', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    });
-    apiData.value = response.data;
-
-  } catch (err) {
-    error.value = err.response?.data || err.message;
-    console.error('Ошибка загрузки:', error.value);
-  }
-
+onMounted(() => {
+  settingsStore.load();
 });
 
 const props = defineProps({

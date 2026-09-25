@@ -100,7 +100,7 @@
 
 <script setup>
 import { usePartnerApplications } from '@/composables/usePartnerApplications';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vuestic-ui';
 import { useI18n } from 'vue-i18n';
@@ -121,8 +121,10 @@ const props = defineProps({
 
 // Проверяем, есть ли заявки со статусом 2
 const { hasApplicationsWithStatus, hasAnyApplications, partnerApplications } = usePartnerApplications()
-const hasApprovedApplications = hasApplicationsWithStatus(2)
-const hasProblemApplications = hasApplicationsWithStatus(3) || hasApplicationsWithStatus(9) ? true : false;
+// computed - иначе статус считается один раз при монтировании и не
+// обновляется, пока пользователь не перезагрузит страницу жёстко.
+const hasApprovedApplications = computed(() => hasApplicationsWithStatus(2))
+const hasProblemApplications = computed(() => hasApplicationsWithStatus(3) || hasApplicationsWithStatus(9))
 
 // Состояние загрузки
 const isSendingVerification = ref(false);

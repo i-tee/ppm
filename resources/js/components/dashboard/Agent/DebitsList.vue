@@ -16,7 +16,7 @@
   <!-- Содержимое выбранной вкладки -->
   <div class="tab-content mt-4">
     <div v-if="activeTab === 'WithdrawalsTable'">
-      <WithdrawalsTable :apiData="apiData" :bData="bData" :refresh="refresh" />
+      <WithdrawalsTable :apiData="apiData" :bData="bData" :refresh="refresh" @ticket-updated="emit('ticket-updated')" />
     </div>
     <div v-else-if="activeTab === 'TrueBonusCodesTable'">
       <TrueBonusCodesTable :apiData="apiData" :bData="bData" :refresh="refresh" />
@@ -42,6 +42,7 @@ import { useBase } from '@/composables/useBase'
 const { formatPrice } = useBase();
 const { t } = useI18n()
 const activeTab = ref('WithdrawalsTable')
+const emit = defineEmits(['ticket-updated'])
 
 // Объявляем и получаем пропсы
 const props = defineProps({

@@ -58,7 +58,7 @@
           <CreditsList :apiData="apiData" :bData="bData" :refresh="refreshKey" />
         </div>
         <div v-else-if="activeTab === 'debits'">
-          <DebitsList :apiData="apiData" :bData="bData" :refresh="refreshKey" />
+          <DebitsList :apiData="apiData" :bData="bData" :refresh="refreshKey" @ticket-updated="handleTicketUpdated" />
         </div>
       </div>
     </div>
@@ -106,8 +106,8 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
+import { useBusinessStore } from '@/stores/business'
 import { useToast } from 'vuestic-ui'
 import CouponsList from './Agent/CouponsList.vue'
 import CreateCoupon from './Agent/CreateCoupon.vue'
@@ -115,7 +115,6 @@ import CreditsList from './Agent/CreditsList.vue'
 import DebitsList from './Agent/DebitsList.vue'
 import PayoutModal from './Agent/PayoutModal.vue'
 import Conditions_Agent from '@/components/parts/Conditions/Agent.vue';
-import { getBusinessData } from '@/api/coupons'
 import { useBase } from '@/composables/useBase';
 import { useI18n } from 'vue-i18n'
 import { usePartnerApplications } from '@/composables/usePartnerApplications';
@@ -124,17 +123,22 @@ const { hasApplication } = usePartnerApplications();
 const { formatPrice } = useBase();
 const { t } = useI18n()  // ← t для скрипта
 
-// Реактивные переменные
-const apiData = ref(null)
-const bData = ref(null)
-const loading = ref(true)
+// Хранилища
+const settingsStore = useSettingsStore()
+const businessStore = useBusinessStore()
+
+// apiData/bData - те же формы данных, что и раньше (bData.data.*), только
+// источник теперь общий стор, а не собственный запрос компонента.
+const apiData = computed(() => settingsStore.data)
+const bData = computed(() => businessStore.data ? { success: true, data: businessStore.data } : null)
+const loading = computed(() => settingsStore.loading || businessStore.loading)
+const error = computed(() => settingsStore.error || businessStore.error)
+
 const showConditions_Agent = ref(false)
-const error = ref(null)
 const refreshKey = ref(0)
 const activeTab = ref('coupons')
 
-// Хранилище и уведомления
-const authStore = useAuthStore()
+// Уведомления
 const { init: initToast } = useToast()  // ← useToast для уведомлений
 
 // Вычисляемые свойства
@@ -156,7 +160,7 @@ const openPayoutModal = () => {
 const handlePayoutCreated = async () => {
   try {
     refreshKey.value++ // Обновляем списки (debits и т.д.)
-    await fetchAllData() // Перезагружаем bData (баланс обновится)
+    await businessStore.load({ force: true }) // Перезагружаем bData (баланс обновится)
     initToast({
       message: t('payoutRequest.create.success'),
       color: 'success',
@@ -173,7 +177,7 @@ const handlePayoutCreated = async () => {
 const handleCouponCreated = async () => {
   try {
     refreshKey.value++ // Обновляем CouponsList
-    await fetchAllData() // Перезагружаем данные
+    await businessStore.load({ force: true }) // Перезагружаем данные
     initToast({
       message: t('coupons.created_success'),
       color: 'success',
@@ -186,56 +190,22 @@ const handleCouponCreated = async () => {
   }
 }
 
-// Функции загрузки данных
-const fetchApiData = async () => {
-  try {
-    const response = await axios.get('/api/ps', {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        'Accept': 'application/json',
-      },
-    })
-    apiData.value = response.data
-  } catch (err) {
-    throw new Error(err.response?.data?.message || t('errors.data_loading'))  // ← t вместо $t
-  }
-}
-
-const loadBusinessData = async () => {
-  try {
-    const response = await getBusinessData()  // ← ФИКС: Добавь await здесь!
-    if (response.success) {
-      bData.value = response  // Теперь response = {success: true, data: {...}}, bData.data?.user сработает
-    } else {
-      throw new Error(t('errors.business_data_loading'))
-    }
-  } catch (err) {
-    throw new Error(err.message || t('errors.business_data_loading'))
-  }
-}
-
-const fetchAllData = async () => {
-  try {
-    loading.value = true
-    error.value = null
-    await Promise.all([fetchApiData(), loadBusinessData()])
-  } catch (err) {
-    error.value = err.message
-    initToast({
-      message: t('errors.data_loading'),
-      color: 'danger',
-    })
-  } finally {
-    loading.value = false
-  }
+// Обработчик загрузки чека по заявке на выплату (WithdrawalsTable → DebitsList)
+const handleTicketUpdated = async () => {
+  refreshKey.value++
+  await businessStore.load({ force: true })
 }
 
 const hasAgent = computed(() => {
   return hasApplication(2, 2);
 });
 
-// Загружаем данные при монтировании
-onMounted(fetchAllData)
+// Загружаем данные при монтировании: кеш показывается сразу, если он есть
+// и не протух; иначе - обычный запрос с индикатором загрузки.
+onMounted(() => {
+  settingsStore.load()
+  businessStore.load()
+})
 </script>
 
 <style scoped>

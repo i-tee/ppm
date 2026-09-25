@@ -41,10 +41,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watchEffect } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { useBreakpoint } from 'vuestic-ui'
 import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 import Sidebar from './dashboard/Sidebar.vue'
 import User from './parts/User.vue'
@@ -62,20 +62,43 @@ watchEffect(() => {
 // Auth + Router
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const isLoading = ref(true)
 const currentUser = computed(() => authStore.currentUser)
 
-onMounted(async () => {
-  if (authStore.isAuthenticated && !authStore.currentUser) {
-    await authStore.fetchUser()
-  }
-
+onMounted(() => {
+  // Профиль на этот момент уже загружен guard'ом роутера (router.js) -
+  // повторный fetchUser здесь не нужен, это и был двойной запрос.
   if (!authStore.isAuthenticated) {
     router.push('/login')
   }
 
   isLoading.value = false
+})
+
+// Свежий профиль: тихо (без спиннера, throttle 30с - см. authStore.refreshUser)
+// перезапрашиваем /api/user при возврате на вкладку, фокусе окна и переходах
+// между экранами дашборда - иначе статус заявки/доступа виден устаревшим,
+// пока не будет жёсткой перезагрузки страницы.
+const handleVisibilityRefresh = () => {
+  if (document.visibilityState === 'visible') {
+    authStore.refreshUser()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityRefresh)
+  window.addEventListener('focus', handleVisibilityRefresh)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityRefresh)
+  window.removeEventListener('focus', handleVisibilityRefresh)
+})
+
+watch(() => route.path, () => {
+  authStore.refreshUser()
 })
 </script>
 

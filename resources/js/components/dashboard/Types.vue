@@ -219,6 +219,7 @@ import Conditions_Influencer from '@/components/parts/Conditions/Influencer.vue'
 import Conditions_Wholesale from '@/components/parts/Conditions/Wholesale.vue';
 import Conditions_Distributor from '@/components/parts/Conditions/Distributor.vue';
 import { useAuthStore } from '@/stores/auth';
+import { useSettingsStore } from '@/stores/settings';
 import { usePartnerApplications } from '@/composables/usePartnerApplications';
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
@@ -226,23 +227,14 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from 'vuestic-ui';
 
 // Подключаем composable
-const {
-  // hasAnyApplications,
-  // applicationsCount,
-  // partnerApplications,
-  // responsibleApplications,
-  // hasActiveApplications,
-  hasApplication,
-  // getApplication,
-  loadApplications,
-  // hasApplicationsWithStatus
-} = usePartnerApplications();
+const { hasApplication } = usePartnerApplications();
 
 const { t } = useI18n();
 const toast = useToast();
 const authStore = useAuthStore();
+const settingsStore = useSettingsStore();
 
-const apiData = ref(null);
+const apiData = computed(() => settingsStore.data);
 const error = ref(null);
 const showDialog = ref(false);
 const selectedType = ref(null);
@@ -400,9 +392,8 @@ async function validateAndSubmit() {
     showDialog.value = false;
 
     // Перезагружаем данные
-    await authStore.fetchUser();
-    await loadApplications(); // ← Обновляем заявки
-    await loadData();         // ← Обновляем типы сотрудничества
+    await authStore.fetchUser(); // partner_applications свежие - проверки в шаблоне реактивны
+    await loadData();            // ← Обновляем типы сотрудничества
     resetForm();
 
   } catch (e) {
@@ -418,10 +409,7 @@ async function validateAndSubmit() {
 
 async function loadData() {
   try {
-    const response = await axios.get('/api/ps', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    });
-    apiData.value = response.data;
+    await settingsStore.load();
   } catch (err) {
     error.value = err.response ? err.response.data : err.message;
   }

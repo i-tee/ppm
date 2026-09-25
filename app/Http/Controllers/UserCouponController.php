@@ -10,6 +10,8 @@ use App\Models\JoomlaCoupon; // модель для работы с Joomla
 use App\Models\JoomlaOrder;
 use App\Models\PayoutRequest;
 use App\Models\TrueBonusCode;
+use App\Helpers\BusinessDataCache;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,8 +22,18 @@ class UserCouponController extends Controller
         try {
             $user = $request->user();
 
-            // Получаем промокоды пользователя из Joomla
-            $couponsData = JoomlaCoupon::getUserCoupons();
+            // Промокоды пользователя из Joomla, кеш на 60с (см. App\Helpers\BusinessDataCache) —
+            // кешируем только успешный результат, ошибку не запоминаем.
+            $cacheKey = BusinessDataCache::couponsKey($user->id);
+            $couponsData = Cache::store('file')->get($cacheKey);
+
+            if ($couponsData === null) {
+                $couponsData = JoomlaCoupon::getUserCoupons();
+
+                if ($couponsData['success']) {
+                    Cache::store('file')->put($cacheKey, $couponsData, BusinessDataCache::TTL);
+                }
+            }
 
             if (!$couponsData['success']) {
                 return response()->json([
@@ -43,11 +55,24 @@ class UserCouponController extends Controller
 
     public function data(Request $request)
     {
+        $user = $request->user();
 
+        // Кеш ответа на 60с по фактическому пользователю запроса (учитывает impersonate:
+        // ключ по $request->user()->id, а не по «исходному» админу). См. docs/operations.md.
+        $payload = Cache::store('file')->remember(
+            BusinessDataCache::businessDataKey($user->id),
+            BusinessDataCache::TTL,
+            fn() => $this->buildBusinessData($user)
+        );
+
+        return response()->json($payload);
+    }
+
+    private function buildBusinessData($user): array
+    {
         // 1. Получаем данные (Юзер создается в Джумла если его нет)
         $raw = JoomlaCoupon::getUserCoupons();   // может быть Collection, может быть массив
-        
-        $user = $request->user();
+
         $joomlaUser = JoomlaCoupon::joomlaUser();
 
         Log::debug('joomlaUser: ', [$joomlaUser]);
@@ -116,8 +141,8 @@ class UserCouponController extends Controller
             $balance -= $backendReversals['debit'];
         }
 
-        // 3. Отдаём JSON
-        return response()->json([
+        // 3. Отдаём данные (сериализуются в JSON и, при первом заходе за TTL, кешируются в data())
+        return [
             'user' => $user,
             'backendReversals' => $backendReversals,
             'balance' => $balance,
@@ -133,7 +158,7 @@ class UserCouponController extends Controller
             'trueBonusCode' => $trueBonusCode,
             'couponsSummary' => JoomlaCoupon::getUserPercentCouponsSummary()
             // 'orders' => $orders
-        ]);
+        ];
 
         //$withdrawals = JoomlaCoupon::withdrawals();
     }
@@ -168,6 +193,9 @@ class UserCouponController extends Controller
             );
 
             if ($result['success']) {
+                // Баланс/список купонов партнёра изменились — сбрасываем его кеш business-data.
+                BusinessDataCache::forget($request->user()->id);
+
                 return response()->json([
                     'message' => __('coupons.create_success')
                 ], 200);

@@ -1,36 +1,16 @@
 // @/composables/usePartnerApplications.js
 
-import { computed, ref, onMounted } from 'vue'; // ✅ Импорты добавлены
-import axios from 'axios';
+import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
 /**
- * Composable для работы с заявками партнёра
+ * Composable для работы с заявками партнёра.
+ * Заявки берутся из authStore.currentUser.partner_applications - отдельного
+ * запроса /api/partner-applications composable не делает (см. stage 1.2).
  */
 export function usePartnerApplications() {
 
   const authStore = useAuthStore();
-  // Локальное хранилище заявок (если нужно отдельно от user)
-  const applications = ref([]);
-
-  // Функция для загрузки заявок с API
-  const loadApplications = async () => {
-    try {
-      const response = await axios.get('/api/partner-applications', {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-        },
-      });
-      applications.value = response.data;
-    } catch (e) {
-      console.error('Failed to load partner applications', e);
-    }
-  };
-
-  // Загружаем при инициализации
-  onMounted(() => {
-    loadApplications();
-  });
 
   // === Вычисляемые свойства ===
 
@@ -112,7 +92,6 @@ export function usePartnerApplications() {
   // === Возвращаем всё необходимое ===
   return {
     // Функции
-    loadApplications, // ✅ Чтобы можно было обновить вручную
     hasApplication,
     getApplication,
     hasApplicationsWithStatus,
@@ -123,8 +102,5 @@ export function usePartnerApplications() {
     partnerApplications,
     responsibleApplications,
     hasActiveApplications,
-
-    // Опционально: если хочешь использовать локальный массив
-    applications,
   };
 }

@@ -129,71 +129,34 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { useSettingsStore } from '@/stores/settings'
+import { useBusinessStore } from '@/stores/business'
 import { useRequisitesHelper } from '@/composables/requisitesHelper'
-import { getBusinessData } from '@/api/coupons'
 import { useBase } from '@/composables/useBase'
 
 const router = useRouter()
-const authStore = useAuthStore()
 const { hasVerifiedRequisite } = useRequisitesHelper()
 const { formatPrice } = useBase()
 
-const isVerified = ref(true)
-const apiData = ref(null)
-const bData = ref(null)
+const settingsStore = useSettingsStore()
+const businessStore = useBusinessStore()
 
-const loading = ref(true)
-const error = ref(null)
+const isVerified = ref(true)
+
+// Те же формы данных, что и раньше (bData.data.*) - источник теперь общий стор.
+const apiData = computed(() => settingsStore.data)
+const bData = computed(() => businessStore.data ? { success: true, data: businessStore.data } : null)
+const loading = computed(() => settingsStore.loading || businessStore.loading)
+const error = computed(() => settingsStore.error || businessStore.error)
 
 const goToRequisites = () => {
     router.push({ name: 'Requisite' })
 }
 
-const fetchApiData = async () => {
-    try {
-        const response = await axios.get('/api/ps', {
-            headers: {
-                Authorization: `Bearer ${authStore.token}`,
-                'Accept': 'application/json',
-            },
-        })
-        apiData.value = response.data
-    } catch (err) {
-        throw new Error(err.response?.data?.message || t('errors.data_loading'))
-    }
-}
-
-const loadBusinessData = async () => {
-    try {
-        const response = await getBusinessData()
-        if (response.success) {
-            bData.value = response
-        } else {
-            throw new Error(t('errors.business_data_loading'))
-        }
-    } catch (err) {
-        throw new Error(err.message || t('errors.business_data_loading'))
-    }
-}
-
+// Кеш показывается сразу, если он есть и не протух; иначе - обычный запрос.
 const fetchAllData = async () => {
-    try {
-        loading.value = true
-        error.value = null
-        await Promise.all([fetchApiData(), loadBusinessData()])
-
-        console.log('apiData:', apiData.value)
-        console.log('bData:', bData.value)
-
-    } catch (err) {
-        error.value = err.message
-        console.log('fetchAllData error:', error)
-    } finally {
-        loading.value = false
-    }
+    await Promise.all([settingsStore.load(), businessStore.load()])
 }
 
 // Основные вычисляемые свойства
