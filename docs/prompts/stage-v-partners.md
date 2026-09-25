@@ -147,3 +147,114 @@ Joomla и в основном бэкенде). **Сначала** изучи к�
 4. Найденное вне задачи.
 5. Текст коммита – **одна строка**, например
    `feat(admin): partners activity table and partner profile page`.
+
+---
+
+## ✅ Утверждённый план (PPM-W13, принят мастер-чатом 2026-09-25)
+
+Этот раздел – источник истины для реализации. Он собран из плана
+первой сессии W13 и правок мастер-чата/владельца. Раздел «Сначала план»
+выше уже выполнен – код писать по этому разделу.
+
+### Условия приёмки (обязательны)
+
+1. **Эталон ДО рефакторинга** – `business-data` всех партнёров с
+   одобренной заявкой (tinker: сброс `BusinessDataCache` → `Auth::login`
+   → `UserCouponController::data()`) в `/tmp/ppm-w13-before/`; после
+   рефакторинга – тот же прогон и **побайтовое** совпадение. Таблица – в
+   отчёт. (Эталон уже снят: 38 партнёров, скрипт
+   `storage/app/ppm-w13-dump.php`.)
+2. **Сверка список ↔ `business-data`** – для КАЖДОГО партнёра с
+   одобренной заявкой `balance`, `total_accruals`, число оплаченных
+   заказов в списке == в его `business-data`. Пометки «приблизительно»
+   нет – цифры обязаны совпадать.
+3. **Ошибки без деталей инфраструктуры** (правило владельца): если по
+   партнёру не догрузились данные (ошибка/таймаут/429 бэкенда, сбой БД) –
+   неполные цифры НЕ показывать: в денежных ячейках партнёра «Ошибка
+   загрузки», над таблицей «Не удалось загрузить часть данных.
+   Попробуйте обновить» + кнопка «Обновить» (сборка в обход кеша); такой
+   список не кешировать. В карточке – вместо денежных блоков «Ошибка при
+   загрузке данных, попробуйте снова» + кнопка. Слова «новый сайт»,
+   «бэкенд», «Joomla» в интерфейсе не использовать. Детали – только в лог.
+4. `JoomlaCoupon::getUserPercentCouponsSummary()` **не трогать** (правит
+   W14).
+
+### Список `GET /api/admin/partners` (гейт `admin`)
+
+- Партнёры = пользователи без уровней 1/2/3
+  (`whereDoesntHave('accessLevels')`).
+- **Одна формула баланса.** Извлечь расчёт из `buildBusinessData()` в
+  `App\Services\PartnerBalanceCalculator::compute(array $orders, float
+  $legacyPaymentsDebit, ?float $oldBalanceSumm, float $bonusCodesDebit,
+  float $payoutRequestsDebit, float $backendReversalsDebit): array` →
+  `['balance','expenseSummary','totalAccruals','ordersCount']`. Порядок
+  операций (`ceil` на первом шаге и т. д.) – буквально как сейчас.
+  `business-data` и список зовут один и тот же метод; отличается только
+  сборка `$orders`.
+- Чтобы `$orders` в списке собирались так же, как в одиночном пути,
+  извлечь из `JoomlaCoupon` переиспользуемые куски: поправку cashback для
+  купонов `type=0 / cashback=0 / value=10` (зовут `loadPpOrdersBatch()` и
+  список); `classifyBackendRows($accrualRows, $redemptionRows)` –
+  структура `accrualsByCoupon / reversals / redemptionsByCoupon /
+  usedCodes` (зовут `loadBackend()` и список); вливание строк бэкенда в
+  заказы купона – общее с `loadPpOrdersBatch()`.
+- Joomla для списка (не растёт с числом партнёров): `users` по email
+  `IN`; `avicenna_user_coupons` по `user_id IN` (CSV купонов +
+  `old_balance`); `jshopping_coupons` по `coupon_id IN`;
+  `jshopping_orders` по `coupon_id IN` + статус `IN (6,7)` – сырые строки
+  **белым списком** `ORDER_SAFE_FIELDS`, не `select *`.
+- Своя БД: суммы без ветвлений (`payout_requests` debit, `true_bonus_codes`,
+  последняя выплата, есть ли проверенные реквизиты) – батчем `GROUP BY
+  user_id`; анкеты – `PartnerApplication::whereIn(...)`, последняя на
+  партнёра.
+- Основной бэкенд: `AvicennaBackendClient::getAccrualsRedemptionsBatch(array
+  $partnerRefs)` на `Http::pool` – чанки по 5 партнёров (×2 запроса = 10
+  одновременных), дозагрузка страниц (`meta.last_page`) следующими
+  раундами, тот же предел страниц и тот же флаг
+  `PARTNER_ACCRUALS_FROM_BACKEND`, парсинг – общий с одиночными методами.
+  Ошибки – по условию 3.
+- **Активность** – `MAX(order_date)` по собранным заказам партнёра (оба
+  источника). Бейджи: «Активен» / «Затих» / «Не начал»; пороги –
+  `config/settings.json → partner_activity` (например, `active_days: 60`),
+  смысл – в `docs/operations.md`.
+- Кеш готового списка – `file`-стор, ключ `ppm:partners-list`, 5 мин;
+  поиск (часть имени/email), сортировка, фильтры (статус анкеты,
+  активность), пагинация – на сервере над закешированным массивом.
+- Колонки – из «Решения владельца» выше.
+
+### Карточка `GET /api/admin/partners/{id}` (гейт `admin`, `whereNumber`)
+
+- `buildBusinessData()` → `public` (без изменения сигнатуры).
+- `Auth::setUser($partner)` в `try/finally` с откатом на админа; сразу
+  после подмены – новый `JoomlaCoupon::resetRequestCaches()` (обнуляет
+  `$backendCache`, `$joomlaUserCache`, `$userCouponsCache`,
+  `$ppOrdersCache`, `$userCouponRecordCache`).
+- Сначала только `JoomlaCoupon::joomlaUser()` (чистый SELECT). Если
+  Joomla-пользователя нет – **не** звать `buildBusinessData()`
+  (`getUserCoupons()` может СОЗДАТЬ запись в Joomla): карточка без
+  денежных блоков – анкета, реквизиты, «Войти как партнёр», статус «ещё
+  не начал». Если есть – `buildBusinessData()` через общий
+  `BusinessDataCache` (цифры = то, что видит сам партнёр).
+- Поверх: все анкеты партнёра (включая старые поля), реквизиты со
+  статусом проверки, история заявок на выплату, график
+  (`utils/statistics.js` + `Statistics/StatisticsChart.vue` без
+  изменений), промокоды включая скрытые (с пометкой).
+
+### Фронт и файлы
+
+- `Impersonate.vue` → `Partners.vue` (путь `/dashboard/partners` тот же);
+  мёртвую локальную `stopImpersonation()` удалить. Новая
+  `Partners/PartnerCard.vue` – роут `partners/:id`, `meta.roles:
+  ['admin']`, лениво. Запросы – через общий клиент `api`.
+- Сервер: `AdminPartnersController` (`index`, `show`),
+  `PartnerBalanceCalculator`, правки `UserCouponController`,
+  `JoomlaCoupon`, `AvicennaBackendClient`, `routes/api.php`,
+  `config/settings.json`. Локали `ru.json`/`en.json` – точечно.
+- Доки: `docs/operations.md` (эндпоинты, гейт, кеш, пороги),
+  `docs/cabinet-map.md` §1.
+
+### Отдельно в отчёт
+
+- Первая компиляция `JoomlaCoupon.php` бросает `ErrorException`
+  («continue» в switch) – первый `business-data` в свежем PHP-процессе
+  падает. Не чинить (W14), но зафиксировать.
