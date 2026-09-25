@@ -251,8 +251,14 @@ export const useAuthStore = defineStore("auth", {
     isAccountant: (state) =>
       !!state.user && !!state.user.effective_access_levels?.includes(3),
     // Сотрудник (1|2|3) — не может быть партнёром.
-    isStaff: (state, getters) => getters.isAdmin || getters.isAccountant,
+    // В Pinia другие геттеры доступны только через this (второго аргумента
+    // getters, как во Vuex, нет), поэтому обычная функция, не стрелочная.
+    isStaff() {
+      return !!(this.isAdmin || this.isAccountant);
+    },
     // Реквизиты и выплаты доступны админу и бухгалтеру одинаково.
-    canManageFinance: (state, getters) => getters.isStaff,
+    canManageFinance() {
+      return this.isStaff;
+    },
   },
 });

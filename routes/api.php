@@ -49,13 +49,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ps', [PartnersSettingController::class, 'index']);
     Route::get('/rs', [RequisitesSettingController::class, 'index']);
 
-    // ── Реквизиты: роуты общие с партнёром (своё создание/удаление),
-    // роль (админ/бухгалтер видят чужие на проверку) проверяется внутри
-    // RequisiteController через canManageFinance() ──
-    Route::get('/user/requisites', [RequisiteController::class, 'index']);
+    // ── Реквизиты: список на проверку, одобрение и удаление – общие роуты
+    // (партнёр удаляет свои, админ/бухгалтер – любые), роль проверяется
+    // внутри RequisiteController через canManageFinance(). Свои реквизиты
+    // (список/создание) – в группе `partner` ниже. ──
     Route::get('/user/requisites-all', [RequisiteController::class, 'all']);
     Route::put('/user/requisites/{id}/verify', [RequisiteController::class, 'verify']);
-    Route::post('/user/requisites', [RequisiteController::class, 'store']);
     Route::delete('/user/requisites/{id}', [RequisiteController::class, 'destroy']);
 
     // ── Финансовые админ-роуты: `finance` — админ и бухгалтер одинаково ──
@@ -95,6 +94,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/payout-requests', [PayoutRequestController::class, 'store']);
         Route::post('/payout-requests/{id}/ticket', [PayoutRequestController::class, 'uploadTicket']);
+
+        Route::get('/user/requisites', [RequisiteController::class, 'index']);
+        Route::post('/user/requisites', [RequisiteController::class, 'store']);
 
         Route::get('/user/coupons', [UserCouponController::class, 'index']);
         Route::post('/user/check-promocode', [UserCouponController::class, 'check']);

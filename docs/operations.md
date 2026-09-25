@@ -225,8 +225,8 @@ Middleware-алиасы (`bootstrap/app.php`):
 |---|---|---|
 | `/admin/users`, `/admin/impersonate/*`, CRUD `/partner-applications` (кроме `POST`) | `admin` | 1, 2 |
 | `/admin/payout-requests*` (кроме `DELETE`), `/admin/payout-ticked-reminder/{id}` | `finance` | 1, 2, 3 |
-| `POST /partner-applications`, `/payout-requests*`, `/user/coupons`, `/user/check-promocode`, `/user/business-data`, `/user/coupon/*` | `partner` | не-сотрудник |
-| `/user/requisites*` (index/store/all/verify/destroy) | без middleware | роль проверяется внутри `RequisiteController` через `canManageFinance()` — общий роут, «свои реквизиты» для сотрудника недоступны |
+| `POST /partner-applications`, `/payout-requests*`, `/user/coupons`, `/user/check-promocode`, `/user/business-data`, `/user/coupon/*`, `GET/POST /user/requisites` (свои реквизиты) | `partner` | не-сотрудник |
+| `/user/requisites-all`, `PUT /user/requisites/{id}/verify`, `DELETE /user/requisites/{id}` | без middleware | роль проверяется внутри `RequisiteController` через `canManageFinance()`: сотрудник видит/одобряет/удаляет любые, партнёр – удаляет только свои |
 | `/user`, `/user/avatar`, `/user/change-password`, `/logout`, `/email/resend`, `/ps`, `/rs` | без middleware | любой залогиненный |
 
 Роли выдаются и снимаются только командой `php artisan ppm:access {email}
