@@ -1,65 +1,106 @@
 <template>
 
-  <va-sidebar-item v-if="!isStaff" :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'"
-    @click="emit('close')">
-    <va-sidebar-item-content>
-      <va-icon name="dashboard" />
-      <va-sidebar-item-title>{{ $t('_dashboard') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item>
+  <!-- Партнёр без одобренной заявки: Главная, Анкета, Профиль -->
+  <template v-if="!isStaff">
 
-  <!-- <va-sidebar-item :to="{ name: 'Promocodes' }" :active="false" disabled>
-    <va-sidebar-item-content>
-      <va-icon name="confirmation_number" />
-      <va-sidebar-item-title>{{ $t('dashboard.promocodes') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item>
+    <va-sidebar-item :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'"
+      @click="emit('close')">
+      <va-sidebar-item-content>
+        <va-icon name="dashboard" />
+        <va-sidebar-item-title>{{ $t('_dashboard') }}</va-sidebar-item-title>
+      </va-sidebar-item-content>
+    </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'ReferralLinks' }" :active="false" disabled>
-    <va-sidebar-item-content>
-      <va-icon name="link" />
-      <va-sidebar-item-title>{{ $t('dashboard.referral_links') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item> -->
+    <va-sidebar-item v-if="!hasApprovedApplications" :to="{ name: 'Application' }"
+      :active="$route.name === 'Application'" :disabled="!isActive" @click="emit('close')">
+      <va-sidebar-item-content>
+        <va-icon name="assignment" />
+        <va-sidebar-item-title>{{ $t('dashboard.application') }}</va-sidebar-item-title>
+      </va-sidebar-item-content>
+    </va-sidebar-item>
 
-  <!-- <va-sidebar-item :to="{ name: 'Account' }" :active="$route.name === 'Account'">
-    <va-sidebar-item-content>
-      <va-icon name="account_circle" />
-      <va-sidebar-item-title>{{ $t('account') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item> -->
+    <!-- Одобренная заявка: работа с промокодами, статистикой и выплатами -->
+    <template v-if="isActive && hasApprovedApplications">
 
-  <va-sidebar-item :to="{ name: 'Impersonate' }" :active="$route.name === 'Impersonate'" v-if="isAdmin"
-    @click="emit('close')">
-    <va-sidebar-item-content>
-      <va-icon name="person" />
-      <va-sidebar-item-title>{{ $t('dashboard.impersonate') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item>
+      <div class="sidebar-section-title">{{ $t('dashboard.section_work') }}</div>
 
-  <va-sidebar-item :to="{ name: 'PartnerApplications' }" :active="$route.name === 'PartnerApplications'" v-if="isAdmin"
-    @click="emit('close')">
-    <va-sidebar-item-content>
-      <va-icon name="business" />
-      <va-sidebar-item-title>{{ $t('dashboard.partner_applications') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item>
+      <va-sidebar-item :to="{ name: 'Promocodes' }" :active="$route.name === 'Promocodes'" @click="emit('close')">
+        <va-sidebar-item-content>
+          <va-icon name="confirmation_number" />
+          <va-sidebar-item-title>{{ $t('dashboard.promocodes') }}</va-sidebar-item-title>
+        </va-sidebar-item-content>
+      </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'RequisiteVerification' }" :active="$route.name === 'RequisiteVerification'"
-    @click="emit('close')" v-if="canManageFinance">
-    <va-sidebar-item-content>
-      <va-icon name="business" />
-      <va-sidebar-item-title>{{ $t('dashboard.requisite_verification') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item>
+      <va-sidebar-item :to="{ name: 'Statistics' }" :active="$route.name === 'Statistics'" @click="emit('close')">
+        <va-sidebar-item-content>
+          <va-icon name="bar_chart" />
+          <va-sidebar-item-title>{{ $t('dashboard.statistics') }}</va-sidebar-item-title>
+        </va-sidebar-item-content>
+      </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'PayoutResolve' }" :active="$route.name === 'PayoutResolve'" v-if="canManageFinance"
-    @click="emit('close')">
-    <va-sidebar-item-content>
-      <va-icon name="business" />
-      <va-sidebar-item-title>{{ $t('dashboard.payout_resolve') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item>
+      <va-sidebar-item :to="{ name: 'Payouts' }" :active="$route.name === 'Payouts'" @click="emit('close')">
+        <va-sidebar-item-content>
+          <va-icon name="payments" />
+          <va-sidebar-item-title>{{ $t('dashboard.payouts') }}</va-sidebar-item-title>
+        </va-sidebar-item-content>
+      </va-sidebar-item>
+
+      <div class="sidebar-section-title">{{ $t('dashboard.section_settings') }}</div>
+
+      <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'" @click="emit('close')">
+        <va-sidebar-item-content>
+          <va-icon name="note" />
+          <va-sidebar-item-title>{{ $t('dashboard.requisite') }}</va-sidebar-item-title>
+        </va-sidebar-item-content>
+      </va-sidebar-item>
+
+    </template>
+
+    <va-sidebar-item :to="{ name: 'Account' }" :active="$route.name === 'Account'" @click="emit('close')">
+      <va-sidebar-item-content>
+        <va-icon name="account_circle" />
+        <va-sidebar-item-title>{{ $t('account') }}</va-sidebar-item-title>
+      </va-sidebar-item-content>
+    </va-sidebar-item>
+
+  </template>
+
+  <!-- Сотрудники: админ видит все 4 пункта, бухгалтер - только Реквизиты и Выплаты -->
+  <template v-if="isStaff">
+
+    <va-sidebar-item :to="{ name: 'PartnerApplications' }" :active="$route.name === 'PartnerApplications'"
+      v-if="isAdmin" @click="emit('close')">
+      <va-sidebar-item-content>
+        <va-icon name="assignment" />
+        <va-sidebar-item-title>{{ $t('dashboard.partner_applications') }}</va-sidebar-item-title>
+      </va-sidebar-item-content>
+    </va-sidebar-item>
+
+    <va-sidebar-item :to="{ name: 'RequisiteVerification' }" :active="$route.name === 'RequisiteVerification'"
+      @click="emit('close')" v-if="canManageFinance">
+      <va-sidebar-item-content>
+        <va-icon name="fact_check" />
+        <va-sidebar-item-title>{{ $t('dashboard.requisite_verification') }}</va-sidebar-item-title>
+      </va-sidebar-item-content>
+    </va-sidebar-item>
+
+    <va-sidebar-item :to="{ name: 'PayoutResolve' }" :active="$route.name === 'PayoutResolve'" v-if="canManageFinance"
+      @click="emit('close')">
+      <va-sidebar-item-content>
+        <va-icon name="payments" />
+        <va-sidebar-item-title>{{ $t('dashboard.payout_resolve') }}</va-sidebar-item-title>
+      </va-sidebar-item-content>
+    </va-sidebar-item>
+
+    <va-sidebar-item :to="{ name: 'Partners' }" :active="$route.name === 'Partners'" v-if="isAdmin"
+      @click="emit('close')">
+      <va-sidebar-item-content>
+        <va-icon name="group" />
+        <va-sidebar-item-title>{{ $t('dashboard.partners') }}</va-sidebar-item-title>
+      </va-sidebar-item-content>
+    </va-sidebar-item>
+
+  </template>
 
   <!-- <va-sidebar-item :to="{ name: 'Dev' }" :active="$route.name === 'Dev'" v-if="isSuperAdmin">
     <va-sidebar-item-content>
@@ -68,43 +109,14 @@
     </va-sidebar-item-content>
   </va-sidebar-item> -->
 
-  <va-sidebar-item v-if="!isStaff" :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive"
-    @click="emit('close')">
-    <va-sidebar-item-content>
-      <va-icon name="work" />
-      <va-sidebar-item-title>{{ $t('dashboard.types') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item>
-
-  <div v-for="type in apiData?.cooperation_types" :key="type.id">
-    <va-sidebar-item v-if="!!getApplication(2, type.id)" :to="{ name: type.route }" @click="emit('close')"
-      :active="$route.name === type.route">
-      <va-sidebar-item-content>
-        <va-icon name="person" />
-        <va-sidebar-item-title>{{ $t('partners.cooperation_types.' + type.name + '.title') }}</va-sidebar-item-title>
-      </va-sidebar-item-content>
-    </va-sidebar-item>
-  </div>
-
-  <VaDivider v-if="isActive && hasApprovedApplications" class="my-4" />
-
-  <va-sidebar-item :to="{ name: 'Requisite' }" :active="$route.name === 'Requisite'" @click="emit('close')"
-    v-if="isActive && hasApprovedApplications">
-    <va-sidebar-item-content>
-      <va-icon name="note" />
-      <va-sidebar-item-title>{{ $t('dashboard.requisite') }}</va-sidebar-item-title>
-    </va-sidebar-item-content>
-  </va-sidebar-item>
-
 </template>
 
 <script setup>
 
 import { usePartnerApplications } from '@/composables/usePartnerApplications';
-const { getApplication, hasApplicationsWithStatus } = usePartnerApplications();
-import { computed, onMounted } from 'vue';
+const { hasApplicationsWithStatus } = usePartnerApplications();
+import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import { useSettingsStore } from '@/stores/settings';
 
 const emit = defineEmits(['close'])
 
@@ -114,12 +126,6 @@ const emit = defineEmits(['close'])
 const hasApprovedApplications = computed(() => hasApplicationsWithStatus(2));
 
 const authStore = useAuthStore();
-const settingsStore = useSettingsStore();
-const apiData = computed(() => settingsStore.data);
-
-onMounted(() => {
-  settingsStore.load();
-});
 
 const props = defineProps({
   user: {
@@ -140,3 +146,14 @@ const isActive = computed(() => {
 });
 
 </script>
+
+<style scoped>
+.sidebar-section-title {
+  padding: 1rem 1rem 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--va-secondary);
+  opacity: 0.7;
+}
+</style>

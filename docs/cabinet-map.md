@@ -9,28 +9,41 @@ https://trello.com/c/RFWSNOMq, бриф – `docs/prompts/partner-ux-master-brie
 
 ## 1. Экраны
 
+Снимок обновлён на этапе 1.4 (2026-09-25, только «Агент» + новое меню).
 Все пути фронта – от `resources/js/`. Роутер `router.js`, компоненты
-подключены статически (lazy-loading нет). Проверок роли в роутере нет:
-админ-экраны закрываются только внутри компонентов.
+подключены статически (lazy-loading нет), но проверка роли теперь есть
+в самом роутере (`meta.roles` + `router.beforeEach`, этап 1.3) - гейт по
+одобренной заявке партнёра остаётся внутри компонентов (как раньше у
+`Agent.vue`).
 
 | Путь | Компонент | Кто видит | Запросы | Что показывает |
 |---|---|---|---|---|
 | `/welcome`, `/register`, `/reset-password` | `Welcome.vue`, `Register.vue`, `ResetPassword.vue` | гость | `/login`, `/register`, `/forgot-password`, `/reset-password`, соц-вход Yandex | вход, регистрация, сброс пароля |
-| `/dashboard` | `dashboard/Overview.vue` → `Overview/AgentOverview.vue` | партнёр | `/ps`, `/user/business-data`, `/user/requisites`, `/email/resend` | подтверждение email; при одобренной заявке – сводка агента (баланс, начисления, расходы, промокоды) |
-| `/dashboard/types` | `dashboard/Types.vue` | партнёр | `/ps`, `POST /partner-applications` | выбор режима сотрудничества, анкета, статус заявки |
-| `/dashboard/agent` | `dashboard/Agent.vue` | партнёр с одобренной заявкой типа 2 | `/ps`, `/user/business-data`, `/user/coupons`, `/user/coupon/create`, `/user/coupon/orders`, `/payout-requests` | баланс, договор; вкладки: промокоды (`Agent/CouponsList.vue`), создание (`CreateCoupon.vue`), начисления (`CreditsList.vue`), списания (`DebitsList.vue`: выплаты, бонусники, корректировки, старое); модалки выплаты и чека |
+| `/dashboard` | `dashboard/Overview.vue` → `Overview/AgentOverview.vue` | партнёр | `/ps`, `/user/business-data`, `/user/requisites`, `/email/resend` | подтверждение email; без одобренной заявки – статус + ссылка на анкету; при одобренной – сводка агента (баланс, начисления, расходы, промокоды) |
+| `/dashboard/application` | `dashboard/Application.vue` | партнёр без одобренной заявки | `/ps`, `POST /partner-applications` | анкета участника программы «Агент» (форма не менялась) и статус её рассмотрения; пункт меню скрывается после одобрения |
+| `/dashboard/promocodes` | `dashboard/Promocodes.vue` | партнёр с одобренной заявкой | `/ps`, `/user/business-data`, `/user/coupon/create` | промокоды (`Agent/CouponsList.vue`) + создание (`CreateCoupon.vue`) |
+| `/dashboard/statistics` | `dashboard/Statistics.vue` | партнёр с одобренной заявкой | `/ps`, `/user/business-data` | начисления (`Agent/CreditsList.vue`); график добавит этап 1.5 |
+| `/dashboard/payouts` | `dashboard/Payouts.vue` | партнёр с одобренной заявкой | `/ps`, `/user/business-data`, `/payout-requests` | баланс, «Вывести» (`Agent/PayoutModal.vue`), ссылка на договор/условия, списания (`Agent/DebitsList.vue`: выплаты, бонусники, корректировки, старое) |
 | `/dashboard/requisite` | `dashboard/Requisite.vue` | партнёр с одобренной заявкой | `/rs`, `/user/requisites` | реквизиты для выплат |
-| `/dashboard/account` | `dashboard/Account.vue` | все | `/email/resend`, `/user/change-password`, `/user/avatar` | профиль (в меню скрыт) |
-| `/dashboard/influencer`, `wholesale`, `distributor` | заглушки по 7 строк | – | – | пусто; попасть можно только по `type.route` из `/ps` или прямым URL |
-| `/dashboard/promocodes`, `referral-links` | `Promocodes.vue`, `ReferralLinks.vue` | – | – | маршруты есть, в меню нет |
+| `/dashboard/account` | `dashboard/Account.vue` | все | `/email/resend`, `/user/change-password`, `/user/avatar` | профиль |
+| `/dashboard/types`, `influencer`, `wholesale`, `distributor`, `agent` | – | – | – | этап 1.4: скрыты, редиректят на `/dashboard` (`types`/`influencer`/`wholesale`/`distributor`) или `/dashboard/promocodes` (`agent`); компоненты (`Types.vue`, `Influencer.vue`, `Wholesale.vue`, `Distributor.vue`, `Agent.vue`) не удалены, просто не подключены к роутам |
+| `/dashboard/referral-links` | `ReferralLinks.vue` | – | – | маршрут есть, в меню нет (не в объёме этапа) |
 | `/dashboard/partner-applications` | `PartnerApplications.vue` | админ (1, 2) | `/ps`, CRUD `/partner-applications` | заявки партнёров, фильтры, серверная пагинация |
-| `/dashboard/requisite-verification` | `RequisiteVerification.vue` | админ | `/ps`, `/user/requisites-all`, `PUT /user/requisites/{id}/verify`, `DELETE /user/requisites/{id}` | неверифицированные реквизиты, одобрение |
-| `/dashboard/payout-resolve` | `PayoutResolve.vue` | админ | `/admin/payout-requests-prepared`, `PUT /admin/payout-requests/{id}/20`, `…-ticket-abort`, `…-ticked-reminder`, `…-received` | заявки на выплату, чеки самозанятых, «выплачено» |
-| `/dashboard/impersonate` | `Impersonate.vue` | админ | `/admin/users`, `POST /admin/impersonate/{id}` | вход под партнёром |
+| `/dashboard/requisite-verification` | `RequisiteVerification.vue` | админ, бухгалтер | `/ps`, `/user/requisites-all`, `PUT /user/requisites/{id}/verify`, `DELETE /user/requisites/{id}` | неверифицированные реквизиты, одобрение |
+| `/dashboard/payout-resolve` | `PayoutResolve.vue` | админ, бухгалтер | `/admin/payout-requests-prepared`, `PUT /admin/payout-requests/{id}/20`, `…-ticket-abort`, `…-ticked-reminder`, `…-received` | заявки на выплату, чеки самозанятых, «выплачено» |
+| `/dashboard/partners` (бывший `/dashboard/impersonate`, редирект сохранён) | `Impersonate.vue` | админ | `/admin/users`, `POST /admin/impersonate/{id}` | список партнёров с поиском по email, вход под партнёром (кнопка неброская, вторичная) |
 
-**Меню** – `components/dashboard/Sidebar.vue`: у админа пункты Impersonate,
-Заявки, Реквизиты, Выплаты; у партнёра – Overview, Types, пункты режимов
-из `/ps` (по одобренной заявке), Requisite.
+**Меню** – `components/dashboard/Sidebar.vue` (этап 1.4, только десктоп,
+мобильная раскладка не менялась):
+- **Партнёр без одобренной заявки:** Главная, Анкета, Профиль.
+- **Партнёр с одобренной заявкой:** Главная; группа «Работа» – Промокоды,
+  Статистика, Выплаты и списания; группа «Настройки» – Реквизиты, Профиль.
+- **Админ:** Заявки, Реквизиты, Выплаты, Партнёры.
+- **Бухгалтер:** Реквизиты, Выплаты.
+
+Выбора режима сотрудничества (`Types.vue`, карточки Influencer/Wholesale/
+Distributor) в интерфейсе больше нет - программа только одна («Агент»),
+решение владельца, п. 1 карточки этапа.
 
 **Стор** один – `stores/auth.js` (user, token). В `localStorage` лежат
 токен и данные impersonate, профиль – нет: после перезагрузки он заново
@@ -41,7 +54,10 @@ https://trello.com/c/RFWSNOMq, бриф – `docs/prompts/partner-ux-master-brie
 Главный ответ – `GET /api/user/business-data` (`UserCouponController::data`):
 `balance`, `credits.{total_accruals, orders_count, orders[]}`,
 `coupons_full[]`, `trueBonusCode`, `withdrawals`, `payoutRequests`,
-`expenseSummary`, `backendReversals`.
+`expenseSummary`, `backendReversals`, `hidden_coupon_codes[]` (этап 1.6 –
+коды скрытых из списка промокодов, в нижнем регистре; сам список
+`coupons_full` скрытые не исключает – фильтрация на фронте, в
+`Agent/CouponsList.vue`).
 
 - У каждого заказа в `credits.orders[]` есть `order_date`, `cashback`,
   `order_total`, `coupon_id`, `coupon_type`, `source` (`backend` = новый
@@ -195,10 +211,10 @@ SQL Joomla на `business-data` теперь **не растёт с числом
 | 1.1 | Замер скорости (мастер-чат в браузере) | 8 | ✅ §4а |
 | 1.2 | Фронт: стор настроек/профиля, свежий профиль, без лишних запросов, ленивые экраны | 7, 8 | ✅ принят 25.09 |
 | 1.2б | Сервер: пакетные запросы в Joomla, кеш `business-data` 60 с (разрешено владельцем 25.09) | 8 | ✅ §4а |
-| 1.3 | Роли: единая проверка, `accountant`, серверный гейт | 10 | – |
-| 1.4 | Только «Агент» + новое меню (десктоп) | 1, 2 | – |
+| 1.3 | Роли: единая проверка, `accountant`, серверный гейт | 10 | ✅ принят 25.09 |
+| 1.4 | Только «Агент» + новое меню (десктоп) | 1, 2 | ✅ принят 25.09 |
 | 1.5 | Статистика | 3 | – |
-| 1.6 | Промокоды: скрыть / архив / восстановить | 9 | – |
+| 1.6 | Промокоды: скрыть / архив / восстановить | 9 | ✅ принят 25.09 |
 | 1.7 | Анкета | 5 | – |
 | 1.8 | «С чего начать?» + инструкции (md в модалке) | 6, 11 | – |
 | 1.9 | Выкат на прод – runbook `docs/rollout-ux.md` | – | – |

@@ -15,24 +15,60 @@
     <div v-else-if="coupons.length" class="mt-4">
 
       <!-- Раздел для процентных промокодов (тип 0) -->
-      <div v-if="percentageCoupons.length">
+      <div v-if="visiblePercentageCoupons.length">
         <VaDivider orientation="left" class="my-4">
           <span class="px-2 text-secondary">{{ t('coupons.discount_codes') }}</span>
         </VaDivider>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <CouponDiscount v-for="coupon in percentageCoupons" :key="coupon.coupon_id" :coupon="coupon" :bData="bData"
-            :apiData="apiData" @open-order-info="handleOrderInfo" />
+          <div v-for="coupon in visiblePercentageCoupons" :key="coupon.coupon_id">
+            <CouponDiscount :coupon="coupon" :bData="bData" :apiData="apiData" @open-order-info="handleOrderInfo" />
+            <div class="flex justify-end mt-1">
+              <VaButton preset="plain" size="small" icon="visibility_off"
+                :loading="hidingCode === normalizeCode(coupon.coupon_code)" @click="confirmHide(coupon)">
+                {{ t('coupons.hide') }}
+              </VaButton>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Раздел для бонусных промокодов (тип 1) -->
-      <div v-if="bonusCoupons.length">
+      <div v-if="visibleBonusCoupons.length">
         <VaDivider orientation="left" class="my-4">
           <span class="px-2 text-secondary">{{ t('coupons.bonus_codes') }}</span>
         </VaDivider>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <CouponBonus v-for="coupon in bonusCoupons" :key="coupon.coupon_id" :coupon="coupon" :bData="bData"
-            :apiData="apiData" @open-order-info="handleOrderInfo" />
+          <div v-for="coupon in visibleBonusCoupons" :key="coupon.coupon_id">
+            <CouponBonus :coupon="coupon" :bData="bData" :apiData="apiData" @open-order-info="handleOrderInfo" />
+            <div class="flex justify-end mt-1">
+              <VaButton preset="plain" size="small" icon="visibility_off"
+                :loading="hidingCode === normalizeCode(coupon.coupon_code)" @click="confirmHide(coupon)">
+                {{ t('coupons.hide') }}
+              </VaButton>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Архив скрытых промокодов -->
+      <div v-if="hiddenCoupons.length" class="mt-6">
+        <VaButton preset="secondary" size="small" @click="showArchive = !showArchive">
+          {{ t('coupons.archive') }} ({{ hiddenCoupons.length }})
+        </VaButton>
+
+        <div v-if="showArchive" class="mt-4">
+          <p class="text-secondary text-sm mb-3">{{ t('coupons.archive_hint') }}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <VaCard v-for="coupon in hiddenCoupons" :key="coupon.coupon_id" outlined class="rounded-xl">
+              <VaCardContent class="flex items-center justify-between gap-2">
+                <span class="font-bold">{{ coupon.coupon_code }}</span>
+                <VaButton preset="secondary" size="small" icon="restore"
+                  :loading="restoringCode === normalizeCode(coupon.coupon_code)" @click="restoreCoupon(coupon)">
+                  {{ t('coupons.restore') }}
+                </VaButton>
+              </VaCardContent>
+            </VaCard>
+          </div>
         </div>
       </div>
 
@@ -53,11 +89,18 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useToast } from 'vuestic-ui';
+import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
+import { useBusinessStore } from '@/stores/business';
 import CouponDiscount from '@/components/parts/CouponDiscount.vue';
 import CouponBonus from '@/components/parts/CouponBonus.vue';
 import OrderInfoModal from '@/components/parts/OrderInfoModal.vue';
 
 const { t } = useI18n();
+const { init: initToast } = useToast();
+const authStore = useAuthStore();
+const businessStore = useBusinessStore();
 
 const props = defineProps({
   apiData: {
@@ -82,8 +125,19 @@ const loading = computed(() => !props.bData);
 const error = ref(null);
 const showModal = ref(false);
 const selectedCoupon = ref(null);
+const showArchive = ref(false);
+const hidingCode = ref(null);
+const restoringCode = ref(null);
+
+const normalizeCode = (code) => (code || '').toLowerCase();
+
+// hidden_coupon_codes - коды в нижнем регистре (этап 1.6). Скрытие - только
+// отображение, сам промокод продолжает работать на сайте и начисляться.
+const hiddenCodes = computed(() => props.bData?.data?.hidden_coupon_codes || []);
+const isHidden = (coupon) => hiddenCodes.value.includes(normalizeCode(coupon.coupon_code));
 
 const percentageCoupons = computed(() => coupons.value.filter(c => c.coupon_type === 0));
+const visiblePercentageCoupons = computed(() => percentageCoupons.value.filter(c => !isHidden(c)));
 
 // Активен = не использован НИ в Joomla (used), НИ на новом сайте
 // (backend_used, этап 4) — та же логика, что в карточке CouponBonus.
@@ -99,9 +153,58 @@ const bonusCoupons = computed(() => {
       return 0; // Остальные купоны сохраняют порядок
     });
 });
+const visibleBonusCoupons = computed(() => bonusCoupons.value.filter(c => !isHidden(c)));
+
+const hiddenCoupons = computed(() => coupons.value.filter(isHidden));
 
 const handleOrderInfo = (coupon) => {
   selectedCoupon.value = coupon;
   showModal.value = true;
+};
+
+const authHeaders = () => ({
+  Authorization: `Bearer ${authStore.token}`,
+  'Content-Type': 'application/json',
+  Accept: 'application/json',
+});
+
+const confirmHide = (coupon) => {
+  const code = coupon.coupon_code;
+  if (!confirm(t('coupons.hide_confirm', { code }))) {
+    return;
+  }
+  hideCoupon(coupon);
+};
+
+const hideCoupon = async (coupon) => {
+  const code = normalizeCode(coupon.coupon_code);
+  hidingCode.value = code;
+  try {
+    await axios.post('/api/user/coupons/hide', { code: coupon.coupon_code }, { headers: authHeaders() });
+    await businessStore.load({ force: true });
+  } catch (err) {
+    initToast({
+      message: err.response?.data?.message ? t(err.response.data.message) : t('coupons.hide_failed'),
+      color: 'danger',
+    });
+  } finally {
+    hidingCode.value = null;
+  }
+};
+
+const restoreCoupon = async (coupon) => {
+  const code = normalizeCode(coupon.coupon_code);
+  restoringCode.value = code;
+  try {
+    await axios.post('/api/user/coupons/restore', { code: coupon.coupon_code }, { headers: authHeaders() });
+    await businessStore.load({ force: true });
+  } catch (err) {
+    initToast({
+      message: err.response?.data?.message ? t(err.response.data.message) : t('coupons.restore_failed'),
+      color: 'danger',
+    });
+  } finally {
+    restoringCode.value = null;
+  }
 };
 </script>

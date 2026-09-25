@@ -1,5 +1,11 @@
 <template>
   <div class="admin-users">
+    <div class="d-head">
+      <p class="va-h4 my-2 mt-4">{{ $t('dashboard.partners') }}</p>
+      <p class="my-2">{{ $t('dashboard.partners_descr') }}</p>
+      <VaDivider class="my-4" />
+    </div>
+
     <div v-if="loading">{{ $t('common.loading') }}</div>
 
     <div v-else>
@@ -58,10 +64,11 @@
                 </span>
               </td>
               <td style="border: 1px solid #ccc; padding: 8px;">
-                <button @click="impersonateUser(user.id)" :disabled="currentUserId === user.id"
-                  style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px;">
-                  {{ currentUserId === user.id ? $t('admin.users.isYou') : $t('admin.users.impersonate') }}
-                </button>
+                <va-button v-if="currentUserId !== user.id" preset="secondary" size="small" icon="login"
+                  @click="impersonateUser(user.id)">
+                  {{ $t('admin.users.impersonate') }}
+                </va-button>
+                <span v-else class="text-secondary">{{ $t('admin.users.isYou') }}</span>
               </td>
             </tr>
           </tbody>

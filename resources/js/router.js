@@ -9,21 +9,23 @@ import { useAuthStore } from "./stores/auth";
 // Дочерние экраны дашборда - лениво, чтобы при заходе на один экран не
 // тянуть код всех остальных (Welcome/Dashboard остаются статическими).
 const Overview = () => import("./components/dashboard/Overview.vue");
+const Application = () => import("./components/dashboard/Application.vue");
 const Promocodes = () => import("./components/dashboard/Promocodes.vue");
-const Influencer = () => import("./components/dashboard/Influencer.vue");
-const Agent = () => import("./components/dashboard/Agent.vue");
+const Statistics = () => import("./components/dashboard/Statistics.vue");
+const Payouts = () => import("./components/dashboard/Payouts.vue");
 const Requisite = () => import("./components/dashboard/Requisite.vue");
-const Wholesale = () => import("./components/dashboard/Wholesale.vue");
-const Distributor = () => import("./components/dashboard/Distributor.vue");
 const PartnerApplications = () =>
   import("./components/dashboard/PartnerApplications.vue");
 const RequisiteVerification = () =>
   import("./components/dashboard/RequisiteVerification.vue");
 const PayoutResolve = () => import("./components/dashboard/PayoutResolve.vue");
-const Types = () => import("./components/dashboard/Types.vue");
 const Impersonate = () => import("./components/dashboard/Impersonate.vue");
 const ReferralLinks = () => import("./components/dashboard/ReferralLinks.vue");
 const Account = () => import("./components/dashboard/Account.vue");
+// Types/Influencer/Wholesale/Distributor/Agent - экраны прошлого режима
+// выбора сотрудничества (этап 1.4). Компоненты не удалены (могут
+// пригодиться позже), но больше не подключены к роутам - их пути ниже
+// редиректят на актуальные экраны.
 // import Dev from "./components/dashboard/Dev.vue";
 
 const routes = [
@@ -62,21 +64,27 @@ const routes = [
         meta: { roles: ["partner"] },
       },
       {
+        path: "application",
+        name: "Application",
+        component: Application,
+        meta: { roles: ["partner"] },
+      },
+      {
         path: "promocodes",
         name: "Promocodes",
         component: Promocodes,
         meta: { roles: ["partner"] },
       },
       {
-        path: "influencer",
-        name: "Influencer",
-        component: Influencer,
+        path: "statistics",
+        name: "Statistics",
+        component: Statistics,
         meta: { roles: ["partner"] },
       },
       {
-        path: "agent",
-        name: "Agent",
-        component: Agent,
+        path: "payouts",
+        name: "Payouts",
+        component: Payouts,
         meta: { roles: ["partner"] },
       },
       {
@@ -85,17 +93,27 @@ const routes = [
         component: Requisite,
         meta: { roles: ["partner"] },
       },
+      // Только программа "Агент" (этап 1.4) - выбор режима и остальные
+      // режимы сотрудничества скрыты, старые пути редиректят на актуальные.
+      {
+        path: "agent",
+        redirect: { name: "Promocodes" },
+      },
+      {
+        path: "types",
+        redirect: { name: "Overview" },
+      },
+      {
+        path: "influencer",
+        redirect: { name: "Overview" },
+      },
       {
         path: "wholesale",
-        name: "Wholesale",
-        component: Wholesale,
-        meta: { roles: ["partner"] },
+        redirect: { name: "Overview" },
       },
       {
         path: "distributor",
-        name: "Distributor",
-        component: Distributor,
-        meta: { roles: ["partner"] },
+        redirect: { name: "Overview" },
       },
       // {
       //   path: "dev",
@@ -115,22 +133,20 @@ const routes = [
         meta: { roles: ["finance"] },
       },
       {
-        path: "impersonate",
-        name: "Impersonate",
+        path: "partners",
+        name: "Partners",
         component: Impersonate,
         meta: { roles: ["admin"] },
+      },
+      {
+        path: "impersonate",
+        redirect: { name: "Partners" },
       },
       {
         path: "partner-applications",
         name: "PartnerApplications",
         component: PartnerApplications,
         meta: { roles: ["admin"] },
-      },
-      {
-        path: "types",
-        name: "Types",
-        component: Types,
-        meta: { roles: ["partner"] },
       },
       {
         path: "account",

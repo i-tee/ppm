@@ -14,7 +14,8 @@
 
 - **Своя БД** (`mysql`): users, user_access_levels, partner_applications,
   requisites, payout_requests, true_bonus_codes, **minted_coupons** (журнал
-  минтов Фазы D).
+  минтов Фазы D), **hidden_coupons** (этап 1.6 — скрытые из списка ЛК
+  промокоды партнёра, только отображение).
 - **БД Joomla** (`mysql_joomla`, префикс `jm_`): ЛК читает/пишет её на каждый
   запрос — купоны (`jshopping_coupons`), заказы (`jshopping_orders`), связка
   партнёр↔купоны (`avicenna_user_coupons`), старые выплаты. Без этого
@@ -196,7 +197,21 @@ impersonated-партнёр, а не админ. Файлы кеша — `storag
 - `RequisiteController::store()`, `verify()`, `dalete()`, `destroy()` —
   свои и админские действия с реквизитами (сброс на случай, если реквизиты
   когда-нибудь попадут в ответ `business-data`; сейчас эндпоинт их не
-  возвращает, но так безопаснее).
+  возвращает, но так безопаснее);
+- `UserCouponController::hideCoupon()`, `restoreCoupon()` (этап 1.6) —
+  после скрытия/возврата промокода из архива.
+
+**Скрытые промокоды (этап 1.6).** `POST /api/user/coupons/hide` и
+`POST /api/user/coupons/restore` (группа `partner`, тело `{ code }`) —
+идемпотентно скрывают/возвращают промокод в списке ЛК, храня признак в
+своей таблице `hidden_coupons` (партнёр, код в нижнем регистре, когда
+скрыт). Код должен принадлежать партнёру (сверяется по
+`JoomlaCoupon::getUserCoupons()`), иначе 404 (`errors.coupon_not_found`).
+Joomla и основной бэкенд не трогаются — промокод продолжает работать на
+сайте и начисляться, скрытие влияет только на отображение. Ответ
+`business-data` дополнен полем `hidden_coupon_codes` (коды в нижнем
+регистре); сводка на главной и статистика скрытые промокоды не
+исключают — только список в `Agent/CouponsList.vue`.
 
 Сбросить кеш вручную (например, при отладке): `php artisan tinker --execute="\App\Helpers\BusinessDataCache::forget(<user_id>);"`
 либо просто подождать 60 секунд.
@@ -225,7 +240,7 @@ Middleware-алиасы (`bootstrap/app.php`):
 |---|---|---|
 | `/admin/users`, `/admin/impersonate/*`, CRUD `/partner-applications` (кроме `POST`) | `admin` | 1, 2 |
 | `/admin/payout-requests*` (кроме `DELETE`), `/admin/payout-ticked-reminder/{id}` | `finance` | 1, 2, 3 |
-| `POST /partner-applications`, `/payout-requests*`, `/user/coupons`, `/user/check-promocode`, `/user/business-data`, `/user/coupon/*`, `GET/POST /user/requisites` (свои реквизиты) | `partner` | не-сотрудник |
+| `POST /partner-applications`, `/payout-requests*`, `/user/coupons`, `/user/check-promocode`, `/user/business-data`, `/user/coupon/*`, `/user/coupons/hide`, `/user/coupons/restore`, `GET/POST /user/requisites` (свои реквизиты) | `partner` | не-сотрудник |
 | `/user/requisites-all`, `PUT /user/requisites/{id}/verify`, `DELETE /user/requisites/{id}` | без middleware | роль проверяется внутри `RequisiteController` через `canManageFinance()`: сотрудник видит/одобряет/удаляет любые, партнёр – удаляет только свои |
 | `/user`, `/user/avatar`, `/user/change-password`, `/logout`, `/email/resend`, `/ps`, `/rs` | без middleware | любой залогиненный |
 

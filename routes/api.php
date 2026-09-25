@@ -103,6 +103,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user/business-data', [UserCouponController::class, 'data']);
         Route::post('/user/coupon/create', [UserCouponController::class, 'create']);
         Route::post('/user/coupon/orders', [UserCouponController::class, 'getOrderInfoByCouponId']);
+        Route::post('/user/coupons/hide', [UserCouponController::class, 'hideCoupon']);
+        Route::post('/user/coupons/restore', [UserCouponController::class, 'restoreCoupon']);
     });
 });
 

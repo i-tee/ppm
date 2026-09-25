@@ -10,6 +10,7 @@ use App\Models\JoomlaCoupon; // модель для работы с Joomla
 use App\Models\JoomlaOrder;
 use App\Models\PayoutRequest;
 use App\Models\TrueBonusCode;
+use App\Models\HiddenCoupon;
 use App\Helpers\BusinessDataCache;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -156,7 +157,8 @@ class UserCouponController extends Controller
             'coupons' => $ids,
             'coupons_full' => $raw['coupons'],
             'trueBonusCode' => $trueBonusCode,
-            'couponsSummary' => JoomlaCoupon::getUserPercentCouponsSummary()
+            'couponsSummary' => JoomlaCoupon::getUserPercentCouponsSummary(),
+            'hidden_coupon_codes' => HiddenCoupon::codesFor($user->id)
             // 'orders' => $orders
         ];
 
@@ -209,6 +211,80 @@ class UserCouponController extends Controller
                 'message' => __('errors.unexpected_error')
             ], 500);
         }
+    }
+
+    /**
+     * Скрыть промокод из основного списка ЛК (только отображение,
+     * промокод продолжает работать на сайте — этап 1.6). Идемпотентно.
+     */
+    public function hideCoupon(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'code' => 'required|string|max:64',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => __('errors.validation_failed'),
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = $request->user();
+        $code = $request->input('code');
+
+        if (!$this->userOwnsCouponCode($code)) {
+            return response()->json([
+                'message' => __('errors.coupon_not_found')
+            ], 404);
+        }
+
+        HiddenCoupon::hide($user->id, $code);
+        BusinessDataCache::forget($user->id);
+
+        return response()->json([
+            'message' => __('coupons.hide_success')
+        ]);
+    }
+
+    /**
+     * Вернуть промокод из архива в основной список ЛК. Идемпотентно.
+     */
+    public function restoreCoupon(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'code' => 'required|string|max:64',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => __('errors.validation_failed'),
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = $request->user();
+
+        HiddenCoupon::restore($user->id, $request->input('code'));
+        BusinessDataCache::forget($user->id);
+
+        return response()->json([
+            'message' => __('coupons.restore_success')
+        ]);
+    }
+
+    /** Принадлежит ли код текущему партнёру (по его списку из Joomla). */
+    private function userOwnsCouponCode(string $code): bool
+    {
+        $result = JoomlaCoupon::getUserCoupons();
+        if (!$result['success']) {
+            return false;
+        }
+
+        $code = mb_strtolower($code);
+
+        return collect($result['coupons'])
+            ->contains(fn($coupon) => mb_strtolower($coupon->coupon_code) === $code);
     }
 
     public static function withdrawals()

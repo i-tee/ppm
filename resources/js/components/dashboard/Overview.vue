@@ -89,7 +89,7 @@
       <div v-if="user && user.email_verified_at" class="mb-6">
         <p>{{ $t('welcomes.choose_text') }}</p>
         <br>
-        <VaButton :to="{ name: 'Types' }">{{ $t('welcomes.choose') }}</VaButton>
+        <VaButton :to="{ name: 'Application' }">{{ $t('welcomes.choose') }}</VaButton>
       </div>
 
     </div>

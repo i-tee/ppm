@@ -2,23 +2,18 @@
   <div>
 
     <div class="d-head">
-      <p class="va-h4 my-2 mt-4">{{ $t('dashboard.promocodes') }}</p>
-      <p class="my-2">{{ $t('dashboard.promocodes_descr') }}</p>
+      <p class="va-h4 my-2 mt-4">{{ $t('dashboard.statistics') }}</p>
+      <p class="my-2">{{ $t('dashboard.statistics_descr') }}</p>
       <VaDivider class="my-4" />
     </div>
 
     <div v-if="hasAgent">
       <div v-if="apiData && bData">
-        <div class="my-2">
-          <CouponsList :apiData="apiData" :bData="bData" :refresh="refreshKey" />
-        </div>
-        <div class="my-2">
-          <CreateCoupon :apiData="apiData" :bData="bData" @coupon-created="handleCouponCreated" />
-        </div>
+        <CreditsList :apiData="apiData" :bData="bData" />
       </div>
 
-      <div v-else-if="loading" class="mt-4 pb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <VaSkeleton v-for="i in 3" :key="i" variant="rounded" height="200px" />
+      <div v-else-if="loading" class="mt-4 pb-4">
+        <VaSkeleton variant="table" :rows="5" />
       </div>
 
       <div v-else-if="error">{{ error }}</div>
@@ -36,18 +31,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 import { useBusinessStore } from '@/stores/business'
-import { useToast } from 'vuestic-ui'
-import CouponsList from './Agent/CouponsList.vue'
-import CreateCoupon from './Agent/CreateCoupon.vue'
-import { useI18n } from 'vue-i18n'
+import CreditsList from './Agent/CreditsList.vue'
 import { usePartnerApplications } from '@/composables/usePartnerApplications'
 
 const { hasApplication } = usePartnerApplications();
-const { t } = useI18n()
-const { init: initToast } = useToast()
 
 const settingsStore = useSettingsStore()
 const businessStore = useBusinessStore()
@@ -57,19 +47,7 @@ const bData = computed(() => businessStore.data ? { success: true, data: busines
 const loading = computed(() => settingsStore.loading || businessStore.loading)
 const error = computed(() => settingsStore.error || businessStore.error)
 
-const refreshKey = ref(0)
-
 const hasAgent = computed(() => hasApplication(2, 2))
-
-const handleCouponCreated = async () => {
-  try {
-    refreshKey.value++
-    await businessStore.load({ force: true })
-    initToast({ message: t('coupons.created_success'), color: 'success' })
-  } catch (err) {
-    initToast({ message: t('errors.coupon_creation_failed'), color: 'danger' })
-  }
-}
 
 onMounted(() => {
   settingsStore.load()
