@@ -30,7 +30,7 @@ https://trello.com/c/RFWSNOMq, бриф – `docs/prompts/partner-ux-master-brie
 | `/dashboard/referral-links` | `ReferralLinks.vue` | – | – | маршрут есть, в меню нет (не в объёме этапа) |
 | `/dashboard/partner-applications` | `PartnerApplications.vue` | админ (1, 2) | `/ps`, CRUD `/partner-applications` | заявки партнёров, фильтры, серверная пагинация |
 | `/dashboard/requisite-verification` | `RequisiteVerification.vue` | админ, бухгалтер | `/ps`, `/user/requisites-all`, `PUT /user/requisites/{id}/verify`, `DELETE /user/requisites/{id}` | неверифицированные реквизиты, одобрение |
-| `/dashboard/payout-resolve` | `PayoutResolve.vue` | админ, бухгалтер | `/admin/payout-requests-prepared`, `PUT /admin/payout-requests/{id}/20`, `…-ticket-abort`, `…-ticked-reminder`, `…-received` | заявки на выплату, чеки самозанятых, «выплачено» |
+| `/dashboard/payout-resolve` | `PayoutResolve.vue` | админ, бухгалтер | `/admin/payout-requests-prepared`, `PUT /admin/payout-requests/{id}/20`, `…/{id}/cancel` (этап А), `…-ticket-abort`, `…-ticked-reminder`, `…-received` | заявки на выплату, чеки самозанятых, «выплачено»; у заявок в статусах 0/10 — неброская кнопка «Отменить заявку» (модалка с обязательной причиной) |
 | `/dashboard/partners` (бывший `/dashboard/impersonate`, редирект сохранён) | `Impersonate.vue` | админ | `/admin/users`, `POST /admin/impersonate/{id}` | список партнёров с поиском по email, вход под партнёром (кнопка неброская, вторичная) |
 
 **Меню** – `components/dashboard/Sidebar.vue` (этап 1.4, только десктоп,
@@ -272,7 +272,7 @@ Beget, не время выполнения):
 | 1.9 | Выкат на прод – runbook `docs/rollout-ux.md` | – | ⏸ отложен владельцем 25.09: всё доделываем на локалке в `boost-ux`, выкат одним разом через ~4–5 дней, без хотфиксов |
 | 1.0а/б | Гигиена сервера и фронта (снят с паузы 25.09) | часть 10 | ✅ принят 25.09 |
 | Г | «Последняя миля» скорости: постоянные соединения с БД за флагом `DB_PERSISTENT` (дефолт off) | 8 | ✅ принят 25.09 |
-| А | Отмена заявки на выплату – только админ/бухгалтер, статусы 0/10, с причиной и письмом (решение 25.09) – https://trello.com/c/nDIM81xt | – | промпт готов, после 1.0 |
+| А | Отмена заявки на выплату – только админ/бухгалтер, статусы 0/10, с причиной и письмом (решение 25.09) – https://trello.com/c/nDIM81xt | – | ✅ принят 25.09 |
 | В | «Партнёры»: таблица активности + карточка партнёра (колонки – решение 25.09, в промпте) | 10 | промпт готов (сначала план), после 1.0 |
 
 Промпты воркеров – `docs/prompts/stage-1.N-*.md`, удаляются после

@@ -104,5 +104,13 @@ return [
         'payout_ticket_reminder_line3' => 'Для самозанятых партнёров это обязательная часть отчётности. Убедитесь, что чек содержит всю необходимую информацию о получении выплаты.',
         'payout_ticket_reminder_line4' => 'Спасибо за сотрудничество!',
         'payout_ticket_reminder_button_dashboard' => 'Загрузить чек в личном кабинете',
+        // Новые ключи для уведомления об отмене заявки на выплату (статус 50)
+        'payout_cancelled_subject' => 'Заявка на выплату отменена',
+        'payout_cancelled_line1' => 'Ваша заявка на выплату (:amount руб.) отменена, сумма вернулась на ваш баланс.',
+        'payout_cancelled_line2' => 'Причина отмены: :reason.',
+        'payout_cancelled_to_company_subject' => 'Заявка на выплату отменена сотрудником',
+        'payout_cancelled_to_company_greeting' => 'Здравствуйте, команда!',
+        'payout_cancelled_to_company_line1' => 'Заявка на выплату от пользователя :name (ID: :request_id, сумма :amount руб.) отменена.',
+        'payout_cancelled_to_company_line2' => 'Отменил(а): :actor. Причина: :reason.',
     ],
 ];

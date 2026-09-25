@@ -20,6 +20,8 @@ use App\Notifications\PayoutPaidNotification;
 use App\Notifications\PayoutPaidToCompanyNotification;
 use App\Notifications\PayoutTickedUploadToCompanyNotification;
 use App\Notifications\PayoutTicketReminderNotification;
+use App\Notifications\PayoutCancelledNotification;
+use App\Notifications\PayoutCancelledToCompanyNotification;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\ErrorNotifier; // Для ошибок
 use Illuminate\Support\Arr; // Для Arr::get
@@ -732,6 +734,134 @@ class PayoutRequestController extends Controller
                 'success' => false,
                 'message' => trans('payoutRequest.error.internal'),
             ], 500);
+        }
+    }
+
+    /**
+     * Отменяет заявку на выплату (для админа/бухгалтера).
+     * Разрешена только пока деньги не выплачены — статусы created (0) и
+     * approved (10). Причина обязательна, дописывается в note с датой и
+     * автором отмены. approver_id — кто отменил (то же поле, что и у
+     * остальных админских переходов статуса, семантика «кто последний
+     * обработал заявку» не меняется).
+     * Деньги на баланс возвращаются сами: PayoutRequest::withdrawals()
+     * не учитывает статус 50 в сумме списаний.
+     *
+     * PUT /admin/payout-requests/{id}/cancel
+     */
+    public function adminCancel(Request $request, $id)
+    {
+        abort_unless(
+            auth()->user()->canManageFinance(),
+            403,
+            trans('payoutRequest.permission_denied')
+        );
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        $actor = Auth::user();
+
+        $result = DB::transaction(function () use ($id, $validated, $actor) {
+            // Блокируем строку заявки — защита от двойного клика / одновременной
+            // отмены двумя сотрудниками.
+            $payoutRequest = PayoutRequest::where('id', $id)->lockForUpdate()->first();
+
+            if (! $payoutRequest) {
+                return ['error' => 404];
+            }
+
+            if (! in_array($payoutRequest->status, [PayoutRequest::STATUS_CREATED, PayoutRequest::STATUS_APPROVED], true)) {
+                return ['error' => 422, 'payoutRequest' => $payoutRequest];
+            }
+
+            $cancelNote = trans('payoutRequest.cancel.note_template', [
+                'date' => now()->format('d.m.Y H:i'),
+                'actor' => $actor->name ?: ('#' . $actor->id),
+                'reason' => $validated['reason'],
+            ]);
+
+            $payoutRequest->update([
+                'status' => PayoutRequest::STATUS_CANCELLED,
+                'approver_id' => $actor->id,
+                'note' => $payoutRequest->note
+                    ? $payoutRequest->note . "\n\n" . $cancelNote
+                    : $cancelNote,
+            ]);
+
+            return ['payoutRequest' => $payoutRequest];
+        });
+
+        if (($result['error'] ?? null) === 404) {
+            abort(404, trans('payoutRequest.not_found'));
+        }
+
+        if (($result['error'] ?? null) === 422) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('payoutRequest.cancel.invalid_status'),
+            ], 422);
+        }
+
+        $payoutRequest = $result['payoutRequest'];
+
+        Log::info('Payout request cancelled by staff', [
+            'payout_id' => $payoutRequest->id,
+            'actor_id' => $actor->id,
+            'reason' => $validated['reason'],
+        ]);
+
+        $payoutRequest->load(['user', 'approver', 'requisite']);
+        $payoutRequest->append('status_text');
+
+        BusinessDataCache::forget($payoutRequest->user_id);
+
+        $this->sendPayoutCancelledNotifications($payoutRequest, $validated['reason']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $payoutRequest,
+            'message' => trans('payoutRequest.cancel.success'),
+        ]);
+    }
+
+    /**
+     * Уведомления об отмене заявки — партнёру и компании (по образцу
+     * sendPayoutPaidNotifications).
+     */
+    protected function sendPayoutCancelledNotifications(PayoutRequest $payoutRequest, string $reason): void
+    {
+        try {
+            $user = User::find($payoutRequest->user_id);
+
+            if (! $user) {
+                ErrorNotifier::notify('Не найден пользователь для отправки уведомления об отмене выплаты');
+                Log::error("[PayoutRequest] User не найден для уведомления об отмене заявки {$payoutRequest->id}.");
+                return;
+            }
+
+            Notification::send($user, new PayoutCancelledNotification($payoutRequest, $reason));
+
+            $globalSettings = Partners::getSettings('global');
+            $email = Arr::get($globalSettings, 'responsible_partnersmail');
+
+            if (!$email) {
+                $email = Arr::get($globalSettings, 'global.responsible_partnersmail');
+            }
+
+            if (!$email) {
+                ErrorNotifier::notify('Почта компании не найдена для уведомления об отмене выплаты');
+                Log::error("[PayoutRequest] Email компании не найден для заявки {$payoutRequest->id}.");
+                return;
+            }
+
+            Notification::route('mail', $email)
+                ->notify(new PayoutCancelledToCompanyNotification($payoutRequest, $reason));
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            ErrorNotifier::notify('Ошибка при отправке уведомлений об отмене выплаты: ' . $errorMsg);
+            Log::error("[PayoutRequest] Исключение при отправке уведомлений об отмене заявки {$payoutRequest->id}: $errorMsg.");
         }
     }
 }

@@ -52,7 +52,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/payout-requests', [PayoutRequestController::class, 'adminIndex']);
         Route::post('/admin/payout-ticked-reminder/{id}', [PayoutRequestController::class, 'adminTicketReminder']);
         Route::get('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminShow']);
-        Route::put('/admin/payout-requests/{id}/{status}', [PayoutRequestController::class, 'adminStatusUpdate']);
+        // {status} – только число, иначе перехватывал бы и /cancel ниже.
+        Route::put('/admin/payout-requests/{id}/{status}', [PayoutRequestController::class, 'adminStatusUpdate'])
+            ->whereNumber('status');
+        Route::put('/admin/payout-requests/{id}/cancel', [PayoutRequestController::class, 'adminCancel']);
         Route::put('/admin/payout-requests-ticket-abort/{id}', [PayoutRequestController::class, 'adminTickedAbort']);
         Route::put('/admin/payout-requests-received/{id}', [PayoutRequestController::class, 'adminReceived']);
     });

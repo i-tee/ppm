@@ -52,11 +52,15 @@
           </td>
           <td>{{ formatDate(payout.created_at) }}</td>
           <td>
-            <div v-if="payout?.status <= 10">
+            <div v-if="payout?.status <= 10" class="flex items-center gap-2">
               <VaButton icon="assignment" icon-color="#ffffff50" @click="openRequisitFullModal(payout);">
                 <span>{{ t('dashboard.payout_resolve_go') }}: {{t('partners.partner_types.' + partnerTypes.find(item =>
                   item.id ===
                   payout.requisite?.partner_type_id)?.name || 'error')}}</span>
+              </VaButton>
+              <VaButton preset="secondary" size="small" color="secondary" icon="cancel"
+                @click="openCancelModal(payout)">
+                <span>{{ t('payoutRequest.cancel.button') }}</span>
               </VaButton>
             </div>
             <div v-else-if="payout?.status == 14">
@@ -124,6 +128,35 @@
 
     </div>
   </VaModal>
+
+  <VaModal v-model="cancelModal" :title="$t('payoutRequest.cancel.modal_title')" :hide-default-actions="true"
+    :close-button="true" size="small">
+    <div v-if="cancelPayout">
+      <div class="text-sm space-y-1 mb-4">
+        <div><span class="text-gray-500">{{ $t('payoutRequest.cancel.confirm_partner') }}: </span>
+          <strong>{{ cancelPayout.user?.name }}</strong> ({{ cancelPayout.user?.email }})
+        </div>
+        <div><span class="text-gray-500">{{ $t('payoutRequest.cancel.confirm_amount') }}: </span>
+          <strong>{{ formatPrice(cancelPayout.withdrawal_amount) }}</strong>
+        </div>
+      </div>
+
+      <p class="font-bold">{{ $t('payoutRequest.cancel.reason_label') }}</p>
+      <VaInput v-model="cancelReason" :placeholder="$t('payoutRequest.cancel.reason_placeholder')" type="textarea"
+        class="w-full" maxlength="500" />
+    </div>
+
+    <template #footer>
+      <div class="flex justify-end space-x-4">
+        <VaButton @click="cancelModal = false" preset="secondary" color="secondary" :disabled="cancelling">
+          {{ $t('payoutRequest.cancel.cancel_button') }}
+        </VaButton>
+        <VaButton color="danger" :disabled="cancelling" @click="submitCancelPayout">
+          {{ $t('payoutRequest.cancel.confirm_button') }}
+        </VaButton>
+      </div>
+    </template>
+  </VaModal>
   </template>
 
 </template>
@@ -136,6 +169,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'vuestic-ui';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
+import api from '@/api';
 
 function openRequisitFullModal(payout) {
 
@@ -175,6 +209,52 @@ const partnerTypes = ref([]);
 const LoadindTable = ref(true);
 const sendingReminder = ref(false);
 const approveTicketModal = ref(false);
+
+const cancelModal = ref(false);
+const cancelPayout = ref(null);
+const cancelReason = ref('');
+const cancelling = ref(false);
+
+const openCancelModal = (payout) => {
+  cancelPayout.value = payout;
+  cancelReason.value = '';
+  cancelModal.value = true;
+};
+
+const submitCancelPayout = async () => {
+
+  if (!cancelReason.value.trim()) {
+    toast.init({ message: t('payoutRequest.cancel.reason_required'), color: 'warning' });
+    return;
+  }
+
+  cancelling.value = true;
+
+  try {
+
+    const response = await api.put(`/admin/payout-requests/${cancelPayout.value.id}/cancel`, {
+      reason: cancelReason.value.trim(),
+    });
+
+    toast.init({ message: response.data?.message || t('payoutRequest.cancel.success'), color: 'success' });
+
+    payouts.value = payouts.value.filter((p) => p.id !== cancelPayout.value.id);
+
+    cancelModal.value = false;
+    cancelPayout.value = null;
+
+  } catch (error) {
+
+    toast.init({
+      message: error.response?.data?.message || t('errors.unexpected_error'),
+      color: 'danger',
+    });
+
+  } finally {
+    cancelling.value = false;
+  }
+
+};
 
 const abortTicket = async (payoutId) => {
 

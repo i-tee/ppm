@@ -4,7 +4,9 @@
 > Рекомендуемая модель: Sonnet (если сессия предложит – можно сильнее;
 > этап крупный). Удалить файл после приёмки этапа.
 > Параллельно может идти этап А (отмена выплаты: `PayoutRequestController`,
-> `PayoutResolve.vue`). **Их не трогай.** Общие файлы – `routes/api.php`,
+> `PayoutResolve.vue`, миграция статуса 30, `tools/balance-*.php`,
+> правка `JoomlaCoupon::getUserPercentCouponsSummary()`). **Их не трогай**
+> (`JoomlaCoupon.php` читать можно, править – нет). Общие файлы – `routes/api.php`,
 > `locales/*.json`: правь точечно, перед правкой перечитывай.
 
 ## ⚠️ Сначала план, потом код

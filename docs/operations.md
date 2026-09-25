@@ -311,7 +311,7 @@ Middleware-алиасы (`bootstrap/app.php`):
 | Роут → гейт | Middleware | Кто проходит |
 |---|---|---|
 | `/admin/users`, `/admin/impersonate/*`, CRUD `/partner-applications` (кроме `POST`) | `admin` | 1, 2 |
-| `/admin/payout-requests*` (кроме `DELETE`), `/admin/payout-ticked-reminder/{id}` | `finance` | 1, 2, 3 |
+| `/admin/payout-requests*` (кроме `DELETE`, включая `PUT .../{id}/cancel` — этап А), `/admin/payout-ticked-reminder/{id}` | `finance` | 1, 2, 3 |
 | `POST /partner-applications`, `/payout-requests*`, `/user/coupons`, `/user/check-promocode`, `/user/business-data`, `/user/coupon/*`, `/user/coupons/hide`, `/user/coupons/restore`, `GET/POST /user/requisites` (свои реквизиты) | `partner` | не-сотрудник |
 | `/user/requisites-all`, `PUT /user/requisites/{id}/verify`, `DELETE /user/requisites/{id}` | без middleware | роль проверяется внутри `RequisiteController` через `canManageFinance()`: сотрудник видит/одобряет/удаляет любые, партнёр – удаляет только свои |
 | `/user`, `/user/avatar`, `/user/change-password`, `/logout`, `/email/resend`, `/ps`, `/rs` | без middleware | любой залогиненный |
@@ -324,6 +324,19 @@ Middleware-алиасы (`bootstrap/app.php`):
 
 `DELETE /admin/payout-requests/{id}` вёл на несуществующий метод
 `adminDestroy` — роут удалён этапом 1.0а (§5 ниже).
+
+**Отмена заявки на выплату (статус 50, этап А, 2026-09-25).**
+`PUT /admin/payout-requests/{id}/cancel` (`PayoutRequestController::adminCancel`) —
+админ/бухгалтер отменяют заявку в статусе 0 (создана) или 10 (одобрена);
+после «выплачено» (14/16/20) — 422. Причина обязательна (`reason`, до 500
+символов), под `lockForUpdate` заявки (двойной клик / два сотрудника
+сериализуются), дописывается в `note` с датой и автором; `approver_id` —
+кто отменил (то же поле, что и у остальных админских переходов статуса).
+Деньги возвращаются на баланс партнёра сами — `PayoutRequest::withdrawals()`
+не учитывает статус 50 в сумме списаний. Письма — партнёру
+(`PayoutCancelledNotification`) и компании
+(`PayoutCancelledToCompanyNotification`), по образцу `PayoutPaidNotification`
+/`...ToCompany`. Кеш `business-data` партнёра сбрасывается.
 
 - `AVICENNA_BACKEND_SOURCE_TOKEN` — секрет уровня пароля БД: даёт право
   минтить купоны на бэке. Только `.env`, не логировать.

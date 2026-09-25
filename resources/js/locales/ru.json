@@ -829,6 +829,18 @@
     "proof_link_placeholder": "https://disk.yandex.ru/...",
     "note_label": "Тут можно написать комментарий к платежу:",
     "note_placeholder": "Комментарий к выплате...",
+    "cancel": {
+      "button": "Отменить заявку",
+      "modal_title": "Отменить заявку на выплату",
+      "confirm_amount": "Сумма",
+      "confirm_partner": "Партнёр",
+      "reason_label": "Причина отмены",
+      "reason_placeholder": "Укажите причину отмены заявки...",
+      "reason_required": "Укажите причину отмены",
+      "confirm_button": "Отменить заявку",
+      "cancel_button": "Закрыть",
+      "success": "Заявка на выплату отменена"
+    },
     "validateFail": {
       "min_payout": "Сумма вывода должна быть не менее {min_payout}.",
       "requisite_id": "Пожалуйста, выберите реквизит для вывода.",
