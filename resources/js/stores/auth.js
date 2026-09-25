@@ -248,5 +248,11 @@ export const useAuthStore = defineStore("auth", {
       state.user &&
       (state.user.effective_access_levels?.includes(1) ||
         state.user.effective_access_levels?.includes(2)),
+    isAccountant: (state) =>
+      !!state.user && !!state.user.effective_access_levels?.includes(3),
+    // Сотрудник (1|2|3) — не может быть партнёром.
+    isStaff: (state, getters) => getters.isAdmin || getters.isAccountant,
+    // Реквизиты и выплаты доступны админу и бухгалтеру одинаково.
+    canManageFinance: (state, getters) => getters.isStaff,
   },
 });

@@ -17,11 +17,14 @@ class UserAccessLevel extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Доступ к данным уровня доступа из конфига
+    // Доступ к данным уровня доступа из конфига (поиск по id, не по индексу
+    // массива — индекс давал смещение на единицу).
     public function getAccessLevelAttribute(): ?array
     {
         $settings = \App\Helpers\Partners::getSettings();
-        return $settings['access_levels'][$this->access_level_id] ?? null;
+        $levels = $settings['access_levels'] ?? [];
+
+        return collect($levels)->firstWhere('id', $this->access_level_id);
     }
 
     /**

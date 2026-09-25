@@ -18,6 +18,11 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    /** Уровни доступа (см. config/settings.json → access_levels). */
+    public const LEVEL_SUPERADMIN = 1;
+    public const LEVEL_ADMIN = 2;
+    public const LEVEL_ACCOUNTANT = 3;
+
     protected $fillable = [
         'name',
         'email',
@@ -63,6 +68,43 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasAccessLevel(int $levelId): bool
     {
         return $this->accessLevels()->where('access_level_id', $levelId)->exists();
+    }
+
+    /**
+     * Проверка по уже загрученным accessLevels, без отдельного SQL на каждый
+     * вызов (в отличие от hasAccessLevel).
+     */
+    protected function hasAnyAccessLevel(array $levelIds): bool
+    {
+        if (!$this->relationLoaded('accessLevels')) {
+            $this->load('accessLevels');
+        }
+
+        return $this->accessLevels->pluck('access_level_id')->intersect($levelIds)->isNotEmpty();
+    }
+
+    /** Суперадмин или админ (1|2) — права одинаковые. */
+    public function isAdmin(): bool
+    {
+        return $this->hasAnyAccessLevel([self::LEVEL_SUPERADMIN, self::LEVEL_ADMIN]);
+    }
+
+    /** Бухгалтер (3). */
+    public function isAccountant(): bool
+    {
+        return $this->hasAnyAccessLevel([self::LEVEL_ACCOUNTANT]);
+    }
+
+    /** Любой сотрудник (1|2|3) — не может быть партнёром. */
+    public function isStaff(): bool
+    {
+        return $this->hasAnyAccessLevel([self::LEVEL_SUPERADMIN, self::LEVEL_ADMIN, self::LEVEL_ACCOUNTANT]);
+    }
+
+    /** Реквизиты и выплаты доступны админу и бухгалтеру одинаково. */
+    public function canManageFinance(): bool
+    {
+        return $this->isStaff();
     }
 
 

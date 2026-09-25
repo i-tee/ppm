@@ -1,6 +1,6 @@
 <template>
 
-  <va-sidebar-item v-if="!isAdmin" :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'"
+  <va-sidebar-item v-if="!isStaff" :user="user" :to="{ name: 'Overview' }" :active="$route.name === 'Overview'"
     @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="dashboard" />
@@ -46,14 +46,14 @@
   </va-sidebar-item>
 
   <va-sidebar-item :to="{ name: 'RequisiteVerification' }" :active="$route.name === 'RequisiteVerification'"
-    @click="emit('close')" v-if="isAdmin">
+    @click="emit('close')" v-if="canManageFinance">
     <va-sidebar-item-content>
       <va-icon name="business" />
       <va-sidebar-item-title>{{ $t('dashboard.requisite_verification') }}</va-sidebar-item-title>
     </va-sidebar-item-content>
   </va-sidebar-item>
 
-  <va-sidebar-item :to="{ name: 'PayoutResolve' }" :active="$route.name === 'PayoutResolve'" v-if="isAdmin"
+  <va-sidebar-item :to="{ name: 'PayoutResolve' }" :active="$route.name === 'PayoutResolve'" v-if="canManageFinance"
     @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="business" />
@@ -68,7 +68,7 @@
     </va-sidebar-item-content>
   </va-sidebar-item> -->
 
-  <va-sidebar-item v-if="!isAdmin" :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive"
+  <va-sidebar-item v-if="!isStaff" :to="{ name: 'Types' }" :active="$route.name === 'Types'" :disabled="!isActive"
     @click="emit('close')">
     <va-sidebar-item-content>
       <va-icon name="work" />
@@ -132,9 +132,9 @@ const props = defineProps({
 const isSuperAdmin = computed(() => {
   return props.user.effective_access_levels && (props.user.effective_access_levels.includes(1));
 });
-const isAdmin = computed(() => {
-  return props.user.effective_access_levels && (props.user.effective_access_levels.includes(1) || props.user.effective_access_levels.includes(2));
-});
+const isAdmin = computed(() => authStore.isAdmin);
+const canManageFinance = computed(() => authStore.canManageFinance);
+const isStaff = computed(() => authStore.isStaff);
 const isActive = computed(() => {
   return props.user.effective_access_levels && props.user.effective_access_levels.some(level => level >= 0);
 });

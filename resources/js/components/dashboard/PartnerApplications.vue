@@ -155,9 +155,7 @@ const settingsStore = useSettingsStore();
 
 axios.defaults.headers.common['Authorization'] = `Bearer ${authStore.token}`;
 
-const isAdmin = computed(() => {
-  return props.user.effective_access_levels && (props.user.effective_access_levels.includes(1) || props.user.effective_access_levels.includes(2));
-});
+const isAdmin = computed(() => authStore.isAdmin);
 
 const applications = ref([]);
 const totalPages = ref(1);

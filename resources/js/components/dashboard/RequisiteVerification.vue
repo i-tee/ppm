@@ -1,5 +1,5 @@
 <template>
-  <template v-if="isAdmin">
+  <template v-if="canManageFinance">
     <div>
       <p class="va-h4 my-4">{{ $t('requisites.title') }}</p>
 
@@ -97,9 +97,7 @@ const { partnerSettings } = usePartnersHelper();
 
 axios.defaults.headers.common['Authorization'] = `Bearer ${authStore.token}`;
 
-const isAdmin = computed(() => {
-  return props.user.effective_access_levels && (props.user.effective_access_levels.includes(1) || props.user.effective_access_levels.includes(2));
-});
+const canManageFinance = computed(() => authStore.canManageFinance);
 
 const allRequisites = ref([]); // Все данные с бэка
 const requisites = ref([]); // Обработанные (с partner_type_name)
@@ -155,7 +153,7 @@ watch(requisites, () => {
 const fetchUnverifiedRequisites = async () => {
   try {
     console.log('User levels:', props.user.effective_access_levels); // ДЕБАГ: уровни юзера
-    console.log('Is Admin:', isAdmin.value); // ДЕБАГ: isAdmin
+    console.log('Can manage finance:', canManageFinance.value); // ДЕБАГ: isAdmin
 
     const response = await axios.get('/api/user/requisites-all');
     console.log('Full API Response:', response); // ДЕБАГ: полный response
@@ -274,7 +272,7 @@ const formatDate = (dateString) => {
 
 onMounted(async () => {
   console.log('onMounted: User props:', props.user); // ДЕБАГ: полный user
-  if (isAdmin.value) {
+  if (canManageFinance.value) {
     // Ждём загрузки partnerSettings
     if (!partnerSettings.value) {
       console.log('Waiting for partnerSettings...'); // ДЕБАГ: ожидание

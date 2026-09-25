@@ -29,11 +29,11 @@ class RequisiteController extends Controller
     public function all(Request $request)
     {
         $user = Auth::user();
-        $isAdmin = $user->hasAccessLevel(1) || $user->hasAccessLevel(2); // Проверка через UserAccessLevel
+        $canManageFinance = $user->canManageFinance(); // Админ и бухгалтер — одинаково
 
         $query = Requisite::query();
 
-        if ($isAdmin) {
+        if ($canManageFinance) {
             // Для админов: все неверифицированные (без active(), без with('user'))
             $query->where('is_verified', false);
         } else {
@@ -49,14 +49,13 @@ class RequisiteController extends Controller
     }
 
     /**
-     * Верифицировать реквизиты (только для админов).
+     * Верифицировать реквизиты (только админ и бухгалтер).
      */
     public function verify($id)
     {
         $user = Auth::user();
-        $isAdmin = $user->hasAccessLevel(1) || $user->hasAccessLevel(2); // Проверка через UserAccessLevel
 
-        if (!$isAdmin) {
+        if (!$user->canManageFinance()) {
             return response()->json(['message' => 'Доступ запрещён'], 403);
         }
 
@@ -195,16 +194,16 @@ class RequisiteController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-        $isAdmin = $user->hasAccessLevel(1) || $user->hasAccessLevel(2);
+        $canManageFinance = $user->canManageFinance(); // Админ и бухгалтер — одинаково
 
         $query = Requisite::query();
 
-        // Если не админ — жёстко фильтруем по своему user_id
-        if (!$isAdmin) {
+        // Если не может управлять финансами — жёстко фильтруем по своему user_id
+        if (!$canManageFinance) {
             $query->where('user_id', $user->id);
         }
 
-        // Теперь ищем с учётом фильтра (или без, если админ)
+        // Теперь ищем с учётом фильтра (или без, если админ/бухгалтер)
         $requisite = $query->findOrFail($id);
 
         // Мягкая деактивация + отмена верификации + мягкое удаление

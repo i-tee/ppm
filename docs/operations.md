@@ -208,17 +208,43 @@ impersonated-партнёр, а не админ. Файлы кеша — `storag
 
 ## 5. Безопасность
 
-- `/api/admin/*` защищены middleware **`admin`**
-  (`app/Http/Middleware/EnsureUserIsAdmin.php`, alias в `bootstrap/app.php`):
-  уровень доступа 1 или 2. До Фазы D группа висела на голом `auth:sanctum`,
-  роль проверялась вразнобой в контроллерах (`adminIndex` — вообще никак).
-  Проверки в контроллерах оставлены как дублирующая подстраховка.
+### Роли и гейты (этап 1.3, 2026-09-25)
+
+Уровни доступа — `config/settings.json → access_levels` + таблица
+`user_access_levels`: 1 `superadmin`, 2 `admin`, 3 `accountant`. Права 1 и 2
+одинаковые. Проверки собраны в `App\Models\User`: `isAdmin()` (1|2),
+`isAccountant()` (3), `isStaff()` (1|2|3), `canManageFinance()` (1|2|3) —
+все работают от уже загруженной связи `accessLevels`, без лишнего SQL на
+каждый вызов. Сотрудник (любой из 1/2/3) не может быть партнёром —
+партнёрские функции ему закрыты и на сервере, и в интерфейсе; impersonate
+это не ломает, под ним запросы идут с токеном партнёра.
+
+Middleware-алиасы (`bootstrap/app.php`):
+
+| Роут → гейт | Middleware | Кто проходит |
+|---|---|---|
+| `/admin/users`, `/admin/impersonate/*`, CRUD `/partner-applications` (кроме `POST`) | `admin` | 1, 2 |
+| `/admin/payout-requests*` (кроме `DELETE`), `/admin/payout-ticked-reminder/{id}` | `finance` | 1, 2, 3 |
+| `POST /partner-applications`, `/payout-requests*`, `/user/coupons`, `/user/check-promocode`, `/user/business-data`, `/user/coupon/*` | `partner` | не-сотрудник |
+| `/user/requisites*` (index/store/all/verify/destroy) | без middleware | роль проверяется внутри `RequisiteController` через `canManageFinance()` — общий роут, «свои реквизиты» для сотрудника недоступны |
+| `/user`, `/user/avatar`, `/user/change-password`, `/logout`, `/email/resend`, `/ps`, `/rs` | без middleware | любой залогиненный |
+
+Роли выдаются и снимаются только командой `php artisan ppm:access {email}
+{superadmin|admin|accountant} [--revoke] [--list]` — экрана для этого нет.
+`--list` — read-only, показывает всех сотрудников; полезно перед выдачей
+роли новому человеку — команда сама предупредит, если у аккаунта есть
+партнёрские данные (заявки/выплаты/реквизиты).
+
+`DELETE /admin/payout-requests/{id}` ведёт на несуществующий метод
+`adminDestroy` (баг, не в объёме 1.3) — роут остался под `admin`, не
+`finance`.
+
 - `AVICENNA_BACKEND_SOURCE_TOKEN` — секрет уровня пароля БД: даёт право
   минтить купоны на бэке. Только `.env`, не логировать.
 
 ### Известные проблемы (задачи в бэклоге, код пока не менялся)
 
-- **Роуты вне гейта `admin`** — доступны любому залогиненному партнёру
+- **Роуты вне гейта** — доступны любому залогиненному партнёру
   (`auth:sanctum`), проверки роли нет:
   - `POST /api/notifications/send` (`NotificationController::send`) —
     отправляет любое уведомление из `App\Notifications\*` любому
@@ -230,6 +256,10 @@ impersonated-партнёр, а не админ. Файлы кеша — `storag
   (`UserCouponController::create`): Joomla-id, к которому привязывается
   купон в `avicenna_user_coupons`, берётся из запроса без сверки с
   текущим пользователем.
+- ~~`GET/PUT/DELETE /partner-applications` без роль-гейта — любой партнёр
+  читал все заявки (с телефонами и почтами), мог одобрить сам себя и
+  удалить чужие~~ — закрыто в этапе 1.3 (роуты под `admin`, `POST` —
+  под `partner`, статус всегда `0` на сервере).
 
 ## 6. Тест-чеклист (смоук после деплоя / включения флагов)
 

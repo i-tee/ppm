@@ -54,18 +54,27 @@ https://trello.com/c/RFWSNOMq, бриф – `docs/prompts/partner-ux-master-brie
 
 ## 3. Уровни доступа
 
-`config/settings.json → access_levels`: 1 superadmin, 2 admin, 3 manager
-(нигде не используется). Таблица `user_access_levels`. Вычисляемые 0/−1 –
-email подтверждён / нет (`User::getEffectiveAccessLevelsAttribute`).
+`config/settings.json → access_levels`: 1 superadmin, 2 admin, 3
+accountant (этап 1.3, 2026-09-25 – переименован из manager). Таблица
+`user_access_levels`. Вычисляемые 0/−1 – email подтверждён / нет
+(`User::getEffectiveAccessLevelsAttribute`).
 
-- Сервер: middleware `admin` (`EnsureUserIsAdmin`, уровни 1 или 2) на
-  `/api/admin/*`. Роуты реквизитов (`/user/requisites-all`, `/verify`,
-  `DELETE`) – вне гейта, роль проверяется внутри `RequisiteController`.
-- Фронт: проверка «1 или 2» скопирована в `stores/auth.js`, `Sidebar.vue`,
-  `PartnerApplications.vue`, `RequisiteVerification.vue`,
-  `PayoutResolve.vue`, `Impersonate.vue`.
-- `UserAccessLevel::getAccessLevelAttribute` берёт уровень по позиции в
-  массиве, а не по `id` – ошибка смещения на единицу.
+- Сервер: единая проверка в `App\Models\User` – `isAdmin()` (1|2),
+  `isAccountant()` (3), `isStaff()` (1|2|3), `canManageFinance()` (1|2|3),
+  все от уже загруженной `accessLevels`. Middleware-алиасы (`admin`,
+  `finance`, `partner`) на соответствующих группах роутов – подробности и
+  таблица «роут → гейт» в `docs/operations.md` §5. Сотрудник (1/2/3) не
+  может быть партнёром – закрыто и на сервере, и в интерфейсе.
+- Фронт: геттеры в `stores/auth.js` (`isAdmin`, `isAccountant`, `isStaff`,
+  `canManageFinance`) – единственное место проверки, остальные пять
+  копий (`Sidebar.vue`, `PartnerApplications.vue`,
+  `RequisiteVerification.vue`, `PayoutResolve.vue`, `Impersonate.vue`)
+  переведены на них. Роутер (`router.js`) гейтит экраны по `meta.roles`.
+- Роли выдаются/снимаются только командой `php artisan ppm:access` –
+  экрана нет (решение владельца).
+- `UserAccessLevel::getAccessLevelAttribute` – исправлено: ищет уровень
+  по `id` (`collect($levels)->firstWhere('id', ...)`), не по позиции в
+  массиве.
 
 ## 4. Найденные проблемы
 
@@ -171,6 +180,12 @@ SQL Joomla на `business-data` теперь **не растёт с числом
    модальном окне (ссылка из интерфейса), у каждой роли – свои.
 6. **Этап 1.0 (гигиена и безопасность сервера) отложен** – решение после
    сдачи остального. В воркер-промптах серверные дыры не чинить.
+7. **Роли (25.09, к этапу 1.3):** сотрудник (уровни 1/2/3) не может
+   быть партнёром – партнёрские функции закрыты ему на сервере и в
+   интерфейсе; бухгалтер отклоняет реквизиты так же, как админ
+   (удалением); роли выдаются artisan-командой `ppm:access`, без экрана;
+   дыра в `/partner-applications` (любой партнёр читал все заявки и мог
+   одобрить себя) закрывается в 1.3, не ждёт 1.0.
 
 ## 6. План этапа 1
 

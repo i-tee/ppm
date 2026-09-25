@@ -93,8 +93,8 @@
     },
     {
       "id": 3,
-      "name": "manager",
-      "description": "Manager has limited access to specific system features.",
+      "name": "accountant",
+      "description": "Accountant checks requisites and resolves payouts, same as admin.",
       "active": true
     }
   ],

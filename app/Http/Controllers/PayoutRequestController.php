@@ -286,8 +286,7 @@ class PayoutRequestController extends Controller
     public function adminIndexPrepared(Request $request)
     {
         abort_unless(
-            auth()->user()->hasAccessLevel(1) ||
-                auth()->user()->hasAccessLevel(2),
+            auth()->user()->canManageFinance(),
             403,
             'Permission denied – no access rights'
         );
@@ -334,9 +333,9 @@ class PayoutRequestController extends Controller
      */
     public function adminReceived(Request $request, $id)
     {
-        // Проверяем права: только админы (уровни 1 или 2)
+        // Проверяем права: админ и бухгалтер — одинаково
         abort_unless(
-            auth()->user()->hasAccessLevel(1) || auth()->user()->hasAccessLevel(2),
+            auth()->user()->canManageFinance(),
             403,
             trans('payoutRequest.permission_denied') // Добавь ключ в локализацию, если нет
         );
@@ -537,7 +536,7 @@ class PayoutRequestController extends Controller
     public function adminTicketReminder($id)
     {
         abort_unless(
-            auth()->user()->hasAccessLevel(1) || auth()->user()->hasAccessLevel(2),
+            auth()->user()->canManageFinance(),
             403,
             trans('payoutRequest.permission_denied')
         );
@@ -597,7 +596,7 @@ class PayoutRequestController extends Controller
     public function adminStatusUpdate(Request $request, $id, $status)
     {
         abort_unless(
-            auth()->user()->hasAccessLevel(1) || auth()->user()->hasAccessLevel(2),
+            auth()->user()->canManageFinance(),
             403,
             trans('payoutRequest.permission_denied')
         );
@@ -667,7 +666,7 @@ class PayoutRequestController extends Controller
     public function adminTickedAbort(Request $request, $id)
     {
         abort_unless(
-            auth()->user()->hasAccessLevel(1) || auth()->user()->hasAccessLevel(2),
+            auth()->user()->canManageFinance(),
             403,
             trans('payoutRequest.permission_denied')
         );

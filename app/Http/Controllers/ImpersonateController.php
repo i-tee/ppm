@@ -12,12 +12,8 @@ class ImpersonateController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        
-        // Используем ту же логику, что и во фронтенде
-        $effectiveLevels = $user->effective_access_levels ?? [];
-        $isAdmin = in_array(1, $effectiveLevels) || in_array(2, $effectiveLevels);
-        
-        if (!$isAdmin) {
+
+        if (!$user->isAdmin()) {
             return response()->json(['error' => 'Access denied'], 403);
         }
 
@@ -34,12 +30,8 @@ class ImpersonateController extends Controller
     public function impersonate(Request $request, User $user)
     {
         $admin = Auth::user();
-        
-        // Проверка прав админа (та же логика)
-        $adminEffectiveLevels = $admin->effective_access_levels ?? [];
-        $isAdmin = in_array(1, $adminEffectiveLevels) || in_array(2, $adminEffectiveLevels);
-        
-        if (!$isAdmin) {
+
+        if (!$admin->isAdmin()) {
             return response()->json(['error' => 'Access denied'], 403);
         }
         

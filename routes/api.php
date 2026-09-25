@@ -27,66 +27,81 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    // Отладочные роуты, открыты любому залогиненному партнёру — известная
+    // дыра, отложена до этапа 1.0 (docs/operations.md §5), в 1.3 не трогаем.
     Route::get('/dev2', [UserCouponController::class, 'ddv']);
     Route::get('/dev3', [UserCouponController::class, 'data']);
     Route::get('/dev4', [UserCouponController::class, 'index']);
 
-    Route::post('/payout-requests', [PayoutRequestController::class, 'store']);
-    Route::post('/payout-requests/{id}/ticket', [PayoutRequestController::class, 'uploadTicket']);
+    // Любое уведомление любому пользователю от любого партнёра — известная
+    // дыра, отложена до этапа 1.0, в 1.3 не трогаем.
+    Route::post('/notifications/send', [NotificationController::class, 'send']);
 
-    // ── Админ-роуты: роль-гейт `admin` поверх auth:sanctum (Фаза D, этап 3) ──
-    // Раньше висели на одном auth:sanctum, роль-проверка была вразнобой в
-    // контроллерах (adminIndex её не имел вовсе). Теперь — централизованно.
-    Route::middleware('admin')->group(function () {
-        Route::get('/admin/payout-requests-prepared', [PayoutRequestController::class, 'adminIndexPrepared']);  //  метод для админа
-        Route::get('/admin/payout-requests', [PayoutRequestController::class, 'adminIndex']);  //  метод для админа
-        Route::post('/admin/payout-ticked-reminder/{id}', [PayoutRequestController::class, 'adminTicketReminder']);  //  метод для админа
-        Route::get('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminShow']);  //  метод для деталей
-        Route::put('/admin/payout-requests/{id}/{status}', [PayoutRequestController::class, 'adminStatusUpdate']);  // Обновление статуса
-        Route::put('/admin/payout-requests-ticket-abort/{id}', [PayoutRequestController::class, 'adminTickedAbort']);  // Откат статуса и отклонение чека
-        Route::put('/admin/payout-requests-received/{id}', [PayoutRequestController::class, 'adminReceived']);  // Отчёт(Обновление) о выплате
-        Route::delete('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminDestroy']);  // Удаление
+    // ── Общие роуты: доступны всем залогиненным, включая сотрудников ──
+    Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
+    Route::put('/user/change-password', [AuthController::class, 'changePassword']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::put('/user', [AuthController::class, 'update']);
+    Route::post('/email/resend', [VerificationController::class, 'resend'])
+        ->middleware('throttle:6,1')
+        ->name('verification.resend');
+    Route::get('/ps', [PartnersSettingController::class, 'index']);
+    Route::get('/rs', [RequisitesSettingController::class, 'index']);
 
-        Route::get('/admin/users', [ImpersonateController::class, 'index']);
-        Route::post('/admin/impersonate/{user}', [ImpersonateController::class, 'impersonate']);
-        Route::post('/admin/impersonate/stop', [ImpersonateController::class, 'stop']);
-    });
-
+    // ── Реквизиты: роуты общие с партнёром (своё создание/удаление),
+    // роль (админ/бухгалтер видят чужие на проверку) проверяется внутри
+    // RequisiteController через canManageFinance() ──
     Route::get('/user/requisites', [RequisiteController::class, 'index']);
     Route::get('/user/requisites-all', [RequisiteController::class, 'all']);
     Route::put('/user/requisites/{id}/verify', [RequisiteController::class, 'verify']);
     Route::post('/user/requisites', [RequisiteController::class, 'store']);
     Route::delete('/user/requisites/{id}', [RequisiteController::class, 'destroy']);
 
-    Route::get('/user/coupons', [UserCouponController::class, 'index']);
-    Route::post('/user/check-promocode', [UserCouponController::class, 'check']);
-    Route::get('/user/business-data', [UserCouponController::class, 'data']);
-    Route::post('/user/coupon/create', [UserCouponController::class, 'create']);
-    Route::post('/user/coupon/orders', [UserCouponController::class, 'getOrderInfoByCouponId']);
+    // ── Финансовые админ-роуты: `finance` — админ и бухгалтер одинаково ──
+    Route::middleware('finance')->group(function () {
+        Route::get('/admin/payout-requests-prepared', [PayoutRequestController::class, 'adminIndexPrepared']);
+        Route::get('/admin/payout-requests', [PayoutRequestController::class, 'adminIndex']);
+        Route::post('/admin/payout-ticked-reminder/{id}', [PayoutRequestController::class, 'adminTicketReminder']);
+        Route::get('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminShow']);
+        Route::put('/admin/payout-requests/{id}/{status}', [PayoutRequestController::class, 'adminStatusUpdate']);
+        Route::put('/admin/payout-requests-ticket-abort/{id}', [PayoutRequestController::class, 'adminTickedAbort']);
+        Route::put('/admin/payout-requests-received/{id}', [PayoutRequestController::class, 'adminReceived']);
+    });
 
-    Route::put('/user/change-password', [AuthController::class, 'changePassword']);
+    // ── Админ-роуты: пользователи, impersonate, заявки партнёров ──
+    // DELETE .../{id} ведёт на несуществующий adminDestroy — оставлено как
+    // есть (не в объёме 1.3), но остаётся под `admin`, не `finance`.
+    Route::middleware('admin')->group(function () {
+        Route::delete('/admin/payout-requests/{id}', [PayoutRequestController::class, 'adminDestroy']);
 
-    Route::post('/partner-applications', [PartnerApplicationController::class, 'store']);
-    Route::get('/partner-applications', [PartnerApplicationController::class, 'index']);
-    Route::get('/partner-applications/statuses', [PartnerApplicationController::class, 'getStatuses']);
-    Route::get('/partner-applications/{id}', [PartnerApplicationController::class, 'show']);
-    Route::put('/partner-applications/{id}', [PartnerApplicationController::class, 'update']);
-    Route::delete('/partner-applications/{id}', [PartnerApplicationController::class, 'destroy']);
+        Route::get('/admin/users', [ImpersonateController::class, 'index']);
+        Route::post('/admin/impersonate/{user}', [ImpersonateController::class, 'impersonate']);
+        Route::post('/admin/impersonate/stop', [ImpersonateController::class, 'stop']);
 
-    Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
+        // Закрытие дыры (этап 1.3): раньше висело на auth:sanctum — любой
+        // партнёр читал все заявки (с телефонами и почтами), мог одобрить
+        // сам себя и удалить чужие.
+        Route::get('/partner-applications', [PartnerApplicationController::class, 'index']);
+        Route::get('/partner-applications/statuses', [PartnerApplicationController::class, 'getStatuses']);
+        Route::get('/partner-applications/{id}', [PartnerApplicationController::class, 'show']);
+        Route::put('/partner-applications/{id}', [PartnerApplicationController::class, 'update']);
+        Route::delete('/partner-applications/{id}', [PartnerApplicationController::class, 'destroy']);
+    });
 
-    Route::get('/ps', [PartnersSettingController::class, 'index']);
-    Route::get('/rs', [RequisitesSettingController::class, 'index']);
+    // ── Партнёрские роуты: сотрудник (1|2|3) не может быть партнёром ──
+    Route::middleware('partner')->group(function () {
+        Route::post('/partner-applications', [PartnerApplicationController::class, 'store']);
 
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::put('/user', [AuthController::class, 'update']);
+        Route::post('/payout-requests', [PayoutRequestController::class, 'store']);
+        Route::post('/payout-requests/{id}/ticket', [PayoutRequestController::class, 'uploadTicket']);
 
-    Route::post('/email/resend', [VerificationController::class, 'resend'])
-        ->middleware('throttle:6,1')
-        ->name('verification.resend');
-
-    Route::post('/notifications/send', [NotificationController::class, 'send']);
+        Route::get('/user/coupons', [UserCouponController::class, 'index']);
+        Route::post('/user/check-promocode', [UserCouponController::class, 'check']);
+        Route::get('/user/business-data', [UserCouponController::class, 'data']);
+        Route::post('/user/coupon/create', [UserCouponController::class, 'create']);
+        Route::post('/user/coupon/orders', [UserCouponController::class, 'getOrderInfoByCouponId']);
+    });
 });
 
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);

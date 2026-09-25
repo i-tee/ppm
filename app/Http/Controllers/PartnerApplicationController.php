@@ -65,7 +65,9 @@ class PartnerApplicationController extends Controller
 
         $data = array_merge($validated, [
             'user_id' => $req->user()->id,
-            'status_id' => $req->input('status_id', 0),
+            // Всегда 0 (новая), не из запроса — иначе партнёр мог подать
+            // сразу одобренную заявку.
+            'status_id' => 0,
         ]);
 
         $app = PartnerApplication::create($data);

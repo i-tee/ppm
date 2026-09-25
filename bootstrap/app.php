@@ -12,9 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Гейт админ-роутов (/api/admin/*): роль-проверка поверх auth:sanctum.
+        // Роль-гейты поверх auth:sanctum (этап 1.3: роли и accountant).
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'finance' => \App\Http\Middleware\EnsureUserCanManageFinance::class,
+            'partner' => \App\Http\Middleware\EnsureUserIsPartner::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

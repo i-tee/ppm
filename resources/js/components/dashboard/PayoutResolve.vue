@@ -1,4 +1,11 @@
 <template>
+  <template v-if="!canManageFinance">
+    <VaAlert color="danger" class="mt-4">
+      {{ $t('errors.no_access') }}
+    </VaAlert>
+  </template>
+
+  <template v-else>
   <div class="va-table-responsive">
     <table v-if="!LoadindTable" class="va-table va-table-payoutRequest">
       <thead>
@@ -117,6 +124,7 @@
 
     </div>
   </VaModal>
+  </template>
 
 </template>
 
@@ -157,9 +165,7 @@ const { t } = useI18n();
 const toast = useToast();
 const authStore = useAuthStore();
 
-const isAdmin = computed(() => {
-  return props.user.effective_access_levels && (props.user.effective_access_levels.includes(1) || props.user.effective_access_levels.includes(2));
-});
+const canManageFinance = computed(() => authStore.canManageFinance);
 
 const checkedPayout = ref(false);
 const showRequisitFullModal = ref(false);
@@ -260,7 +266,7 @@ const adminTicketReminder = async (payoutId) => {
 
 const fetchPayoutRequests = async () => {
 
-  if (!isAdmin.value) return;
+  if (!canManageFinance.value) return;
 
   try {
 
@@ -290,7 +296,7 @@ const fetchPayoutRequests = async () => {
 };
 
 onMounted(async () => {
-  if (isAdmin.value) {
+  if (canManageFinance.value) {
     await fetchPayoutRequests();
   }
 });

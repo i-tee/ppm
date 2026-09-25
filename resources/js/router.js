@@ -59,36 +59,43 @@ const routes = [
         path: "",
         name: "Overview",
         component: Overview,
+        meta: { roles: ["partner"] },
       },
       {
         path: "promocodes",
         name: "Promocodes",
         component: Promocodes,
+        meta: { roles: ["partner"] },
       },
       {
         path: "influencer",
         name: "Influencer",
         component: Influencer,
+        meta: { roles: ["partner"] },
       },
       {
         path: "agent",
         name: "Agent",
         component: Agent,
+        meta: { roles: ["partner"] },
       },
       {
         path: "requisite",
         name: "Requisite",
         component: Requisite,
+        meta: { roles: ["partner"] },
       },
       {
         path: "wholesale",
         name: "Wholesale",
         component: Wholesale,
+        meta: { roles: ["partner"] },
       },
       {
         path: "distributor",
         name: "Distributor",
         component: Distributor,
+        meta: { roles: ["partner"] },
       },
       // {
       //   path: "dev",
@@ -99,26 +106,31 @@ const routes = [
         path: "requisite-verification",
         name: "RequisiteVerification",
         component: RequisiteVerification,
+        meta: { roles: ["finance"] },
       },
       {
         path: "payout-resolve",
         name: "PayoutResolve",
         component: PayoutResolve,
+        meta: { roles: ["finance"] },
       },
       {
         path: "impersonate",
         name: "Impersonate",
         component: Impersonate,
+        meta: { roles: ["admin"] },
       },
       {
         path: "partner-applications",
         name: "PartnerApplications",
         component: PartnerApplications,
+        meta: { roles: ["admin"] },
       },
       {
         path: "types",
         name: "Types",
         component: Types,
+        meta: { roles: ["partner"] },
       },
       {
         path: "account",
@@ -129,6 +141,7 @@ const routes = [
         path: "referral-links",
         name: "ReferralLinks",
         component: ReferralLinks,
+        meta: { roles: ["partner"] },
       },
     ],
   },
@@ -144,6 +157,20 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
+// «Домашний» экран роли — используется для редиректа при нехватке прав.
+function homeRouteFor(authStore) {
+  if (authStore.isAdmin) return { name: "PartnerApplications" };
+  if (authStore.isAccountant) return { name: "PayoutResolve" };
+  return { name: "Overview" };
+}
+
+function roleAllows(role, authStore) {
+  if (role === "admin") return authStore.isAdmin;
+  if (role === "finance") return authStore.canManageFinance;
+  if (role === "partner") return !authStore.isStaff;
+  return false;
+}
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
@@ -186,6 +213,12 @@ router.beforeEach(async (to, from, next) => {
       authStore.logout();
       return next({ name: "welcome" });
     }
+
+    const requiredRoles = to.meta.roles;
+    if (requiredRoles && !requiredRoles.some((role) => roleAllows(role, authStore))) {
+      return next(homeRouteFor(authStore));
+    }
+
     return next();
   }
 
