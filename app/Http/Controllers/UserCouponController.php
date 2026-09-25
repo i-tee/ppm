@@ -12,6 +12,7 @@ use App\Models\PayoutRequest;
 use App\Models\TrueBonusCode;
 use App\Models\HiddenCoupon;
 use App\Helpers\BusinessDataCache;
+use App\Services\PartnerBalanceCalculator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -69,7 +70,14 @@ class UserCouponController extends Controller
         return response()->json($payload);
     }
 
-    private function buildBusinessData($user): array
+    /**
+     * Полные данные кабинета партнёра. `public` с этапа В (PPM-W13):
+     * карточку партнёра в админке (`AdminPartnersController::show`) собирает
+     * этот же метод – чтобы админ видел ровно те цифры, что и сам партнёр.
+     * Пользователь берётся из аргумента, но методы `JoomlaCoupon` читают его
+     * из `Auth` – зовущий обязан подменить `Auth` на этого же партнёра.
+     */
+    public function buildBusinessData($user): array
     {
         // 1. Получаем данные (Юзер создается в Джумла если его нет)
         $raw = JoomlaCoupon::getUserCoupons();   // может быть Collection, может быть массив
@@ -109,38 +117,31 @@ class UserCouponController extends Controller
         $credits = JoomlaCoupon::credits();
         $withdrawals = JoomlaCoupon::withdrawals();
 
-        $expenseSummary += $withdrawals['debit'];
-
-        $balance = ceil($credits['total_accruals'] - $withdrawals['debit']);
-        if ($oldPromocodBalance['be']) {
-            $balance += $oldPromocodBalance['summ'];
-        }
-
         $trueBonusCode = [];
         $trueBonusCode['trueBonusCodes'] = TrueBonusCode::where('user_id', $user->id)->orderBy('created_at')->get();
         $trueBonusCode['totalBonusCodesCost'] = $trueBonusCode['trueBonusCodes']->sum('bonus_code_cost');
 
-        if (isset($trueBonusCode['totalBonusCodesCost']) and $trueBonusCode['totalBonusCodesCost'] > 0) {
-            $balance -= $trueBonusCode['totalBonusCodesCost'];
-            $expenseSummary += $trueBonusCode['totalBonusCodesCost'];
-        }
-
         // Новое: Получаем данные о payout_requests
         $payoutRequestsData = PayoutRequest::withdrawals();
-        $expenseSummary += $payoutRequestsData['debit']; // Добавляем в общие расходы (списание из баланса)
-
-        if (isset($payoutRequestsData['debit']) && $payoutRequestsData['debit'] > 0) {
-            $balance -= $payoutRequestsData['debit']; // Списываем из баланса агента
-        }
 
         // Бэк-сторно (возвраты нового сайта) — списание из баланса (Фаза D, слайс B).
         // Начисления бэка уже в credits.total_accruals через шов getPpOrders;
         // здесь вычитаем возвраты, чтобы баланс был net (accruals − reversals).
         $backendReversals = JoomlaCoupon::backendReversalsSummary();
-        if ($backendReversals['debit'] > 0) {
-            $expenseSummary += $backendReversals['debit'];
-            $balance -= $backendReversals['debit'];
-        }
+
+        // Единственная формула баланса — общая со списком «Партнёры» в админке
+        // (этап В). Порядок операций внутри не менялся, см. PartnerBalanceCalculator.
+        $totals = PartnerBalanceCalculator::compute(
+            $credits['orders'],
+            (float) $withdrawals['debit'],
+            $oldPromocodBalance['be'] ? (float) $oldPromocodBalance['summ'] : null,
+            (float) $trueBonusCode['totalBonusCodesCost'],
+            (float) $payoutRequestsData['debit'],
+            (float) $backendReversals['debit'],
+        );
+
+        $balance = $totals['balance'];
+        $expenseSummary += $totals['expenseSummary'];
 
         // 3. Отдаём данные (сериализуются в JSON и, при первом заходе за TTL, кешируются в data())
         return [

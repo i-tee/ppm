@@ -18,6 +18,12 @@ use Illuminate\Support\Facades\Log;
  */
 class AvicennaBackendClient
 {
+    /** Сколько партнёров в одном раунде Http::pool (×2 эндпоинта = 10 запросов). */
+    private const POOL_PARTNERS = 5;
+
+    /** Предел страниц на один эндпоинт — тот же, что у одиночных методов. */
+    private const MAX_PAGES = 50;
+
     /**
      * Минт партнёрского купона на бэке.
      *
@@ -204,5 +210,150 @@ class AvicennaBackendClient
         } while ($page <= $lastPage && $page <= 50); // guard: не более 50 страниц
 
         return ['success' => true, 'rows' => $rows];
+    }
+
+    /**
+     * Пакетная загрузка начислений и погашений сразу по многим партнёрам —
+     * для админского списка «Партнёры» (этап В, PPM-W13).
+     *
+     * Одиночные `getAccruals()`/`getRedemptions()` делают 2 последовательных
+     * HTTP на партнёра: на 50 партнёрах это 100 запросов в очередь. Здесь те же
+     * эндпоинты зовутся через `Http::pool` чанками по {@see self::POOL_PARTNERS}
+     * партнёров (×2 запроса = 10 одновременных). Первый раунд тянет страницу 1
+     * и узнаёт `meta.last_page`, остальные страницы догружаются следующими
+     * раундами — тем же пулом и с тем же пределом страниц, что у одиночных
+     * методов.
+     *
+     * Флаг `PARTNER_ACCRUALS_FROM_BACKEND` — тот же: при выключенном флаге
+     * отдаём пустые (но успешные) наборы, как это делает JoomlaCoupon::loadBackend().
+     *
+     * Частичный сбой изолирован по партнёру: у кого не догрузилось — у того
+     * `success: false`, остальные приходят целыми. Разбор строк — общий с
+     * одиночным путём (`JoomlaCoupon::classifyBackendRows()`).
+     *
+     * @param  array<int|string>  $partnerRefs
+     * @return array<string,array{success:bool,accruals:array,redemptions:array}>
+     */
+    public function getAccrualsRedemptionsBatch(array $partnerRefs): array
+    {
+        $refs = array_values(array_unique(array_map('strval', $partnerRefs)));
+
+        $result = [];
+        foreach ($refs as $ref) {
+            $result[$ref] = ['success' => true, 'accruals' => [], 'redemptions' => []];
+        }
+
+        if (empty($refs) || ! (bool) config('services.avicenna_backend.accruals_from_backend')) {
+            return $result;
+        }
+
+        foreach (array_chunk($refs, self::POOL_PARTNERS) as $chunk) {
+            // Раунд 1: первая страница обоих эндпоинтов по каждому партнёру.
+            $descriptors = [];
+            foreach ($chunk as $ref) {
+                $descriptors[] = ['ref' => $ref, 'kind' => 'accruals', 'page' => 1];
+                $descriptors[] = ['ref' => $ref, 'kind' => 'redemptions', 'page' => 1];
+            }
+
+            $lastPages = [];
+            $this->runPoolRound($descriptors, $result, $lastPages);
+
+            // Раунды 2+: доборы страниц там, где бэк сообщил last_page > 1.
+            $pending = [];
+            foreach ($lastPages as $key => $lastPage) {
+                [$ref, $kind] = explode('|', $key, 2);
+                if (($result[$ref]['success'] ?? false) === false) {
+                    continue; // у партнёра уже сбой — добирать нечего
+                }
+                for ($page = 2; $page <= min($lastPage, self::MAX_PAGES); $page++) {
+                    $pending[] = ['ref' => $ref, 'kind' => $kind, 'page' => $page];
+                }
+            }
+
+            foreach (array_chunk($pending, self::POOL_PARTNERS * 2) as $round) {
+                $ignored = [];
+                $this->runPoolRound($round, $result, $ignored);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Один раунд `Http::pool`: шлёт описанные запросы разом и раскладывает
+     * строки по партнёрам. Сбой конкретного запроса помечает партнёра
+     * `success: false` (детали — только в лог, наружу они не уходят).
+     *
+     * @param  array<array{ref:string,kind:string,page:int}>  $descriptors
+     * @param  array<string,array{success:bool,accruals:array,redemptions:array}>  $result
+     * @param  array<string,int>  $lastPages  Заполняется `ref|kind => meta.last_page`.
+     */
+    private function runPoolRound(array $descriptors, array &$result, array &$lastPages): void
+    {
+        if (empty($descriptors)) {
+            return;
+        }
+
+        $cfg = config('services.avicenna_backend');
+        $baseUrl = rtrim((string) $cfg['base_url'], '/');
+        $timeout = (int) ($cfg['timeout'] ?? 10);
+        $token = (string) $cfg['source_token'];
+
+        $responses = Http::pool(function ($pool) use ($descriptors, $baseUrl, $timeout, $token) {
+            $requests = [];
+
+            foreach ($descriptors as $i => $d) {
+                $requests[] = $pool->as((string) $i)
+                    ->withHeaders(['X-Source-Token' => $token, 'Accept' => 'application/json'])
+                    ->timeout($timeout)
+                    ->get($baseUrl . '/api/v1/partner/' . $d['kind'], [
+                        'partner_ref' => $d['ref'],
+                        'per_page'    => 100,
+                        'page'        => $d['page'],
+                    ]);
+            }
+
+            return $requests;
+        });
+
+        foreach ($descriptors as $i => $d) {
+            $ref = $d['ref'];
+            $response = $responses[(string) $i] ?? null;
+
+            if ($response instanceof \Throwable) {
+                Log::error('avicenna_backend.batch_network_error', [
+                    'error' => $response->getMessage(),
+                    'partner_ref' => $ref,
+                    'kind' => $d['kind'],
+                    'page' => $d['page'],
+                ]);
+                $result[$ref]['success'] = false;
+                continue;
+            }
+
+            if (! $response || ! $response->successful()) {
+                Log::error('avicenna_backend.batch_failed', [
+                    'status' => $response?->status(),
+                    'partner_ref' => $ref,
+                    'kind' => $d['kind'],
+                    'page' => $d['page'],
+                ]);
+                $result[$ref]['success'] = false;
+                continue;
+            }
+
+            $body = $response->json();
+
+            foreach (($body['data'] ?? []) as $row) {
+                $result[$ref][$d['kind']][] = $row;
+            }
+
+            if ($d['page'] === 1) {
+                $lastPage = (int) ($body['meta']['last_page'] ?? 1);
+                if ($lastPage > 1) {
+                    $lastPages[$ref . '|' . $d['kind']] = $lastPage;
+                }
+            }
+        }
     }
 }

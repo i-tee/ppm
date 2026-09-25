@@ -121,6 +121,9 @@
       "active": true
     }
   ],
+  "partner_activity": {
+    "active_days": 60
+  },
   "global": {
     "responsible_partnersmail": "avicenna.com.ru@gmail.com",
     "responsible_phone": "74997055969",

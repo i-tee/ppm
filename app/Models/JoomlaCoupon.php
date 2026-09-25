@@ -48,6 +48,17 @@ class JoomlaCoupon extends Model
     ];
 
     /**
+     * Белый список полей заказа для внешних пакетных выборок (админский
+     * список «Партнёры», этап В) — чтобы там тоже не появился `select *`.
+     *
+     * @return string[]
+     */
+    public static function orderSafeFields(): array
+    {
+        return self::ORDER_SAFE_FIELDS;
+    }
+
+    /**
      * Отключаем автоинкремент, если он не нужен
      */
     public $incrementing = true;
@@ -887,6 +898,146 @@ class JoomlaCoupon extends Model
     }
 
     /**
+     * Поправка кешбэка для «старых» процентных купонов: у купона
+     * type=0 / cashback=0 / coupon_value=10 кешбэк заказа не проставлен, и
+     * его берут равным скидке заказа. Извлечено из loadPpOrdersBatch()
+     * (этап В) — тем же правилом пользуется админский список «Партнёры»,
+     * иначе его цифры разошлись бы с кабинетом партнёра.
+     *
+     * @param  object  $coupon  Строка jshopping_coupons.
+     * @param  \Illuminate\Support\Collection  $orders  Заказы этого купона.
+     * @param  bool  $log  Писать ли в лог. Список «Партнёры» зовёт метод по
+     *                     всем купонам всех партнёров сразу — там логирование
+     *                     каждого заказа только забивает лог, поэтому false.
+     * @return \Illuminate\Support\Collection
+     */
+    public static function applyCashbackFix($coupon, $orders, bool $log = true)
+    {
+        // Проверяем условия: coupon_type=0, cashback=0, coupon_value=10
+        if ($coupon->coupon_type == 0 && (float) $coupon->cashback == 0.0 && (float) $coupon->coupon_value == 10.0) {
+            return $orders->map(function ($order) use ($log) {
+                // Приводим cashback и order_discount к числу для точного сравнения
+                $orderCashback = (float) $order->cashback;
+                $orderDiscount = (float) $order->order_discount;
+
+                if ($orderCashback == 0.0 && $orderDiscount > 0) {
+                    $order->cashback = number_format($orderDiscount, 2, '.', '');
+                    if ($log) {
+                        Log::info("Updated order cashback", [
+                            'order_id' => $order->order_id,
+                            'cashback' => $order->cashback,
+                            'order_discount' => $orderDiscount,
+                        ]);
+                    }
+                }
+                return $order;
+            });
+        }
+
+        if ($log) {
+            Log::info("Coupon conditions not met, skipping cashback update", [
+                'coupon_id' => $coupon->coupon_id ?? null,
+                'coupon_type' => $coupon->coupon_type,
+                'cashback' => $coupon->cashback,
+                'coupon_value' => $coupon->coupon_value,
+            ]);
+        }
+
+        return $orders;
+    }
+
+    /**
+     * Раскладывает сырые строки бэкенда по купонам. Извлечено из loadBackend()
+     * (этап В) — список «Партнёры» тянет строки пакетно (Http::pool), а
+     * разбирает их этим же кодом.
+     *
+     * @param  array  $accrualRows     Строки `/partner/accruals` (type: accrual|reversal).
+     * @param  array  $redemptionRows  Строки `/partner/redemptions`.
+     * @return array{accrualsByCoupon:array<string,\stdClass[]>,reversals:array,redemptionsByCoupon:array<string,\stdClass[]>,usedCodes:array<string,true>}
+     */
+    public static function classifyBackendRows(array $accrualRows, array $redemptionRows): array
+    {
+        $cache = [
+            'accrualsByCoupon'    => [],
+            'reversals'           => [],
+            'redemptionsByCoupon' => [],
+            'usedCodes'           => [],
+        ];
+
+        // Начисления (процентные купоны): accrual → шов, reversal → «Корректировки».
+        foreach ($accrualRows as $row) {
+            $type = $row['type'] ?? null;
+            if ($type === 'accrual') {
+                $code = mb_strtolower(trim((string) ($row['coupon_code'] ?? '')));
+                if ($code !== '') {
+                    $cache['accrualsByCoupon'][$code][] = self::mapBackendRowToOrder($row);
+                }
+            } elseif ($type === 'reversal') {
+                $cache['reversals'][] = $row;
+            }
+        }
+
+        // Погашения (бонусные купоны): факт использования + заказ.
+        foreach ($redemptionRows as $row) {
+            $code = mb_strtolower(trim((string) ($row['coupon_code'] ?? '')));
+            if ($code !== '') {
+                $cache['redemptionsByCoupon'][$code][] = self::mapBackendRowToOrder($row);
+                $cache['usedCodes'][$code] = true;
+            }
+        }
+
+        return $cache;
+    }
+
+    /**
+     * Подмешивает к заказам купона строки нового сайта. Извлечено из
+     * loadPpOrdersBatch() (этап В) — общее со списком «Партнёры».
+     *
+     * @param  \Illuminate\Support\Collection  $orders
+     * @param  array  $classified  Результат classifyBackendRows().
+     * @return \Illuminate\Support\Collection
+     */
+    public static function appendBackendOrders($orders, string $couponCode, int $couponId, array $classified)
+    {
+        $code = mb_strtolower(trim($couponCode));
+
+        // ── Шов: дотягиваем начисления нового сайта по коду купона ──────
+        // (Фаза D, слайс B). Только accruals; сторно → «Корректировки».
+        foreach ($classified['accrualsByCoupon'][$code] ?? [] as $beOrder) {
+            $be = clone $beOrder;         // не мутируем кэш
+            $be->coupon_id = $couponId;   // чтобы data() резолвил coupon_type
+            $orders->push($be);
+        }
+
+        // ── Шов: погашения бонусника нового сайта (этап 4). У бонусника
+        // начислений нет — заказ приходит этим каналом (пересечения с
+        // accruals нет: бонусные и процентные — разные купоны/коды). ──────
+        foreach ($classified['redemptionsByCoupon'][$code] ?? [] as $beOrder) {
+            $be = clone $beOrder;
+            $be->coupon_id = $couponId;
+            $orders->push($be);
+        }
+
+        return $orders;
+    }
+
+    /**
+     * Сбрасывает все мемо-кеши «на время запроса». Нужен админской карточке
+     * партнёра (этап В): она подменяет `Auth` на партнёра, а часть кешей
+     * (`$backendCache`, `$ppOrdersCache`) не привязана к id пользователя —
+     * без сброса партнёр получил бы данные предыдущего.
+     */
+    public static function resetRequestCaches(): void
+    {
+        self::$backendCache = null;
+        self::$backendFailed = false;
+        self::$joomlaUserCache = [];
+        self::$userCouponsCache = [];
+        self::$ppOrdersCache = [];
+        self::$userCouponRecordCache = [];
+    }
+
+    /**
      * Пакетно загружает и кеширует заказы для набора купонов: один SELECT по
      * jshopping_coupons и один по jshopping_orders вместо пары запросов на
      * каждый купон в цикле.
@@ -930,50 +1081,9 @@ class JoomlaCoupon extends Model
                 continue;
             }
 
-            $orders = $ordersByCoupon->get($couponId, collect());
+            $orders = self::applyCashbackFix($coupon, $ordersByCoupon->get($couponId, collect()));
 
-            // Проверяем условия: coupon_type=0, cashback=0, coupon_value=10
-            if ($coupon->coupon_type == 0 && (float) $coupon->cashback == 0.0 && (float) $coupon->coupon_value == 10.0) {
-                $orders = $orders->map(function ($order) {
-                    // Приводим cashback и order_discount к числу для точного сравнения
-                    $orderCashback = (float) $order->cashback;
-                    $orderDiscount = (float) $order->order_discount;
-
-                    if ($orderCashback == 0.0 && $orderDiscount > 0) {
-                        $order->cashback = number_format($orderDiscount, 2, '.', '');
-                        Log::info("Updated order cashback", [
-                            'order_id' => $order->order_id,
-                            'cashback' => $order->cashback,
-                            'order_discount' => $orderDiscount,
-                        ]);
-                    }
-                    return $order;
-                });
-            } else {
-                Log::info("Coupon conditions not met, skipping cashback update", [
-                    'coupon_id' => $couponId,
-                    'coupon_type' => $coupon->coupon_type,
-                    'cashback' => $coupon->cashback,
-                    'coupon_value' => $coupon->coupon_value,
-                ]);
-            }
-
-            // ── Шов: дотягиваем начисления нового сайта по коду купона ──────
-            // (Фаза D, слайс B). Только accruals; сторно → «Корректировки».
-            foreach (self::backendAccrualsForCoupon((string) $coupon->coupon_code) as $beOrder) {
-                $be = clone $beOrder;         // не мутируем кэш
-                $be->coupon_id = $couponId;   // чтобы data() резолвил coupon_type
-                $orders->push($be);
-            }
-
-            // ── Шов: погашения бонусника нового сайта (этап 4). У бонусника
-            // начислений нет — заказ приходит этим каналом (пересечения с
-            // accruals нет: бонусные и процентные — разные купоны/коды). ──────
-            foreach (self::backendRedemptionsForCoupon((string) $coupon->coupon_code) as $beOrder) {
-                $be = clone $beOrder;
-                $be->coupon_id = $couponId;
-                $orders->push($be);
-            }
+            $orders = self::appendBackendOrders($orders, (string) $coupon->coupon_code, $couponId, self::loadBackend());
 
             self::$ppOrdersCache[$couponId] = $orders->values()->toArray();
         }
@@ -985,6 +1095,20 @@ class JoomlaCoupon extends Model
 
     /** Кэш начислений бэка на время запроса. */
     private static ?array $backendCache = null;
+
+    /**
+     * Не удалось получить данные нового сайта в текущем запросе (сеть/таймаут/
+     * 429/5xx) при включённом флаге. Кабинет партнёра при этом деградирует к
+     * Joomla-данным как раньше, а админские экраны (этап В) по этому признаку
+     * показывают «Ошибка загрузки» вместо неполных цифр.
+     */
+    private static bool $backendFailed = false;
+
+    /** Были ли сбои загрузки данных нового сайта в текущем запросе. */
+    public static function backendLoadFailed(): bool
+    {
+        return self::$backendFailed;
+    }
 
     /**
      * Один раз за запрос тянет данные партнёра с бэка (все страницы) и
@@ -1017,33 +1141,17 @@ class JoomlaCoupon extends Model
             if ($partnerRef) {
                 $client = app(AvicennaBackendClient::class);
 
-                // Начисления (процентные купоны): accrual → шов, reversal → «Корректировки».
                 $res = $client->getAccruals((string) $partnerRef);
-                if ($res['success'] ?? false) {
-                    foreach ($res['rows'] as $row) {
-                        $type = $row['type'] ?? null;
-                        if ($type === 'accrual') {
-                            $code = mb_strtolower(trim((string) ($row['coupon_code'] ?? '')));
-                            if ($code !== '') {
-                                $cache['accrualsByCoupon'][$code][] = self::mapBackendRowToOrder($row);
-                            }
-                        } elseif ($type === 'reversal') {
-                            $cache['reversals'][] = $row;
-                        }
-                    }
+                $red = $client->getRedemptions((string) $partnerRef);
+
+                if (! ($res['success'] ?? false) || ! ($red['success'] ?? false)) {
+                    self::$backendFailed = true;
                 }
 
-                // Погашения (бонусные купоны): факт использования + заказ.
-                $red = $client->getRedemptions((string) $partnerRef);
-                if ($red['success'] ?? false) {
-                    foreach ($red['rows'] as $row) {
-                        $code = mb_strtolower(trim((string) ($row['coupon_code'] ?? '')));
-                        if ($code !== '') {
-                            $cache['redemptionsByCoupon'][$code][] = self::mapBackendRowToOrder($row);
-                            $cache['usedCodes'][$code] = true;
-                        }
-                    }
-                }
+                $cache = self::classifyBackendRows(
+                    ($res['success'] ?? false) ? $res['rows'] : [],
+                    ($red['success'] ?? false) ? $red['rows'] : [],
+                );
             }
         }
 
@@ -1073,18 +1181,6 @@ class JoomlaCoupon extends Model
         $o->city           = null;
 
         return $o;
-    }
-
-    /** Начисления бэка по коду купона (для шва getPpOrders). @return \stdClass[] */
-    private static function backendAccrualsForCoupon(string $couponCode): array
-    {
-        return self::loadBackend()['accrualsByCoupon'][mb_strtolower(trim($couponCode))] ?? [];
-    }
-
-    /** Погашения бонусника с бэка по коду купона (для шва getPpOrders). @return \stdClass[] */
-    private static function backendRedemptionsForCoupon(string $couponCode): array
-    {
-        return self::loadBackend()['redemptionsByCoupon'][mb_strtolower(trim($couponCode))] ?? [];
     }
 
     /** Использован ли купон на новом сайте (бэк-погашение по коду). */

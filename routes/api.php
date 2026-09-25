@@ -9,6 +9,7 @@ use App\Http\Controllers\RequisiteController;
 use App\Http\Controllers\RequisitesSettingController;
 use App\Http\Controllers\PayoutRequestController;
 use App\Http\Controllers\ImpersonateController;
+use App\Http\Controllers\AdminPartnersController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -65,6 +66,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/users', [ImpersonateController::class, 'index']);
         Route::post('/admin/impersonate/{user}', [ImpersonateController::class, 'impersonate'])
             ->whereNumber('user');
+
+        // Экран «Партнёры» (этап В): таблица активности и карточка партнёра.
+        // `{id}` – только число, как у impersonate, чтобы не перехватывать
+        // возможные буквенные подпути.
+        Route::get('/admin/partners', [AdminPartnersController::class, 'index']);
+        Route::get('/admin/partners/{id}', [AdminPartnersController::class, 'show'])
+            ->whereNumber('id');
 
         // Закрытие дыры (этап 1.3): раньше висело на auth:sanctum — любой
         // партнёр читал все заявки (с телефонами и почтами), мог одобрить
