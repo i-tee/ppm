@@ -31,14 +31,15 @@ https://trello.com/c/RFWSNOMq, бриф – `docs/prompts/partner-ux-master-brie
 | `/dashboard/partner-applications` | `PartnerApplications.vue` | админ (1, 2) | `/ps`, CRUD `/partner-applications` | заявки партнёров, фильтры, серверная пагинация |
 | `/dashboard/requisite-verification` | `RequisiteVerification.vue` | админ, бухгалтер | `/ps`, `/user/requisites-all`, `PUT /user/requisites/{id}/verify`, `DELETE /user/requisites/{id}` | неверифицированные реквизиты, одобрение |
 | `/dashboard/payout-resolve` | `PayoutResolve.vue` | админ, бухгалтер | `/admin/payout-requests-prepared`, `PUT /admin/payout-requests/{id}/20`, `…/{id}/cancel` (этап А), `…-ticket-abort`, `…-ticked-reminder`, `…-received` | заявки на выплату, чеки самозанятых, «выплачено»; у заявок в статусах 0/10 — неброская кнопка «Отменить заявку» (модалка с обязательной причиной) |
-| `/dashboard/partners` (бывший `/dashboard/impersonate`, редирект сохранён) | `Impersonate.vue` | админ | `/admin/users`, `POST /admin/impersonate/{id}` | список партнёров с поиском по email, вход под партнёром (кнопка неброская, вторичная) |
+| `/dashboard/partners` (бывший `/dashboard/impersonate`, редирект сохранён) | `Partners.vue` (этап В, бывший `Impersonate.vue`) | админ | `/admin/partners`, `POST /admin/impersonate/{id}` | таблица активности партнёров: имя/email, регистрация, статус анкеты, специальность и опыт, ссылки, бейдж активности, баланс, заявка на вывод, всего заработано, оплаченные заказы, промокоды, выведено, проверенные реквизиты, последняя выплата; поиск по части имени/email, фильтры по статусу анкеты и активности, серверная сортировка и пагинация; вход под партнёром (кнопка неброская, вторичная) |
+| `/dashboard/partners/:id` | `Partners/PartnerCard.vue` (этап В) | админ | `/admin/partners/{id}`, `POST /admin/impersonate/{id}` | карточка партнёра: сводка денег (те же цифры, что видит сам партнёр), график начислений (`utils/statistics.js` + `Statistics/StatisticsChart.vue`), промокоды включая скрытые (с пометкой), выплаты старой партнёрки и бонус-коды, история заявок на вывод, все анкеты целиком (включая старые поля и ссылки), реквизиты со статусом проверки, «Войти как партнёр» |
 
 **Меню** – `components/dashboard/Sidebar.vue` (этап 1.4, только десктоп,
 мобильная раскладка не менялась):
 - **Партнёр без одобренной заявки:** Главная, Анкета, Профиль.
 - **Партнёр с одобренной заявкой:** Главная; группа «Работа» – Промокоды,
   Статистика, Выплаты и списания; группа «Настройки» – Реквизиты, Профиль.
-- **Админ:** Заявки, Реквизиты, Выплаты, Партнёры.
+- **Админ:** Заявки, Реквизиты, Выплаты, Партнёры (список → карточка).
 - **Бухгалтер:** Реквизиты, Выплаты.
 
 Выбора режима сотрудничества (`Types.vue`, карточки Influencer/Wholesale/

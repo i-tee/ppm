@@ -19,7 +19,9 @@ const PartnerApplications = () =>
 const RequisiteVerification = () =>
   import("./components/dashboard/RequisiteVerification.vue");
 const PayoutResolve = () => import("./components/dashboard/PayoutResolve.vue");
-const Impersonate = () => import("./components/dashboard/Impersonate.vue");
+const Partners = () => import("./components/dashboard/Partners.vue");
+const PartnerCard = () =>
+  import("./components/dashboard/Partners/PartnerCard.vue");
 const ReferralLinks = () => import("./components/dashboard/ReferralLinks.vue");
 const Account = () => import("./components/dashboard/Account.vue");
 // Types/Influencer/Wholesale/Distributor/Agent - экраны прошлого режима
@@ -134,7 +136,13 @@ const routes = [
       {
         path: "partners",
         name: "Partners",
-        component: Impersonate,
+        component: Partners,
+        meta: { roles: ["admin"] },
+      },
+      {
+        path: "partners/:id",
+        name: "PartnerCard",
+        component: PartnerCard,
         meta: { roles: ["admin"] },
       },
       {

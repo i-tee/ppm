@@ -157,7 +157,6 @@ class AdminPartnersController extends Controller
                 'experience' => $application?->experience,
                 'links' => $application?->links ?: [],
                 'has_verified_requisites' => in_array($partner->id, $local['verifiedRequisites'], true),
-                'failed' => false,
             ];
 
             $backendForPartner = $backend[(string) $partner->id] ?? ['success' => false];
@@ -193,6 +192,8 @@ class AdminPartnersController extends Controller
             'last_payout_at' => null,
             'last_order_at' => null,
             'activity' => null,
+            // Единственный признак для фронта: деньги этого партнёра не
+            // показываем, вместо них — «Ошибка загрузки».
             'failed' => true,
         ];
     }
@@ -288,6 +289,7 @@ class AdminPartnersController extends Controller
             'last_payout_at' => $lastPayoutAt,
             'last_order_at' => $lastOrderAt,
             'activity' => $this->activityBadge($totals['ordersCount'], $lastOrderAt, $activeSince),
+            'failed' => false,
         ];
     }
 
@@ -683,24 +685,26 @@ class AdminPartnersController extends Controller
             Auth::setUser($partner);
             JoomlaCoupon::resetRequestCaches();
 
-            // Сначала чистый SELECT: getUserCoupons() умеет СОЗДАТЬ запись в
-            // Joomla, а админский просмотр не должен ничего создавать.
-            if (JoomlaCoupon::joomlaUser()) {
+            $cacheKey = BusinessDataCache::businessDataKey($partner->id);
+            $businessData = $refresh ? null : Cache::store('file')->get($cacheKey);
+
+            if ($businessData !== null) {
+                // Данные в кеше есть – значит и Joomla-пользователь есть,
+                // лишний запрос в Joomla ради этого не делаем.
+                $hasJoomlaUser = true;
+            } elseif (JoomlaCoupon::joomlaUser()) {
+                // Сначала чистый SELECT: getUserCoupons() умеет СОЗДАТЬ запись в
+                // Joomla, а админский просмотр не должен ничего создавать.
                 $hasJoomlaUser = true;
 
-                $cacheKey = BusinessDataCache::businessDataKey($partner->id);
-                $businessData = $refresh ? null : Cache::store('file')->get($cacheKey);
+                $businessData = app(UserCouponController::class)->buildBusinessData($partner);
 
-                if ($businessData === null) {
-                    $businessData = app(UserCouponController::class)->buildBusinessData($partner);
-
-                    if (JoomlaCoupon::backendLoadFailed()) {
-                        // Часть данных не пришла – ни показывать, ни кешировать.
-                        $failed = true;
-                        $businessData = null;
-                    } else {
-                        Cache::store('file')->put($cacheKey, $businessData, BusinessDataCache::TTL);
-                    }
+                if (JoomlaCoupon::backendLoadFailed()) {
+                    // Часть данных не пришла – ни показывать, ни кешировать.
+                    $failed = true;
+                    $businessData = null;
+                } else {
+                    Cache::store('file')->put($cacheKey, $businessData, BusinessDataCache::TTL);
                 }
             }
         } catch (\Throwable $e) {
