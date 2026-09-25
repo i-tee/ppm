@@ -2,6 +2,7 @@
 
 > **Операционная документация** (окружения, ручной прод-деплой, интеграция
 > с основным бэкендом Avicenna, тест-чеклист) — **[docs/operations.md](docs/operations.md)**.
+> Карта экранов, данных и уровней доступа кабинета (переработка UX, 2026-09) — **[docs/cabinet-map.md](docs/cabinet-map.md)**.
 > Стратегия миграции партнёрки (Фаза D) — `avicenna-backend/docs/partner-migration-plan.md`.
 
 ## Обзор
