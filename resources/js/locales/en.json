@@ -254,7 +254,15 @@
       "requisite_unverified": "Not verified",
       "requisite_status": "Verification",
       "received_amount": "To receive",
-      "bank_name": "Bank"
+      "bank_name": "Bank",
+      "pending_payout_hint": "Payout requests: {count}",
+      "coupons_hint": "Promo codes: {count}",
+      "no_payouts": "No payouts yet",
+      "yes": "Yes",
+      "no": "No",
+      "older_application": "Previous application",
+      "legacy_block": "From the old application",
+      "coupon_type": "Type"
     }
   }
 }

@@ -948,7 +948,7 @@
       "col_activity": "Активность",
       "col_balance": "Баланс",
       "col_pending_payout": "Заявка на вывод",
-      "col_earned": "Всего заработано",
+      "col_earned": "Заработано всего",
       "col_orders": "Оплаченных заказов",
       "col_coupons": "Промокодов",
       "col_withdrawn": "Выведено",
@@ -974,7 +974,15 @@
       "requisite_unverified": "Не проверены",
       "requisite_status": "Проверка",
       "received_amount": "К получению",
-      "bank_name": "Банк"
+      "bank_name": "Банк",
+      "pending_payout_hint": "Заявок на вывод: {count}",
+      "coupons_hint": "Промокодов: {count}",
+      "no_payouts": "Выплат не было",
+      "yes": "Да",
+      "no": "Нет",
+      "older_application": "Предыдущая анкета",
+      "legacy_block": "Из старой анкеты",
+      "coupon_type": "Тип"
     }
   }
 }

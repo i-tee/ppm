@@ -1689,8 +1689,10 @@ class JoomlaCoupon extends Model
 
                 switch (true) {
                     case ($cashback < 0):
-                        // Пропускаем отрицательный cashback (бонусный промокод)
-                        continue;
+                        // Пропускаем отрицательный cashback (бонусный промокод).
+                        // `continue 2` — именно пропуск заказа: `continue` внутри
+                        // switch PHP понимает как `break`, и заказ попадал в сводку.
+                        continue 2;
 
                     case ($cashback == 0 && $discount > 0 && $discountRatio >= 0.09 && $discountRatio <= 0.11):
                         // Если cashback = 0, есть скидка, и она составляет 9–11% от суммы заказа
@@ -1702,8 +1704,9 @@ class JoomlaCoupon extends Model
                         break;
 
                     default:
-                        // Если cashback == 0 и скидка не подходит под условие (или <= 0) — пропускаем
-                        continue;
+                        // Если cashback == 0 и скидка не подходит под условие (или <= 0) —
+                        // пропускаем заказ целиком (`continue 2`, не `break` из switch).
+                        continue 2;
                 }
 
                 // Агрегируем метрики

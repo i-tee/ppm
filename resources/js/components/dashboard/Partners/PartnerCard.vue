@@ -1,24 +1,33 @@
 <template>
   <div class="partner-card">
-    <div class="d-head">
-      <div class="flex items-center gap-3 flex-wrap mt-4">
-        <VaButton preset="secondary" size="small" icon="arrow_back" :to="{ name: 'Partners' }">
-          {{ $t('admin.partners.back_to_list') }}
-        </VaButton>
-        <p class="va-h4 my-0">{{ partner?.name || $t('admin.partners.card_title') }}</p>
+    <!-- Шапка: «К списку» над именем, имя слева, справа – вход под партнёром -->
+    <div class="card-head">
+      <VaButton
+        class="mb-2"
+        preset="plain"
+        size="small"
+        icon="arrow_back"
+        :to="{ name: 'Partners' }"
+      >{{ $t('admin.partners.back_to_list') }}</VaButton>
+
+      <div class="head-row">
+        <div class="min-w-0">
+          <p class="va-h4 my-0">{{ partner?.name || $t('admin.partners.card_title') }}</p>
+          <p v-if="partner" class="head-sub">
+            {{ partner.email }}
+            <span class="head-dot">·</span>
+            {{ $t('admin.partners.col_registered') }}: {{ formatDate(partner.created_at) }}
+          </p>
+        </div>
+
         <VaButton
           v-if="partner && currentUserId !== partner.id"
-          preset="plain"
-          size="small"
+          preset="secondary"
           icon="login"
           @click="impersonatePartner"
-        >
-          {{ $t('admin.users.impersonate') }}
-        </VaButton>
+        >{{ $t('admin.users.impersonate') }}</VaButton>
       </div>
-      <p v-if="partner" class="my-2 text-secondary">
-        {{ partner.email }} · {{ $t('admin.partners.col_registered') }}: {{ formatDate(partner.created_at) }}
-      </p>
+
       <VaDivider class="my-4" />
     </div>
 
@@ -31,6 +40,61 @@
     </VaAlert>
 
     <div v-else class="space-y-6">
+      <!-- 1. Анкета – сразу под шапкой -->
+      <VaCard class="p-4">
+        <p class="va-h6 mb-3">{{ $t('dashboard.application') }}</p>
+
+        <p v-if="!applications.length" class="text-secondary">{{ $t('admin.partners.no_application') }}</p>
+
+        <div v-for="(application, index) in applications" :key="application.id">
+          <div v-if="index > 0" class="mt-4">
+            <VaDivider class="my-2" />
+            <p class="text-secondary text-sm mb-2">{{ $t('admin.partners.older_application') }}</p>
+          </div>
+
+          <div class="flex items-center gap-2 mb-3">
+            <VaBadge
+              :text="application.status_name ? $t('status.' + application.status_name) : $t('status.unknown')"
+              :color="applicationStatusColor(application)"
+            />
+            <span class="text-secondary text-sm">{{ formatDate(application.created_at) }}</span>
+          </div>
+
+          <div class="app-grid">
+            <div v-for="field in applicationFields(application)" :key="field.label" class="app-field">
+              <span class="app-label">{{ field.label }}</span>
+              <span class="app-value">{{ field.value }}</span>
+            </div>
+          </div>
+
+          <div v-if="applicationLinks(application).length" class="app-field mt-2">
+            <span class="app-label">{{ $t('admin.partners.col_links') }}</span>
+            <span class="app-value">
+              <a
+                v-for="(link, i) in applicationLinks(application)"
+                :key="i"
+                :href="link"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="app-link"
+              >{{ link }}</a>
+            </span>
+          </div>
+
+          <!-- Старые анкеты (до этапа 1.7) – отдельным блоком, чтобы не
+               путать со свежими полями -->
+          <div v-if="legacyFields(application).length" class="legacy-block">
+            <p class="legacy-title">{{ $t('admin.partners.legacy_block') }}</p>
+            <div class="app-grid">
+              <div v-for="field in legacyFields(application)" :key="field.label" class="app-field">
+                <span class="app-label">{{ field.label }}</span>
+                <span class="app-value">{{ field.value }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </VaCard>
+
       <!-- Деньги не догрузились: цифр не показываем вообще. -->
       <VaCard v-if="failed" class="p-4">
         <p class="va-h6 text-danger mb-2">{{ $t('admin.partners.card_error') }}</p>
@@ -83,7 +147,7 @@
           </div>
         </div>
 
-        <!-- График начислений -->
+        <!-- График начислений: по умолчанию – всё время -->
         <VaCard class="p-4">
           <div class="flex flex-wrap gap-4 items-end mb-4">
             <p class="va-h6 my-0 mr-auto">{{ $t('dashboard.statistics') }}</p>
@@ -110,9 +174,9 @@
         <!-- Промокоды, включая скрытые -->
         <VaCard class="p-4">
           <p class="va-h6 mb-3">{{ $t('dashboard.promocodes') }}</p>
-          <VaDataTable :items="coupons" :columns="couponColumns">
+          <VaDataTable class="readable-table" :items="coupons" :columns="couponColumns">
             <template #cell(coupon_code)="{ rowData }">
-              {{ rowData.coupon_code }}
+              <span class="font-semibold">{{ rowData.coupon_code }}</span>
               <VaBadge
                 v-if="rowData.is_hidden"
                 class="ml-2"
@@ -124,10 +188,9 @@
               {{ rowData.coupon_type == 1 ? $t('dashboard.bonus_coupons') : $t('dashboard.percent_coupons') }}
             </template>
             <template #cell(used)="{ rowData }">
-              <VaIcon
-                :name="(rowData.used == 1 || rowData.backend_used == 1) ? 'check_circle' : 'remove'"
-                :color="(rowData.used == 1 || rowData.backend_used == 1) ? 'success' : 'secondary'"
-              />
+              <span :class="isCouponUsed(rowData) ? 'text-success font-semibold' : 'text-secondary'">
+                {{ isCouponUsed(rowData) ? $t('admin.partners.yes') : $t('admin.partners.no') }}
+              </span>
             </template>
           </VaDataTable>
         </VaCard>
@@ -137,6 +200,7 @@
           <p class="va-h6 mb-3">{{ $t('dashboard.withdrawals_total') }}</p>
           <VaDataTable
             v-if="businessData.withdrawals.withdrawals.length"
+            class="readable-table"
             :items="businessData.withdrawals.withdrawals"
             :columns="legacyPayoutColumns"
           >
@@ -147,7 +211,11 @@
           <template v-if="businessData.trueBonusCode.trueBonusCodes.length">
             <VaDivider class="my-4" />
             <p class="va-h6 mb-3">{{ $t('dashboard.bonus_codes_expense') }}</p>
-            <VaDataTable :items="businessData.trueBonusCode.trueBonusCodes" :columns="bonusCodeColumns">
+            <VaDataTable
+              class="readable-table"
+              :items="businessData.trueBonusCode.trueBonusCodes"
+              :columns="bonusCodeColumns"
+            >
               <template #cell(bonus_code_cost)="{ rowData }">{{ formatPrice(rowData.bonus_code_cost) }}</template>
               <template #cell(created_at)="{ rowData }">{{ formatDate(rowData.created_at) }}</template>
             </VaDataTable>
@@ -155,52 +223,31 @@
         </VaCard>
       </template>
 
-      <!-- История заявок на вывод: показываем всегда, деньгам бэкенда не подчинена -->
+      <!-- История заявок на вывод -->
       <VaCard class="p-4">
         <p class="va-h6 mb-3">{{ $t('dashboard.withdrawal_requests') }}</p>
         <VaDataTable
           v-if="payoutRequests.length"
+          class="readable-table"
           :items="payoutRequests"
           :columns="payoutColumns"
         >
           <template #cell(withdrawal_amount)="{ rowData }">{{ formatPrice(rowData.withdrawal_amount) }}</template>
           <template #cell(received_amount)="{ rowData }">{{ formatPrice(rowData.received_amount) }}</template>
-          <template #cell(status)="{ rowData }">{{ rowData.status_text }}</template>
+          <template #cell(status)="{ rowData }">
+            <VaBadge :text="getStatusText(rowData.status)" :color="getStatusColor(rowData.status)" />
+            <!-- У отменённых причина лежит в note (её дописывает отмена заявки) -->
+            <div v-if="rowData.status === 50 && rowData.note" class="cancel-reason">{{ rowData.note }}</div>
+          </template>
           <template #cell(created_at)="{ rowData }">{{ formatDate(rowData.created_at) }}</template>
         </VaDataTable>
         <p v-else class="text-secondary">{{ $t('admin.partners.empty_section') }}</p>
       </VaCard>
 
-      <!-- Анкеты партнёра целиком, включая старые поля -->
-      <VaCard class="p-4">
-        <p class="va-h6 mb-3">{{ $t('dashboard.partner_applications') }}</p>
-        <p v-if="!applications.length" class="text-secondary">{{ $t('admin.partners.empty_section') }}</p>
-        <div v-for="application in applications" :key="application.id" class="mb-4">
-          <VaDivider v-if="applications.length > 1" class="my-2" />
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
-            <div v-for="field in applicationFields(application)" :key="field.label" class="flex gap-2">
-              <span class="text-secondary">{{ field.label }}:</span>
-              <span>{{ field.value }}</span>
-            </div>
-          </div>
-          <div v-if="applicationLinks(application).length" class="mt-2">
-            <span class="text-secondary">{{ $t('admin.partners.col_links') }}:</span>
-            <a
-              v-for="(link, i) in applicationLinks(application)"
-              :key="i"
-              :href="link"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-primary underline ml-2"
-            >{{ link }}</a>
-          </div>
-        </div>
-      </VaCard>
-
       <!-- Реквизиты со статусом проверки -->
       <VaCard class="p-4">
         <p class="va-h6 mb-3">{{ $t('dashboard.requisites') }}</p>
-        <VaDataTable v-if="requisites.length" :items="requisites" :columns="requisiteColumns">
+        <VaDataTable v-if="requisites.length" class="readable-table" :items="requisites" :columns="requisiteColumns">
           <template #cell(is_verified)="{ rowData }">
             <VaBadge
               :text="rowData.is_verified ? $t('admin.partners.requisite_verified') : $t('admin.partners.requisite_unverified')"
@@ -208,10 +255,9 @@
             />
           </template>
           <template #cell(is_active)="{ rowData }">
-            <VaIcon
-              :name="rowData.is_active ? 'check_circle' : 'remove'"
-              :color="rowData.is_active ? 'success' : 'secondary'"
-            />
+            <span :class="rowData.is_active ? 'text-success' : 'text-secondary'">
+              {{ rowData.is_active ? $t('admin.partners.yes') : $t('admin.partners.no') }}
+            </span>
           </template>
         </VaDataTable>
         <p v-else class="text-secondary">{{ $t('admin.partners.empty_section') }}</p>
@@ -226,7 +272,9 @@ import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
+import { useSettingsStore } from '@/stores/settings';
 import { useBase } from '@/composables/useBase';
+import { usePayoutStatus } from '@/composables/usePayoutStatus';
 import StatisticsChart from '../Statistics/StatisticsChart.vue';
 import {
   PERIOD_PRESETS,
@@ -243,7 +291,9 @@ const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const authStore = useAuthStore();
+const settingsStore = useSettingsStore();
 const { formatPrice, formatDate } = useBase();
+const { getStatusText, getStatusColor } = usePayoutStatus();
 
 const loading = ref(true);
 const notFound = ref(false);
@@ -258,8 +308,9 @@ const businessData = ref(null);
 const currentUserId = computed(() => authStore.currentUser?.id);
 
 // --- График: переиспользуем утилиты экрана «Статистика» ---
+// Админу важна вся история партнёра, поэтому по умолчанию – «Всё время».
 
-const periodPreset = ref('30d');
+const periodPreset = ref('all');
 
 const periodOptions = computed(() => PERIOD_PRESETS
   .filter((preset) => preset !== 'custom')
@@ -290,11 +341,16 @@ const coupons = computed(() => {
   }));
 });
 
+// Бонусник, погашённый на новом сайте, в Joomla остаётся used=0 – учитываем оба признака.
+function isCouponUsed(coupon) {
+  return coupon.used == 1 || coupon.backend_used == 1;
+}
+
 const couponColumns = computed(() => [
   { key: 'coupon_code', label: t('coupons.code') },
-  { key: 'coupon_type', label: t('dashboard.income_type') },
-  { key: 'coupon_value', label: t('dashboard.avg_value') },
-  { key: 'used', label: t('dashboard.used') },
+  { key: 'coupon_type', label: t('admin.partners.coupon_type') },
+  { key: 'coupon_value', label: t('coupons.value') },
+  { key: 'used', label: t('coupons.used') },
 ]);
 
 const legacyPayoutColumns = computed(() => [
@@ -304,41 +360,53 @@ const legacyPayoutColumns = computed(() => [
 ]);
 
 const bonusCodeColumns = computed(() => [
-  { key: 'bonus_code_value', label: t('dashboard.avg_value') },
-  { key: 'bonus_code_cost', label: t('dashboard.bonus_codes_cost') },
+  { key: 'bonus_code_value', label: t('coupons.bonus_code_value') },
+  { key: 'bonus_code_cost', label: t('coupons.bonus_code_cost') },
   { key: 'created_at', label: t('date.date') },
 ]);
 
 const payoutColumns = computed(() => [
-  { key: 'created_at', label: t('date.date') },
-  { key: 'withdrawal_amount', label: t('summ') },
-  { key: 'received_amount', label: t('admin.partners.received_amount') },
-  { key: 'status', label: t('admin.users.status') },
+  { key: 'created_at', label: t('date.date'), width: '110px' },
+  { key: 'withdrawal_amount', label: t('summ'), width: '130px' },
+  { key: 'received_amount', label: t('admin.partners.received_amount'), width: '130px' },
+  { key: 'status', label: t('payoutRequest.status.status') },
 ]);
 
 const requisiteColumns = computed(() => [
-  { key: 'id', label: 'ID' },
+  { key: 'id', label: 'ID', width: '70px' },
   { key: 'full_name', label: t('form.full_name') },
   { key: 'bank_name', label: t('admin.partners.bank_name') },
   { key: 'is_verified', label: t('admin.partners.requisite_status') },
   { key: 'is_active', label: t('dashboard.active') },
 ]);
 
-// Анкета целиком — вместе со старыми полями (full_name, experience).
+function applicationStatusColor(application) {
+  if (application.status_name === 'accepted') return 'success';
+  if (application.status_name === 'rejected' || application.status_name === 'blocked') return 'danger';
+  return 'warning';
+}
+
+// Форма занятости – из настроек программы (GET /ps), как на экране заявок.
+function partnerTypeText(application) {
+  const types = settingsStore.data?.partner_types || [];
+  const type = types.find((item) => item.id === application.partner_type_id);
+  return type ? t('partners.partner_types.' + type.name) : null;
+}
+
+// Актуальные поля анкеты (этап 1.7 и позже).
 function applicationFields(application) {
+  const fullName = [application.last_name, application.first_name, application.middle_name]
+    .filter(Boolean)
+    .join(' ');
+
   const fields = [
-    ['admin.partners.app_status', application.status_name ? t('status.' + application.status_name) : null],
-    ['form.last_name', application.last_name],
-    ['form.first_name', application.first_name],
-    ['form.middle_name', application.middle_name],
-    ['form.full_name', application.full_name],
-    ['form.specialty', application.specialty],
-    ['admin.partners.experience', application.experience_years
-      ? t('admin.partners.experience_years', { years: application.experience_years })
-      : application.experience],
+    ['form.full_name', fullName],
     ['form.phone', application.phone],
     ['email', application.email],
     ['city', application.city],
+    ['form.specialty', application.specialty],
+    ['form.experience_years', application.experience_years],
+    ['business_form', partnerTypeText(application)],
     ['form.company_name', application.company_name],
     ['form.comment', application.comment],
   ];
@@ -348,9 +416,20 @@ function applicationFields(application) {
     .map(([key, value]) => ({ label: t(key), value }));
 }
 
+// Поля старых анкет – отдельным блоком.
+function legacyFields(application) {
+  const fields = [
+    ['form.full_name', application.full_name],
+    ['form.experience', application.experience],
+  ];
+
+  return fields
+    .filter(([, value]) => value !== null && value !== undefined && value !== '')
+    .map(([key, value]) => ({ label: t(key), value }));
+}
+
 function applicationLinks(application) {
-  const links = application.links || [];
-  return links
+  return (application.links || [])
     .map((link) => (typeof link === 'string' ? link : (link.url || link.link || '')))
     .filter(Boolean);
 }
@@ -358,6 +437,7 @@ function applicationLinks(application) {
 async function load({ refresh = false } = {}) {
   loading.value = true;
   notFound.value = false;
+  failed.value = false;
 
   try {
     const response = await api.get(`/admin/partners/${route.params.id}`, {
@@ -393,6 +473,7 @@ onMounted(async () => {
     return;
   }
 
+  settingsStore.load();
   load();
 });
 
@@ -418,5 +499,96 @@ const impersonatePartner = async () => {
 <style scoped>
 .partner-card {
   padding: 20px;
+}
+
+.card-head {
+  margin-top: 16px;
+}
+
+.head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.head-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.head-dot {
+  margin: 0 4px;
+}
+
+/* Таблицы карточки: текст по умолчанию слишком бледный на белом фоне. */
+.readable-table :deep(td) {
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.readable-table :deep(th) {
+  color: #374151;
+  font-weight: 600;
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px 24px;
+}
+
+@media (min-width: 768px) {
+  .app-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.app-field {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.app-label {
+  color: #6b7280;
+  font-size: 13px;
+  flex: 0 0 auto;
+  min-width: 130px;
+}
+
+.app-value {
+  color: #1f2937;
+  overflow-wrap: anywhere;
+}
+
+.app-link {
+  color: var(--va-primary);
+  text-decoration: underline;
+  margin-right: 12px;
+  overflow-wrap: anywhere;
+}
+
+.legacy-block {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+.legacy-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.cancel-reason {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  white-space: pre-line;
 }
 </style>

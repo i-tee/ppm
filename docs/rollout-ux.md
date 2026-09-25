@@ -59,6 +59,7 @@ php artisan migrate --force
 |---|---|---|---|
 | `2026_09_25_140000_create_hidden_coupons_table` | 1.6 | Создаёт таблицу `hidden_coupons` (своя БД ppm, партнёр + код + когда скрыт) — признак «скрыт» для списка промокодов в ЛК, Joomla и основной бэкенд не трогает | `php artisan migrate:rollback --step=1` безопасен — таблица новая, ничего кроме неё не меняет |
 | `2026_09_25_150000_add_name_parts_specialty_experience_years_to_partner_applications_table` | 1.7 | Добавляет в `partner_applications` колонки `last_name`, `first_name`, `middle_name`, `specialty` (nullable string), `experience_years` (nullable unsigned smallint) — разбивка ФИО и новые поля анкеты; старые колонки (`full_name`, `experience`) не трогает | `php artisan migrate:rollback --step=1` удаляет только новые колонки — данные новых анкет в них пропадут, `full_name`/`experience` старых заявок останутся как есть |
+| `2026_09_25_160000_fix_legacy_payout_status_30` | А2 | **Миграция данных, не схемы.** `payout_requests`: легаси-статус `30` → `16` (`STATUS_TICKET_UPLOADED`) у заявок, созданных 24–25.12.2025, пока значением константы было `30`. Эти заявки не попадали в `PayoutRequest::withdrawals()`, поэтому баланс их партнёров был завышен — после миграции он уменьшится на сумму заявок. Затронутые id печатаются в вывод миграции и пишутся в лог (`migration.fix_legacy_payout_status_30`) | **Отката нет** (`down()` пустой): возвращать несуществующий статус — значит снова завысить баланс, а «все 16 → 30» откатывать нельзя (под 16 есть и нормальные заявки). Если откат всё же нужен — точечно по списку id из лога |
 
 ## 3. Роли (этап 1.3)
 
@@ -91,6 +92,58 @@ php artisan ppm:access --list                       # проверить ито�
   прод-БД (`Laravel_partner`, `avicenna` – узнать через SELECT, см.
   `docs/operations.md` «Постоянные соединения с БД»). Отдельное решение
   владельца, не автоматически при обычном деплое.
+
+## 4а. Сверка денег (этап А2)
+
+Выкат меняет цифры в кабинете (миграция статуса `30`, правка сводки
+промокодов), поэтому деньги всех партнёров снимаем **до** и **после** и
+сверяем. Инструменты — `tools/balance-snapshot.php` и
+`tools/balance-compare.php`, оба только читают (см. `docs/operations.md`
+§4г).
+
+**1. До `git pull`** — снимок «до» на старом коде. Скрипта в старом
+дереве ещё нет, берём его из ветки, не трогая рабочее дерево:
+
+```bash
+cd /home/dev-user/web/partner.avicenna.com.ru/public_html
+git fetch origin
+git show origin/main:tools/balance-snapshot.php > /tmp/snap.php   # до мержа — origin/boost-ux
+PPM_SNAPSHOT_OUT=/tmp/balance-before.json php artisan tinker /tmp/snap.php
+```
+
+Снимок берётся только по партнёрам с одобренной заявкой (у остальных нет
+Joomla-пользователя, а чтение его создало бы — в боевую Joomla не пишем).
+Идёт последовательно, по ~3–6 с на партнёра: на ~40 партнёрах это 3–5
+минут, файл `/tmp/balance-before.json` **сохранить вне репо**.
+
+**2. Выкат** — шаги §1–§3 этого файла как обычно.
+
+**3. После выката** — сбросить кеш и снять снимок «после» уже новым
+скриптом:
+
+```bash
+php artisan cache:clear --store=file
+PPM_SNAPSHOT_OUT=/tmp/balance-after.json php artisan tinker tools/balance-snapshot.php
+```
+
+Сброс кеша обязателен: `business-data` кешируется на 60 с, иначе в снимок
+«после» попадут старые цифры.
+
+**4. Сравнить:**
+
+```bash
+PPM_SNAPSHOT_A=/tmp/balance-before.json \
+PPM_SNAPSHOT_B=/tmp/balance-after.json \
+  php artisan tinker tools/balance-compare.php
+```
+
+**5. Что считать нормой.** Единственное ожидаемое расхождение —
+блок «ожидаемо: статус 30 → 16»: у партнёров с легаси-заявками баланс
+уменьшается ровно на их сумму, а сами заявки переезжают из статуса `30` в
+`16`. Всё, что попало в блок «Расхождения», — повод **откатить по §6** и
+разбираться: деньги партнёра после выката меняться не должны. Сводка
+промокодов (`couponsSummary`) на баланс не влияет и в снимок не входит
+специально — её изменения ожидаемы и в сверку не попадают.
 
 ## 5. После выката
 
